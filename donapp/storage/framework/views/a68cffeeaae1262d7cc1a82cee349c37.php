@@ -1,21 +1,20 @@
-@extends('layouts.app')
-@section('title', 'Registro | Donapp')
-@section('styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/StylesRegistrar.css') }}">
-@endsection
+<?php $__env->startSection('title', 'Registro | Donapp'); ?>
+<?php $__env->startSection('styles'); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('assets/css/StylesRegistrar.css')); ?>">
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <div class="caja-exterior">
-    <a href="{{ route('home') }}" class="logo-container">
-        <img src="{{ asset('assets/uploads/Red-Logo.png') }}" alt="Logo Donapp" class="form-logo">
+    <a href="<?php echo e(route('home')); ?>" class="logo-container">
+        <img src="<?php echo e(asset('assets/uploads/Red-Logo.png')); ?>" alt="Logo Donapp" class="form-logo">
     </a>
 
     <h2>Crea tu cuenta</h2>
     <p class="subtitle">Completa los datos para registrarte en el sistema</p>
 
-    <form action="{{ route('registro.post') }}" method="POST" class="form-grid" id="registerForm">
-        @csrf
+    <form action="<?php echo e(route('registro.post')); ?>" method="POST" class="form-grid" id="registerForm">
+        <?php echo csrf_field(); ?>
 
         <div class="input-group">
             <label for="nombre"><i class="fa-solid fa-user"></i> Nombre Completo</label>
@@ -105,7 +104,7 @@
                 <input type="checkbox" name="aceptaTerminos" id="aceptaTerminos" required>
                 <span>
                     He leído y acepto los
-                    <a href="{{ route('terminos') }}" target="_blank" rel="noopener">Términos y Condiciones</a>
+                    <a href="<?php echo e(route('terminos')); ?>" target="_blank" rel="noopener">Términos y Condiciones</a>
                     y la Política de Habeas Data de Donapp.
                 </span>
             </label>
@@ -117,13 +116,13 @@
         </button>
 
         <div class="auth-links full-width">
-            <p>¿Ya tienes una cuenta? <a href="{{ route('login') }}">Inicia sesión aquí</a></p>
+            <p>¿Ya tienes una cuenta? <a href="<?php echo e(route('login')); ?>">Inicia sesión aquí</a></p>
             <p class="asistido-txt">¿Necesitas ayuda? <a href="javascript:void(0)" onclick="abrirAsistido()">Usa el Registro Asistido</a></p>
         </div>
     </form>
 </div>
 
-{{-- Modal Registro Asistido --}}
+
 <div id="modalAsistido" class="modal-asistido">
     <div class="modal-content">
         <span class="close-btn" onclick="cerrarAsistido()">&times;</span>
@@ -145,11 +144,11 @@
 
         <div class="descargas-box">
             <h4><i class="fa-solid fa-file-arrow-down"></i> Formatos para diligenciar antes de tu visita</h4>
-            <a class="btn-descarga" href="{{ asset('assets/docs/AutorizacionTratamientoDatosDonapp.docx') }}" download>
+            <a class="btn-descarga" href="<?php echo e(asset('assets/docs/AutorizacionTratamientoDatosDonapp.docx')); ?>" download>
                 <i class="fa-solid fa-file-word"></i>
                 <span>Autorización de tratamiento de datos<br><small>Registro propio, presencial</small></span>
             </a>
-            <a class="btn-descarga" href="{{ asset('assets/docs/AutorizacionRegistroDonapp.docx') }}" download>
+            <a class="btn-descarga" href="<?php echo e(asset('assets/docs/AutorizacionRegistroDonapp.docx')); ?>" download>
                 <i class="fa-solid fa-file-word"></i>
                 <span>Autorización por tercero<br><small>Cuando alguien más te representa</small></span>
             </a>
@@ -157,8 +156,9 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
-    <script src="{{ asset('assets/js/registro.js') }}"></script>
-@endsection
+<?php $__env->startSection('scripts'); ?>
+    <script src="<?php echo e(asset('assets/js/registro.js')); ?>"></script>
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\DonappLaravel\donapp\resources\views/auth/registro.blade.php ENDPATH**/ ?>

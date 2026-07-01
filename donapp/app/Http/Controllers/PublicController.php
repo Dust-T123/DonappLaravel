@@ -23,4 +23,8 @@ class PublicController extends Controller
             'statsUsuarios', 'statsDonaciones', 'statsEventos', 'publicaciones'
         ));
     }
+    public function terminos()
+    {
+        return view('public.terminos');
+    }
 }

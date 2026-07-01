@@ -1,7 +1,6 @@
-@extends('layouts.app')
-@section('title', 'Donapp — Panel Administrativo')
-@section('styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/admin_style.css') }}">
+<?php $__env->startSection('title', 'Donapp — Panel Administrativo'); ?>
+<?php $__env->startSection('styles'); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('assets/css/admin_style.css')); ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
@@ -15,17 +14,17 @@
         .alert-success{background:#e6f6ea;border:1px solid #9bd8ac;color:#1e7a34;}
         .alert-danger{background:#fdecea;border:1px solid #f3a6a0;color:#a12a22;}
     </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <div class="admin-wrapper">
 
-    {{-- ═══════ SIDEBAR ═══════ --}}
+    
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <a href="{{ route('home') }}">
-                <img src="{{ asset('assets/uploads/Red-Logo.png') }}" alt="Donapp">
+            <a href="<?php echo e(route('home')); ?>">
+                <img src="<?php echo e(asset('assets/uploads/Red-Logo.png')); ?>" alt="Donapp">
             </a>
             <p class="sidebar-title">Panel Administrativo</p>
         </div>
@@ -39,8 +38,8 @@
             <li><a href="#perfil"     class="nav-link"><i class="fa-solid fa-user-gear"></i><span> Mi Perfil</span></a></li>
             <li><hr></li>
             <li>
-                <form action="{{ route('logout') }}" method="POST" style="margin:0">
-                    @csrf
+                <form action="<?php echo e(route('logout')); ?>" method="POST" style="margin:0">
+                    <?php echo csrf_field(); ?>
                     <button type="submit" class="nav-link logout">
                         <i class="fa-solid fa-power-off"></i><span> Cerrar Sesión</span>
                     </button>
@@ -49,12 +48,12 @@
         </ul>
     </aside>
 
-    {{-- ═══════ MAIN ═══════ --}}
+    
     <main class="main-content">
 
-        {{-- ── DASHBOARD ── --}}
+        
         <div id="dashboard" class="tab-pane active">
-            <h1 class="page-title">Bienvenid@, {{ $adminActual->nombre }} 👋</h1>
+            <h1 class="page-title">Bienvenid@, <?php echo e($adminActual->nombre); ?> 👋</h1>
             <p class="text-muted">
                 <i class="fa-solid fa-shield-halved"></i>
                 Módulo de Administrador — Revisa y gestiona usuarios, categorías, donaciones, solicitudes y eventos.
@@ -62,27 +61,27 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                    <div><h3>{{ $totalUsuarios }}</h3><p>Usuarios totales</p></div>
+                    <div><h3><?php echo e($totalUsuarios); ?></h3><p>Usuarios totales</p></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon orange"><i class="fa-solid fa-box-open"></i></div>
-                    <div><h3>{{ $totalDonaciones }}</h3><p>Donaciones</p></div>
+                    <div><h3><?php echo e($totalDonaciones); ?></h3><p>Donaciones</p></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon blue"><i class="fa-solid fa-clipboard-list"></i></div>
-                    <div><h3>{{ $totalSolicitudes }}</h3><p>Solicitudes</p></div>
+                    <div><h3><?php echo e($totalSolicitudes); ?></h3><p>Solicitudes</p></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon green"><i class="fa-solid fa-calendar-check"></i></div>
-                    <div><h3>{{ $totalEventos }}</h3><p>Eventos</p></div>
+                    <div><h3><?php echo e($totalEventos); ?></h3><p>Eventos</p></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-                    <div><h3>{{ $totalAprobadas }}</h3><p>Donaciones aprobadas</p></div>
+                    <div><h3><?php echo e($totalAprobadas); ?></h3><p>Donaciones aprobadas</p></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-tags"></i></div>
-                    <div><h3>{{ $totalCategorias }}</h3><p>Categorías</p></div>
+                    <div><h3><?php echo e($totalCategorias); ?></h3><p>Categorías</p></div>
                 </div>
             </div>
 
@@ -111,7 +110,7 @@
             </div>
         </div>
 
-        {{-- ── USUARIOS ── --}}
+        
         <div id="usuarios" class="tab-pane">
             <div class="section-header">
                 <h2 class="page-title">Gestión de Usuarios</h2>
@@ -120,27 +119,27 @@
                 </button>
             </div>
             <div class="card">
-                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar">
+                <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar">
                     <input type="hidden" name="tab" value="usuarios">
                     <input type="text" name="search" placeholder="🔍 Buscar por nombre o email..."
-                           value="{{ request('search') }}" class="form-input search-input" maxlength="200">
+                           value="<?php echo e(request('search')); ?>" class="form-input search-input" maxlength="200">
                     <select name="rol" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todos los roles</option>
-                        <option value="donante"       {{ request('rol')=='donante'       ? 'selected' : '' }}>Donante / Solicitante</option>
-                        <option value="asistente"     {{ request('rol')=='asistente'     ? 'selected' : '' }}>Asistente</option>
-                        <option value="administrador" {{ request('rol')=='administrador' ? 'selected' : '' }}>Administrador</option>
+                        <option value="donante"       <?php echo e(request('rol')=='donante'       ? 'selected' : ''); ?>>Donante / Solicitante</option>
+                        <option value="asistente"     <?php echo e(request('rol')=='asistente'     ? 'selected' : ''); ?>>Asistente</option>
+                        <option value="administrador" <?php echo e(request('rol')=='administrador' ? 'selected' : ''); ?>>Administrador</option>
                     </select>
                     <select name="prioridad" class="form-input sel-small" onchange="this.form.submit()"
                             id="filtro_prioridad_select">
                         <option value="">Todas las prioridades</option>
-                        <option value="alta"  {{ request('prioridad')=='alta'  ? 'selected' : '' }}>🔴 Alta</option>
-                        <option value="media" {{ request('prioridad')=='media' ? 'selected' : '' }}>🟡 Media</option>
-                        <option value="baja"  {{ request('prioridad')=='baja'  ? 'selected' : '' }}>🟢 Baja</option>
+                        <option value="alta"  <?php echo e(request('prioridad')=='alta'  ? 'selected' : ''); ?>>🔴 Alta</option>
+                        <option value="media" <?php echo e(request('prioridad')=='media' ? 'selected' : ''); ?>>🟡 Media</option>
+                        <option value="baja"  <?php echo e(request('prioridad')=='baja'  ? 'selected' : ''); ?>>🟢 Baja</option>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    @if(request('search') || request('rol') || request('prioridad'))
-                        <a href="{{ route('admin.dashboard') }}#usuarios" class="btn btn-secondary btn-sm">Limpiar</a>
-                    @endif
+                    <?php if(request('search') || request('rol') || request('prioridad')): ?>
+                        <a href="<?php echo e(route('admin.dashboard')); ?>#usuarios" class="btn btn-secondary btn-sm">Limpiar</a>
+                    <?php endif; ?>
                 </form>
 
                 <div class="table-wrap">
@@ -153,40 +152,40 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($usuarios as $u)
+                            <?php $__empty_1 = true; $__currentLoopData = $usuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $u): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <tr>
-                                <td>{{ $u->idUsuario }}</td>
-                                <td>{{ $u->nombre }}</td>
-                                <td><small>{{ $u->tipoDocumento }}: {{ $u->numDocumento }}</small></td>
-                                <td>{{ $u->email }}</td>
-                                <td>{{ $u->telefono }}</td>
-                                <td><span class="badge {{ $u->rol }}">{{ $u->rol }}</span></td>
-                                <td><span class="badge estado-{{ $u->estado }}">{{ $u->estado }}</span></td>
+                                <td><?php echo e($u->idUsuario); ?></td>
+                                <td><?php echo e($u->nombre); ?></td>
+                                <td><small><?php echo e($u->tipoDocumento); ?>: <?php echo e($u->numDocumento); ?></small></td>
+                                <td><?php echo e($u->email); ?></td>
+                                <td><?php echo e($u->telefono); ?></td>
+                                <td><span class="badge <?php echo e($u->rol); ?>"><?php echo e($u->rol); ?></span></td>
+                                <td><span class="badge estado-<?php echo e($u->estado); ?>"><?php echo e($u->estado); ?></span></td>
                                 <td class="td-actions">
-                                    <button onclick='abrirModalEditarUsuario({{ json_encode($u) }})'
+                                    <button onclick='abrirModalEditarUsuario(<?php echo e(json_encode($u)); ?>)'
                                             class="btn btn-sm btn-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
-                                    <form action="{{ route('admin.usuarios.estado', $u->idUsuario) }}" method="POST" style="display:inline"
-                                          onsubmit="return confirm('{{ $u->estado==='activo' ? '¿Inactivar este usuario?' : '¿Activar este usuario?' }}')">
-                                        @csrf @method('PATCH')
-                                        <button type="submit" class="btn btn-sm {{ $u->estado==='activo' ? 'btn-warning' : 'btn-success' }}"
-                                                title="{{ $u->estado==='activo' ? 'Inactivar' : 'Activar' }}">
-                                            <i class="fa-solid {{ $u->estado==='activo' ? 'fa-ban' : 'fa-circle-check' }}"></i>
+                                    <form action="<?php echo e(route('admin.usuarios.estado', $u->idUsuario)); ?>" method="POST" style="display:inline"
+                                          onsubmit="return confirm('<?php echo e($u->estado==='activo' ? '¿Inactivar este usuario?' : '¿Activar este usuario?'); ?>')">
+                                        <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
+                                        <button type="submit" class="btn btn-sm <?php echo e($u->estado==='activo' ? 'btn-warning' : 'btn-success'); ?>"
+                                                title="<?php echo e($u->estado==='activo' ? 'Inactivar' : 'Activar'); ?>">
+                                            <i class="fa-solid <?php echo e($u->estado==='activo' ? 'fa-ban' : 'fa-circle-check'); ?>"></i>
                                         </button>
                                     </form>
                                 </td>
                             </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr><td colspan="8" class="empty-row">No se encontraron usuarios.</td></tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        {{-- ── CATEGORÍAS ── --}}
+        
         <div id="categorias" class="tab-pane">
             <div class="section-header">
                 <h2 class="page-title">Gestión de Categorías</h2>
@@ -194,20 +193,21 @@
                     <i class="fa-solid fa-plus"></i> Nueva Categoría
                 </button>
             </div>
-            @if(session('categoria_error'))
+            <?php if(session('categoria_error')): ?>
             <div class="alert-box alert-danger">
-                <i class="fa-solid fa-triangle-exclamation"></i> {{ session('categoria_error') }}
+                <i class="fa-solid fa-triangle-exclamation"></i> <?php echo e(session('categoria_error')); ?>
+
             </div>
-            @endif
+            <?php endif; ?>
             <div class="card">
-                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+                <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar" style="margin-bottom:16px">
                     <input type="hidden" name="tab" value="categorias">
                     <input type="text" name="cat_search" placeholder="🔍 Buscar categoría por nombre..."
-                           value="{{ request('cat_search') }}" class="form-input search-input" maxlength="200">
+                           value="<?php echo e(request('cat_search')); ?>" class="form-input search-input" maxlength="200">
                     <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    @if(request('cat_search'))
-                        <a href="{{ route('admin.dashboard') }}#categorias" class="btn btn-secondary btn-sm">Limpiar</a>
-                    @endif
+                    <?php if(request('cat_search')): ?>
+                        <a href="<?php echo e(route('admin.dashboard')); ?>#categorias" class="btn btn-secondary btn-sm">Limpiar</a>
+                    <?php endif; ?>
                 </form>
                 <div class="table-wrap">
                     <table>
@@ -218,79 +218,81 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($categorias as $cat)
+                            <?php $__empty_1 = true; $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <tr>
-                                <td>{{ $cat->idCategoria }}</td>
-                                <td>{{ $cat->nombre }}</td>
-                                <td>{{ $cat->creadaPor?->nombre ?? '—' }}</td>
-                                <td>{{ $cat->donaciones_count }}</td>
-                                <td>{{ $cat->solicitudes_count }}</td>
+                                <td><?php echo e($cat->idCategoria); ?></td>
+                                <td><?php echo e($cat->nombre); ?></td>
+                                <td><?php echo e($cat->creadaPor?->nombre ?? '—'); ?></td>
+                                <td><?php echo e($cat->donaciones_count); ?></td>
+                                <td><?php echo e($cat->solicitudes_count); ?></td>
                                 <td class="td-actions">
-                                    <button onclick='abrirModalEditarCategoria({{ json_encode(["idCategoria"=>$cat->idCategoria,"nombre"=>$cat->nombre]) }})'
+                                    <button onclick='abrirModalEditarCategoria(<?php echo e(json_encode(["idCategoria"=>$cat->idCategoria,"nombre"=>$cat->nombre])); ?>)'
                                             class="btn btn-sm btn-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
-                                    @if($cat->donaciones_count == 0 && $cat->solicitudes_count == 0)
-                                    <form action="{{ route('admin.categorias.eliminar', $cat->idCategoria) }}" method="POST" style="display:inline"
+                                    <?php if($cat->donaciones_count == 0 && $cat->solicitudes_count == 0): ?>
+                                    <form action="<?php echo e(route('admin.categorias.eliminar', $cat->idCategoria)); ?>" method="POST" style="display:inline"
                                           onsubmit="return confirm('¿Eliminar esta categoría?')">
-                                        @csrf @method('DELETE')
+                                        <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                                         <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
-                                    @else
+                                    <?php else: ?>
                                     <button class="btn btn-sm btn-secondary" disabled title="Tiene registros asociados">
                                         <i class="fa-solid fa-lock"></i>
                                     </button>
-                                    @endif
+                                    <?php endif; ?>
                                 </td>
                             </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr><td colspan="6" class="empty-row">No se encontraron categorías.</td></tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
             <script id="categoriasExistentes" type="application/json">
-                {!! json_encode($categorias->map(fn($c) => ['id' => $c->idCategoria, 'nombre' => mb_strtolower(trim($c->nombre))])->values(), JSON_UNESCAPED_UNICODE) !!}
+                <?php echo json_encode($categorias->map(fn($c) => ['id' => $c->idCategoria, 'nombre' => mb_strtolower(trim($c->nombre))])->values(), JSON_UNESCAPED_UNICODE); ?>
+
             </script>
         </div>
 
-        {{-- ── DONACIONES / SOLICITUDES ── --}}
+        
         <div id="donapp" class="tab-pane">
             <h2 class="page-title">Donaciones y Solicitudes</h2>
             <div class="tabs-inner">
-                <button class="tab-btn {{ !request('sol_search') && !request('sol_estado') ? 'active' : '' }}"
+                <button class="tab-btn <?php echo e(!request('sol_search') && !request('sol_estado') ? 'active' : ''); ?>"
                         onclick="switchInner(this,'don-panel')">Donaciones</button>
-                <button class="tab-btn {{ request('sol_search') || request('sol_estado') ? 'active' : '' }}"
+                <button class="tab-btn <?php echo e(request('sol_search') || request('sol_estado') ? 'active' : ''); ?>"
                         onclick="switchInner(this,'sol-panel')">Solicitudes</button>
             </div>
 
-            {{-- Panel Donaciones --}}
-            <div id="don-panel" class="inner-panel" {{ request('sol_search') || request('sol_estado') ? 'style=display:none' : '' }}>
-                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+            
+            <div id="don-panel" class="inner-panel" <?php echo e(request('sol_search') || request('sol_estado') ? 'style=display:none' : ''); ?>>
+                <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar" style="margin-bottom:16px">
                     <input type="hidden" name="tab" value="donapp">
                     <input type="text" name="don_search" placeholder="🔍 Buscar por descripción o donante..."
-                           value="{{ request('don_search') }}" class="form-input search-input" maxlength="200">
+                           value="<?php echo e(request('don_search')); ?>" class="form-input search-input" maxlength="200">
                     <select name="don_estado" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todos los estados</option>
-                        <option value="pendiente" {{ request('don_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
-                        <option value="aprobada"  {{ request('don_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
-                        <option value="rechazada" {{ request('don_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                        <option value="pendiente" <?php echo e(request('don_estado')=='pendiente' ? 'selected' : ''); ?>>Pendiente</option>
+                        <option value="aprobada"  <?php echo e(request('don_estado')=='aprobada'  ? 'selected' : ''); ?>>Aprobada</option>
+                        <option value="rechazada" <?php echo e(request('don_estado')=='rechazada' ? 'selected' : ''); ?>>Rechazada</option>
                     </select>
                     <select name="don_cat" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="0">Todas las categorías</option>
-                        @foreach($categorias as $cat)
-                            <option value="{{ $cat->idCategoria }}" {{ request('don_cat')==$cat->idCategoria ? 'selected' : '' }}>
-                                {{ $cat->nombre }}
+                        <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($cat->idCategoria); ?>" <?php echo e(request('don_cat')==$cat->idCategoria ? 'selected' : ''); ?>>
+                                <?php echo e($cat->nombre); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('don_search') || request('don_estado') || request('don_cat'))
-                        <a href="{{ route('admin.dashboard') }}#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
-                    @endif
+                    <?php if(request('don_search') || request('don_estado') || request('don_cat')): ?>
+                        <a href="<?php echo e(route('admin.dashboard')); ?>#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
+                    <?php endif; ?>
                 </form>
                 <div class="card">
                     <div class="table-wrap">
@@ -300,56 +302,57 @@
                                 <th>Estado</th><th>Fecha</th><th>Donante</th><th>Observación</th><th>Acción</th>
                             </tr></thead>
                             <tbody>
-                                @forelse($donaciones as $d)
+                                <?php $__empty_1 = true; $__currentLoopData = $donaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
-                                    <td>{{ $d->idDonacion }}</td>
-                                    <td>{{ $d->descripcion }}</td>
-                                    <td>{{ $d->categoria?->nombre ?? '—' }}</td>
-                                    <td>{{ $d->stock }}</td>
-                                    <td><span class="badge estado-{{ $d->estado }}">{{ $d->estado }}</span></td>
-                                    <td>{{ $d->donantes->first()?->pivot->FechaCreacion ? \Carbon\Carbon::parse($d->donantes->first()->pivot->FechaCreacion)->format('d/m/Y') : '—' }}</td>
-                                    <td>{{ $d->donantes->first()?->nombre ?? '—' }}</td>
-                                    <td>{{ $d->observacion ?? '—' }}</td>
+                                    <td><?php echo e($d->idDonacion); ?></td>
+                                    <td><?php echo e($d->descripcion); ?></td>
+                                    <td><?php echo e($d->categoria?->nombre ?? '—'); ?></td>
+                                    <td><?php echo e($d->stock); ?></td>
+                                    <td><span class="badge estado-<?php echo e($d->estado); ?>"><?php echo e($d->estado); ?></span></td>
+                                    <td><?php echo e($d->donantes->first()?->pivot->FechaCreacion ? \Carbon\Carbon::parse($d->donantes->first()->pivot->FechaCreacion)->format('d/m/Y') : '—'); ?></td>
+                                    <td><?php echo e($d->donantes->first()?->nombre ?? '—'); ?></td>
+                                    <td><?php echo e($d->observacion ?? '—'); ?></td>
                                     <td>
-                                        <button onclick='abrirModalDonacion({{ json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock]) }})'
+                                        <button onclick='abrirModalDonacion(<?php echo e(json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock])); ?>)'
                                                 class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                     </td>
                                 </tr>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr><td colspan="9" class="empty-row">No se encontraron donaciones.</td></tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            {{-- Panel Solicitudes --}}
-            <div id="sol-panel" class="inner-panel" {{ !request('sol_search') && !request('sol_estado') ? 'style=display:none' : '' }}>
-                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+            
+            <div id="sol-panel" class="inner-panel" <?php echo e(!request('sol_search') && !request('sol_estado') ? 'style=display:none' : ''); ?>>
+                <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar" style="margin-bottom:16px">
                     <input type="hidden" name="tab" value="donapp">
                     <input type="text" name="sol_search" placeholder="🔍 Buscar por descripción o solicitante..."
-                           value="{{ request('sol_search') }}" class="form-input search-input" maxlength="200">
+                           value="<?php echo e(request('sol_search')); ?>" class="form-input search-input" maxlength="200">
                     <select name="sol_estado" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todos los estados</option>
-                        <option value="pendiente" {{ request('sol_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
-                        <option value="aprobada"  {{ request('sol_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
-                        <option value="rechazada" {{ request('sol_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                        <option value="pendiente" <?php echo e(request('sol_estado')=='pendiente' ? 'selected' : ''); ?>>Pendiente</option>
+                        <option value="aprobada"  <?php echo e(request('sol_estado')=='aprobada'  ? 'selected' : ''); ?>>Aprobada</option>
+                        <option value="rechazada" <?php echo e(request('sol_estado')=='rechazada' ? 'selected' : ''); ?>>Rechazada</option>
                     </select>
                     <select name="sol_cat" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="0">Todas las categorías</option>
-                        @foreach($categorias as $cat)
-                            <option value="{{ $cat->idCategoria }}" {{ request('sol_cat')==$cat->idCategoria ? 'selected' : '' }}>
-                                {{ $cat->nombre }}
+                        <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($cat->idCategoria); ?>" <?php echo e(request('sol_cat')==$cat->idCategoria ? 'selected' : ''); ?>>
+                                <?php echo e($cat->nombre); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('sol_search') || request('sol_estado') || request('sol_cat'))
-                        <a href="{{ route('admin.dashboard') }}#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
-                    @endif
+                    <?php if(request('sol_search') || request('sol_estado') || request('sol_cat')): ?>
+                        <a href="<?php echo e(route('admin.dashboard')); ?>#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
+                    <?php endif; ?>
                 </form>
                 <div class="card">
                     <div class="table-wrap">
@@ -359,32 +362,32 @@
                                 <th>Fecha</th><th>Solicitante</th><th>Gestor</th><th>Observación</th><th>Acción</th>
                             </tr></thead>
                             <tbody>
-                                @forelse($solicitudes as $s)
+                                <?php $__empty_1 = true; $__currentLoopData = $solicitudes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
-                                    <td>{{ $s->idSolicitud }}</td>
-                                    <td>{{ $s->descripcion }}</td>
-                                    <td>{{ $s->categoria?->nombre ?? '—' }}</td>
-                                    <td><span class="badge estado-{{ $s->estado }}">{{ $s->estado }}</span></td>
-                                    <td>{{ \Carbon\Carbon::parse($s->created_at ?? now())->format('d/m/Y') }}</td>
-                                    <td>{{ $s->solicitante?->nombre ?? '—' }}</td>
+                                    <td><?php echo e($s->idSolicitud); ?></td>
+                                    <td><?php echo e($s->descripcion); ?></td>
+                                    <td><?php echo e($s->categoria?->nombre ?? '—'); ?></td>
+                                    <td><span class="badge estado-<?php echo e($s->estado); ?>"><?php echo e($s->estado); ?></span></td>
+                                    <td><?php echo e(\Carbon\Carbon::parse($s->created_at ?? now())->format('d/m/Y')); ?></td>
+                                    <td><?php echo e($s->solicitante?->nombre ?? '—'); ?></td>
                                     <td>
-                                        @if($s->gestor)
-                                            <span class="badge-staff"><i class="fa-solid fa-user-shield"></i> {{ $s->gestor->nombre }}</span>
-                                        @else
+                                        <?php if($s->gestor): ?>
+                                            <span class="badge-staff"><i class="fa-solid fa-user-shield"></i> <?php echo e($s->gestor->nombre); ?></span>
+                                        <?php else: ?>
                                             <span class="text-muted"><i>Esperando revisión...</i></span>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
-                                    <td>{{ $s->observacion ?? '—' }}</td>
+                                    <td><?php echo e($s->observacion ?? '—'); ?></td>
                                     <td>
-                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre]) }})'
+                                        <button onclick='abrirModalSolicitud(<?php echo e(json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre])); ?>)'
                                                 class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                     </td>
                                 </tr>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr><td colspan="9" class="empty-row">No se encontraron solicitudes.</td></tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -392,7 +395,7 @@
             </div>
         </div>
 
-        {{-- ── EVENTOS ── --}}
+        
         <div id="eventos" class="tab-pane">
             <div class="section-header">
                 <h2 class="page-title">Gestión de Eventos</h2>
@@ -401,19 +404,19 @@
                 </button>
             </div>
             <div class="card">
-                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+                <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar" style="margin-bottom:16px">
                     <input type="hidden" name="tab" value="eventos">
                     <input type="text" name="ev_search" placeholder="🔍 Buscar evento por nombre..."
-                           value="{{ request('ev_search') }}" class="form-input search-input" maxlength="200">
+                           value="<?php echo e(request('ev_search')); ?>" class="form-input search-input" maxlength="200">
                     <select name="ev_estado" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todos los estados</option>
-                        <option value="activo"   {{ request('ev_estado')=='activo'   ? 'selected' : '' }}>Activo</option>
-                        <option value="inactivo" {{ request('ev_estado')=='inactivo' ? 'selected' : '' }}>Inactivo</option>
+                        <option value="activo"   <?php echo e(request('ev_estado')=='activo'   ? 'selected' : ''); ?>>Activo</option>
+                        <option value="inactivo" <?php echo e(request('ev_estado')=='inactivo' ? 'selected' : ''); ?>>Inactivo</option>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('ev_search') || request('ev_estado'))
-                        <a href="{{ route('admin.dashboard') }}#eventos" class="btn btn-secondary btn-sm">Limpiar</a>
-                    @endif
+                    <?php if(request('ev_search') || request('ev_estado')): ?>
+                        <a href="<?php echo e(route('admin.dashboard')); ?>#eventos" class="btn btn-secondary btn-sm">Limpiar</a>
+                    <?php endif; ?>
                 </form>
                 <div class="table-wrap">
                     <table>
@@ -421,8 +424,8 @@
                             <th>ID</th><th>Nombre</th><th>Estado</th><th>Acciones</th>
                         </tr></thead>
                         <tbody>
-                            @forelse($eventos as $ev)
-                            @php
+                            <?php $__empty_1 = true; $__currentLoopData = $eventos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ev): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <?php
                                 $evJson = json_encode([
                                     'idEvento'        => $ev->idEvento,
                                     'Nombre'          => $ev->Nombre,
@@ -434,32 +437,32 @@
                                     'idPublicacion'   => $ev->publicacion?->idPublicacion ?? '',
                                     'imagen'          => $ev->publicacion?->imagenBase64() ?? '',
                                 ]);
-                            @endphp
+                            ?>
                             <tr>
-                                <td>{{ $ev->idEvento }}</td>
-                                <td>{{ $ev->Nombre }}</td>
-                                <td><span class="badge estado-{{ $ev->estado }}">{{ $ev->estado }}</span></td>
+                                <td><?php echo e($ev->idEvento); ?></td>
+                                <td><?php echo e($ev->Nombre); ?></td>
+                                <td><span class="badge estado-<?php echo e($ev->estado); ?>"><?php echo e($ev->estado); ?></span></td>
                                 <td class="td-actions">
-                                    <button onclick='abrirModalEditarEvento({{ $evJson }})'
+                                    <button onclick='abrirModalEditarEvento(<?php echo e($evJson); ?>)'
                                             class="btn btn-sm btn-primary"><i class="fa-solid fa-pen"></i></button>
-                                    <form action="{{ route('admin.eventos.estado', $ev->idEvento) }}" method="POST" style="display:inline">
-                                        @csrf @method('PATCH')
+                                    <form action="<?php echo e(route('admin.eventos.estado', $ev->idEvento)); ?>" method="POST" style="display:inline">
+                                        <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
                                         <button type="submit" class="btn btn-sm btn-warning">
                                             <i class="fa-solid fa-arrows-rotate"></i> Toggle
                                         </button>
                                     </form>
                                 </td>
                             </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr><td colspan="4" class="empty-row">No se encontraron eventos.</td></tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        {{-- ── REPORTES ── --}}
+        
         <div id="reportes" class="tab-pane">
             <h2 class="page-title">Generador de Reportes PDF</h2>
             <div class="reportes-grid">
@@ -476,9 +479,9 @@
                             <option value="pendiente">Pendientes</option>
                         </select>
                         <label>Fecha desde:</label>
-                        <input type="date" id="rpt_don_desde" class="form-input" max="{{ date('Y-m-d') }}">
+                        <input type="date" id="rpt_don_desde" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                         <label>Fecha hasta:</label>
-                        <input type="date" id="rpt_don_hasta" class="form-input" max="{{ date('Y-m-d') }}">
+                        <input type="date" id="rpt_don_hasta" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                     </div>
                     <button class="btn btn-primary" onclick="generarReporteDonaciones()">
                         <i class="fa-solid fa-file-pdf"></i> Generar PDF
@@ -498,9 +501,9 @@
                             <option value="pendiente">Pendientes</option>
                         </select>
                         <label>Fecha desde:</label>
-                        <input type="date" id="rpt_sol_desde" class="form-input" max="{{ date('Y-m-d') }}">
+                        <input type="date" id="rpt_sol_desde" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                         <label>Fecha hasta:</label>
-                        <input type="date" id="rpt_sol_hasta" class="form-input" max="{{ date('Y-m-d') }}">
+                        <input type="date" id="rpt_sol_hasta" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                     </div>
                     <button class="btn btn-primary" onclick="generarReporteSolicitudes()">
                         <i class="fa-solid fa-file-pdf"></i> Generar PDF
@@ -509,22 +512,24 @@
             </div>
 
             <script id="donacionesData" type="application/json">
-                {!! json_encode($donacionesRpt, JSON_UNESCAPED_UNICODE) !!}
+                <?php echo json_encode($donacionesRpt, JSON_UNESCAPED_UNICODE); ?>
+
             </script>
             <script id="solicitudesData" type="application/json">
-                {!! json_encode($solicitudesRpt, JSON_UNESCAPED_UNICODE) !!}
+                <?php echo json_encode($solicitudesRpt, JSON_UNESCAPED_UNICODE); ?>
+
             </script>
         </div>
 
-        {{-- ── PERFIL ── --}}
+        
         <div id="perfil" class="tab-pane">
             <h2 class="page-title">Mi Perfil</h2>
 
-            @if(session('correccion_ok'))
+            <?php if(session('correccion_ok')): ?>
             <div class="alert-box alert-success">
                 <i class="fa-solid fa-circle-check"></i> Tu solicitud de corrección fue enviada y quedará pendiente de aprobación por otro administrador.
             </div>
-            @endif
+            <?php endif; ?>
 
             <div class="card card-perfil">
                 <div class="perfil-lock-notice">
@@ -541,48 +546,48 @@
                     </button>
                 </div>
 
-                <form action="{{ route('admin.perfil.update') }}" method="POST" id="formPerfil">
-                    @csrf @method('PUT')
+                <form action="<?php echo e(route('admin.perfil.update')); ?>" method="POST" id="formPerfil">
+                    <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                             <input type="text" class="form-input"
-                                   value="{{ $adminActual->nombre }}"
+                                   value="<?php echo e($adminActual->nombre); ?>"
                                    disabled readonly>
                         </div>
                         <div class="form-group">
                             <label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
-                            <input type="text" class="form-input" value="{{ $adminActual->tipoDocumento }}" disabled readonly>
+                            <input type="text" class="form-input" value="<?php echo e($adminActual->tipoDocumento); ?>" disabled readonly>
                         </div>
                         <div class="form-group">
                             <label>Número de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                             <input type="text" class="form-input"
-                                   value="{{ $adminActual->numDocumento }}"
+                                   value="<?php echo e($adminActual->numDocumento); ?>"
                                    disabled readonly>
                         </div>
                         <div class="form-group">
                             <label>Fecha de nacimiento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                             <input type="date" class="form-input"
-                                   value="{{ $adminActual->fechaNacimiento }}" disabled readonly>
+                                   value="<?php echo e($adminActual->fechaNacimiento); ?>" disabled readonly>
                         </div>
                         <div class="form-group">
                             <label>Teléfono</label>
                             <input type="tel" name="telefono" class="form-input"
-                                   value="{{ $adminActual->telefono }}"
+                                   value="<?php echo e($adminActual->telefono); ?>"
                                    required pattern="[0-9]{10}" maxlength="10"
                                    placeholder="Digita tu número de teléfono celular">
                         </div>
                         <div class="form-group">
                             <label>Dirección</label>
                             <input type="text" name="direccion" class="form-input"
-                                   value="{{ $adminActual->direccion }}"
+                                   value="<?php echo e($adminActual->direccion); ?>"
                                    required minlength="5" maxlength="255"
                                    placeholder="Escribe tu dirección de residencia actual">
                         </div>
                         <div class="form-group">
                             <label>Email</label>
                             <input type="email" name="email" class="form-input"
-                                   value="{{ $adminActual->email }}" required maxlength="150"
+                                   value="<?php echo e($adminActual->email); ?>" required maxlength="150"
                                    placeholder="Ingresa tu correo electrónico">
                         </div>
                     </div>
@@ -623,18 +628,18 @@
     </main>
 </div>
 
-{{-- ═══════ MODALES ═══════ --}}
 
-{{-- CREAR USUARIO --}}
+
+
 <div id="modalCrearUsuario" class="modal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
             <h3><i class="fa-solid fa-user-plus"></i> Nuevo Usuario</h3>
             <button class="modal-close" onclick="cerrarModal('modalCrearUsuario')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ route('admin.usuarios.crear') }}" method="POST" id="formCrearUsuario"
+        <form action="<?php echo e(route('admin.usuarios.crear')); ?>" method="POST" id="formCrearUsuario"
               onsubmit="return validarPassModal('cu_pass','cu_pass2','cu_pass_err')">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>Nombre completo *</label>
@@ -646,9 +651,9 @@
                     <label>Tipo de documento *</label>
                     <select name="tipoDocumento" class="form-input" required>
                         <option value="">Seleccione el tipo de documento</option>
-                        @foreach(['CC','TI','CE','PEP'] as $t)
-                            <option value="{{ $t }}">{{ $t }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = ['CC','TI','CE','PEP']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($t); ?>"><?php echo e($t); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="form-group">
@@ -659,7 +664,7 @@
                 <div class="form-group">
                     <label>Fecha de nacimiento *</label>
                     <input type="date" name="fechaNacimiento" class="form-input" required
-                           max="{{ date('Y-m-d', strtotime('-5 years')) }}">
+                           max="<?php echo e(date('Y-m-d', strtotime('-5 years'))); ?>">
                 </div>
                 <div class="form-group">
                     <label>Dirección *</label>
@@ -739,7 +744,7 @@
     </div>
 </div>
 
-{{-- EDITAR USUARIO --}}
+
 <div id="modalEditarUsuario" class="modal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -748,7 +753,7 @@
         </div>
         <form id="formEditarUsuario" method="POST"
               onsubmit="return validarPassModal('eu_pass','eu_pass2','eu_pass_err')">
-            @csrf @method('PUT')
+            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
             <input type="hidden" name="_id" id="eu_id">
             <div class="form-grid-2">
                 <div class="form-group">
@@ -760,9 +765,9 @@
                 <div class="form-group">
                     <label>Tipo de documento *</label>
                     <select name="tipoDocumento" id="eu_tipo" class="form-input" required>
-                        @foreach(['CC','TI','CE','PEP'] as $t)
-                            <option value="{{ $t }}">{{ $t }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = ['CC','TI','CE','PEP']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($t); ?>"><?php echo e($t); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="form-group">
@@ -772,7 +777,7 @@
                 <div class="form-group">
                     <label>Fecha de nacimiento *</label>
                     <input type="date" name="fechaNacimiento" id="eu_fnac" class="form-input" required
-                           max="{{ date('Y-m-d', strtotime('-5 years')) }}">
+                           max="<?php echo e(date('Y-m-d', strtotime('-5 years'))); ?>">
                 </div>
                 <div class="form-group">
                     <label>Dirección *</label>
@@ -847,7 +852,7 @@
     </div>
 </div>
 
-{{-- GESTIONAR DONACIÓN --}}
+
 <div id="modalDonacion" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -857,7 +862,7 @@
         <div id="don_detalle" class="detalle-box"></div>
         <form id="formDonacion" method="POST"
               onsubmit="return validarObservacionRequerida('don_estado','don_obs','don_obs_err')">
-            @csrf @method('PATCH')
+            <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
             <input type="hidden" name="_don_id" id="don_id">
             <div class="form-group">
                 <label>Estado</label>
@@ -884,7 +889,7 @@
     </div>
 </div>
 
-{{-- GESTIONAR SOLICITUD --}}
+
 <div id="modalSolicitud" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -894,7 +899,7 @@
         <div id="sol_detalle" class="detalle-box"></div>
         <form id="formSolicitud" method="POST"
               onsubmit="return validarObservacionRequerida('sol_estado','sol_obs','sol_obs_err')">
-            @csrf @method('PATCH')
+            <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
             <input type="hidden" name="_sol_id" id="sol_id">
             <div class="form-group">
                 <label>Estado</label>
@@ -921,15 +926,15 @@
     </div>
 </div>
 
-{{-- CREAR EVENTO --}}
+
 <div id="modalCrearEvento" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3><i class="fa-solid fa-calendar-plus"></i> Publicar Nuevo Evento</h3>
             <button class="modal-close" onclick="cerrarModal('modalCrearEvento')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ route('admin.eventos.crear') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        <form action="<?php echo e(route('admin.eventos.crear')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>Nombre del Evento *</label>
@@ -981,7 +986,7 @@
     </div>
 </div>
 
-{{-- EDITAR EVENTO --}}
+
 <div id="modalEditarEvento" class="modal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
@@ -989,7 +994,7 @@
             <button class="modal-close" onclick="cerrarModal('modalEditarEvento')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="formEditarEvento" method="POST" enctype="multipart/form-data">
-            @csrf @method('PUT')
+            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
             <input type="hidden" name="idEvento" id="edit_idEvento">
             <div class="form-grid-2">
                 <div class="form-group">
@@ -1043,16 +1048,16 @@
     </div>
 </div>
 
-{{-- CREAR CATEGORÍA --}}
+
 <div id="modalCrearCategoria" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3><i class="fa-solid fa-tags"></i> Nueva Categoría</h3>
             <button class="modal-close" onclick="cerrarModal('modalCrearCategoria')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ route('admin.categorias.crear') }}" method="POST"
+        <form action="<?php echo e(route('admin.categorias.crear')); ?>" method="POST"
               onsubmit="return validarCategoria('crear')">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="form-group">
                 <label>Nombre de la categoría *</label>
                 <input type="text" name="nombre_categoria" id="cat_nombre" class="form-input"
@@ -1071,7 +1076,7 @@
     </div>
 </div>
 
-{{-- EDITAR CATEGORÍA --}}
+
 <div id="modalEditarCategoria" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -1080,7 +1085,7 @@
         </div>
         <form id="formEditarCategoria" method="POST"
               onsubmit="return validarCategoria('editar')">
-            @csrf @method('PUT')
+            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
             <input type="hidden" name="idCategoria" id="ecat_id">
             <div class="form-group">
                 <label>Nombre de la categoría *</label>
@@ -1098,15 +1103,15 @@
     </div>
 </div>
 
-{{-- SOLICITAR CORRECCIÓN DE DATOS SENSIBLES --}}
+
 <div id="modalSolicitarCorreccion" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3><i class="fa-solid fa-user-shield"></i> Solicitar corrección de datos</h3>
             <button class="modal-close" onclick="cerrarModal('modalSolicitarCorreccion')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ route('admin.perfil.solicitarCorreccion') }}" method="POST">
-            @csrf
+        <form action="<?php echo e(route('admin.perfil.solicitarCorreccion')); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <p class="text-muted" style="margin-top:0;">
                 Esta solicitud quedará <b>pendiente</b> hasta que otro administrador la revise y apruebe. No modifica tus datos de inmediato.
             </p>
@@ -1138,19 +1143,19 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
-<script src="{{ asset('assets/js/admin.js') }}"></script>
-<script src="{{ asset('assets/js/admin_dashboard.js') }}"></script>
+<?php $__env->startSection('scripts'); ?>
+<script src="<?php echo e(asset('assets/js/admin.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/js/admin_dashboard.js')); ?>"></script>
 <script>
 // Conectar modales de donación/solicitud a rutas Laravel
 const ROUTES = {
-    donacion:  (id) => `{{ url('/admin/donaciones') }}/${id}/estado`,
-    solicitud: (id) => `{{ url('/admin/solicitudes') }}/${id}/estado`,
-    editarUsuario: (id) => `{{ url('/admin/usuarios') }}/${id}`,
-    editarCategoria: (id) => `{{ url('/admin/categorias') }}/${id}`,
-    editarEvento: (id) => `{{ url('/admin/eventos') }}/${id}`,
+    donacion:  (id) => `<?php echo e(url('/admin/donaciones')); ?>/${id}/estado`,
+    solicitud: (id) => `<?php echo e(url('/admin/solicitudes')); ?>/${id}/estado`,
+    editarUsuario: (id) => `<?php echo e(url('/admin/usuarios')); ?>/${id}`,
+    editarCategoria: (id) => `<?php echo e(url('/admin/categorias')); ?>/${id}`,
+    editarEvento: (id) => `<?php echo e(url('/admin/eventos')); ?>/${id}`,
 };
 
 // Sobrescribir abrirModalDonacion para inyectar la ruta correcta
@@ -1308,4 +1313,5 @@ window.generarReporteSolicitudes = function () {
     if (typeof _origGenerarSolicitudes === 'function') _origGenerarSolicitudes();
 };
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\DonappLaravel\donapp\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>

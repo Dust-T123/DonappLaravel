@@ -9,6 +9,7 @@ use App\Http\Controllers\PublicController;
 
 // ── PÚBLICAS ─────────────────────────────────────────────────────────────────
 Route::get('/', [PublicController::class, 'index'])->name('home');
+Route::get('/terminos', [PublicController::class, 'terminos'])->name('terminos');
 
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login',   [AuthController::class, 'login'])->name('login.post');
