@@ -47,6 +47,8 @@ if (fechaNacInput) {
 registrationForm.onsubmit = function(e) {
     const pass    = document.getElementById('password').value;
     const confirm = document.getElementById('confirm_password').value;
+    const aceptaTerminos = document.getElementById('aceptaTerminos');
+
     if (pass !== confirm) {
         e.preventDefault();
         Swal.fire({
@@ -55,6 +57,18 @@ registrationForm.onsubmit = function(e) {
             text: 'Las contraseñas no coinciden.',
             confirmButtonColor: '#df0b0b'
         });
+        return false;
+    }
+
+    if (aceptaTerminos && !aceptaTerminos.checked) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Términos y Condiciones',
+            text: 'Debes leer y aceptar los Términos y Condiciones y la Política de Habeas Data para completar tu registro.',
+            confirmButtonColor: '#df0b0b'
+        });
+        aceptaTerminos.focus();
         return false;
     }
 };
