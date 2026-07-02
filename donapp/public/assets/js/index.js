@@ -5,11 +5,22 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ DONAPP cargado correctamente');
-
-    // Partículas animadas para el hero (si el contenedor existe)
     initHeroParticles();
+    actualizarEstadisticas();
+    statsInterval = setInterval(actualizarEstadisticas, 30000);
+    cargarEventosAPI();
+    setInterval(() => {
+        cargarEventosAPI();
+        // Si el modal está abierto, refresca los datos del evento activo
+        const modal = document.getElementById('modal-detalle-publicacion');
+        if (modal && modal.classList.contains('active')) {
+            const cardActiva = document.querySelector('.api-evento-card.seleccionada');
+            if (cardActiva) {
+                verDetallePublicacion(JSON.parse(cardActiva.dataset.ev));
+            }
+        }
+    }, 30000);
 });
-
 // ========== MODALES ==========
 
 function showModal(modalId) {
@@ -177,23 +188,22 @@ style.innerHTML = `
 `;
 document.head.appendChild(style);
 // ========== API: ESTADÍSTICAS EN TIEMPO REAL ==========
-
-const API_BASE = '/api';
+const API_BASE = 'http://127.0.0.1:8000/api';
 let statsInterval = null;
 
 function animarContador(elemento, valorFinal) {
     if (!elemento) return;
-    const duracion  = 1200;
-    const inicio    = parseInt(elemento.textContent.replace(/\D/g, '')) || 0;
+    const duracion = 1200;
+    const inicio = parseInt(elemento.textContent.replace(/\D/g, '')) || 0;
     const diferencia = valorFinal - inicio;
-    const pasos     = 40;
-    let paso        = 0;
+    const pasos = 40;
+    let paso = 0;
 
     const timer = setInterval(() => {
         paso++;
         const progreso = paso / pasos;
-        const ease     = 1 - Math.pow(1 - progreso, 3); // ease-out cúbico
-        const actual   = Math.round(inicio + diferencia * ease);
+        const ease = 1 - Math.pow(1 - progreso, 3); // ease-out cúbico
+        const actual = Math.round(inicio + diferencia * ease);
         elemento.textContent = '+' + actual;
         if (paso >= pasos) {
             clearInterval(timer);
@@ -204,28 +214,29 @@ function animarContador(elemento, valorFinal) {
 
 async function actualizarEstadisticas() {
     try {
-        const res  = await fetch(`${API_BASE}/estadisticas`);
+        const res = await fetch(`${API_BASE}/estadisticas`);
         const json = await res.json();
         if (!json.success) return;
 
         const d = json.data;
 
-        // Actualiza los contadores del hero con animación
         const statEls = document.querySelectorAll('.hero-stat');
         statEls.forEach(el => {
-            const label = el.querySelector('span')?.textContent?.trim().toLowerCase();
-            const strong = el.querySelector('strong');
+            // Leer el span de texto dentro del div, no el icono emoji
+            const divEl = el.querySelector('div');
+            const strong = divEl ? divEl.querySelector('strong') : null;
+            const spanEl = divEl ? divEl.querySelector('span') : null;
+            const label = spanEl ? spanEl.textContent.trim().toLowerCase() : '';
             if (!strong) return;
 
-            if (label?.includes('donacion'))
+            if (label.includes('donacion'))
                 animarContador(strong, d.total_donaciones);
-            else if (label?.includes('usuario'))
+            else if (label.includes('usuario'))
                 animarContador(strong, d.total_donantes);
-            else if (label?.includes('evento'))
+            else if (label.includes('evento'))
                 animarContador(strong, d.eventos_activos);
         });
 
-        // Indicador de actualización
         const indicador = document.getElementById('stats-live-indicator');
         if (indicador) {
             indicador.classList.add('pulso');
@@ -247,72 +258,79 @@ function formatearFechaEvento(fechaStr) {
 }
 
 function renderizarTarjetaEvento(ev) {
-    const pub       = ev.publicacion  || {};
-    const prog      = ev.programacion || {};
-    const titulo    = pub.titulo    || ev.nombre;
+    const pub = ev.publicacion || {};
+    const prog = ev.programacion || {};
+    const titulo = pub.titulo || ev.nombre;
     const contenido = pub.contenido || '';
-    const fecha     = formatearFechaEvento(prog.fecha_entrega);
-    const lugar     = prog.lugar    || 'No especificado';
-    const imagen    = pub.imagen    || '';
-    const autor     = pub.autor     || '';
-    const fechaPub  = pub.fecha_publicacion
-        ? formatearFechaEvento(pub.fecha_publicacion) : '';
+    const fecha = formatearFechaEvento(prog.fecha_entrega);
+    const lugar = prog.lugar || 'No especificado';
+    const imagen = pub.imagen || '';
+    const autor = pub.autor || '';
+    const fechaPub = pub.fecha_publicacion ?
+        formatearFechaEvento(pub.fecha_publicacion) : '';
 
-    const datosModal = JSON.stringify({
+    // Guardamos los datos en un atributo data- para evitar problemas con comillas
+    const card = document.createElement('div');
+    card.className = 'publicacion-card publicacion-activa api-evento-card';
+    card.dataset.ev = JSON.stringify({
         titulo,
         contenido,
-        evento:   ev.nombre,
-        fecha:    fechaPub,
-        entrega:  fecha,
+        evento: ev.nombre,
+        fecha: fechaPub,
+        entrega: fecha,
         lugar,
         autor,
-        estado:   ev.estado,
+        estado: ev.estado,
         imagen,
-    }).replace(/'/g, '&#39;');
+    });
+    card.addEventListener('click', function() {
+        document.querySelectorAll('.api-evento-card').forEach(c => c.classList.remove('seleccionada'));
+        this.classList.add('seleccionada');
+        verDetallePublicacion(JSON.parse(this.dataset.ev));
+    });
 
-    return `
-        <div class="publicacion-card publicacion-activa api-evento-card"
-             onclick='verDetallePublicacion(${datosModal})'>
-            ${imagen ? `
-            <div class="api-evento-img">
-                <img src="${imagen}" alt="${titulo}" loading="lazy">
-                <span class="publicacion-badge badge-activo api-live-badge">
-                    <i class="fa-solid fa-circle api-dot"></i> En vivo
-                </span>
-            </div>` : `
-            <div class="api-evento-img api-evento-img--placeholder">
-                <i class="fa-solid fa-calendar-star"></i>
-                <span class="publicacion-badge badge-activo api-live-badge">
-                    <i class="fa-solid fa-circle api-dot"></i> En vivo
-                </span>
-            </div>`}
+    card.innerHTML = `
+        ${imagen ? `
+        <div class="api-evento-img">
+            <img src="${imagen}" alt="${titulo}" loading="lazy">
+            <span class="publicacion-badge badge-activo api-live-badge">
+                <i class="fa-solid fa-circle api-dot"></i> En vivo
+            </span>
+        </div>` : `
+        <div class="api-evento-img api-evento-img--placeholder">
+            <i class="fa-solid fa-calendar-star"></i>
+            <span class="publicacion-badge badge-activo api-live-badge">
+                <i class="fa-solid fa-circle api-dot"></i> En vivo
+            </span>
+        </div>`}
 
-            <div class="publicacion-header" style="margin-top:12px">
-                <span class="publicacion-fecha">
-                    <i class="fa-regular fa-calendar"></i> ${fechaPub || fecha}
-                </span>
+        <div class="publicacion-header" style="margin-top:12px">
+            <span class="publicacion-fecha">
+                <i class="fa-regular fa-calendar"></i> ${fechaPub || fecha}
+            </span>
+        </div>
+
+        <div class="publicacion-body">
+            <h3 class="publicacion-titulo">${titulo}</h3>
+            <p class="publicacion-evento">
+                <i class="fa-solid fa-tag"></i> ${ev.nombre}
+            </p>
+            <p class="publicacion-contenido">
+                ${contenido.length > 100 ? contenido.substring(0, 100) + '…' : contenido}
+            </p>
+        </div>
+
+        <div class="publicacion-footer" style="margin-top:auto;padding-top:12px;border-top:1px solid rgba(0,0,0,0.07)">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.82rem;color:var(--color-text-muted)">
+                <span><i class="fa-solid fa-location-dot"></i> ${lugar}</span>
+                <span><i class="fa-solid fa-truck"></i> ${fecha}</span>
             </div>
-
-            <div class="publicacion-body">
-                <h3 class="publicacion-titulo">${titulo}</h3>
-                <p class="publicacion-evento">
-                    <i class="fa-solid fa-tag"></i> ${ev.nombre}
-                </p>
-                <p class="publicacion-contenido">
-                    ${contenido.length > 100 ? contenido.substring(0, 100) + '…' : contenido}
-                </p>
-            </div>
-
-            <div class="publicacion-footer" style="margin-top:auto;padding-top:12px;border-top:1px solid rgba(0,0,0,0.07)">
-                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.82rem;color:var(--color-text-muted)">
-                    <span><i class="fa-solid fa-location-dot"></i> ${lugar}</span>
-                    <span><i class="fa-solid fa-truck"></i> ${fecha}</span>
-                </div>
-                <p class="publicacion-autor" style="margin-top:8px">
-                    Ver detalles <i class="fa-solid fa-plus"></i>
-                </p>
-            </div>
+            <p class="publicacion-autor" style="margin-top:8px">
+                Ver detalles <i class="fa-solid fa-plus"></i>
+            </p>
         </div>`;
+
+    return card;
 }
 
 async function cargarEventosAPI() {
@@ -327,7 +345,7 @@ async function cargarEventosAPI() {
 
         if (spinner) spinner.style.display = 'none';
 
-        if (!json.success || !json.data?.length) {
+        if (!json.success || !json.data || !json.data.length) {
             contenedor.innerHTML = `
                 <div class="publicaciones-empty" style="grid-column:1/-1">
                     <i class="fa-regular fa-calendar-xmark"></i>
@@ -341,7 +359,8 @@ async function cargarEventosAPI() {
             contador.style.display = 'inline-flex';
         }
 
-        contenedor.innerHTML = json.data.map(renderizarTarjetaEvento).join('');
+        contenedor.innerHTML = '';
+json.data.forEach(ev => contenedor.appendChild(renderizarTarjetaEvento(ev)));
 
     } catch (e) {
         if (spinner) spinner.style.display = 'none';
@@ -353,14 +372,3 @@ async function cargarEventosAPI() {
         console.warn('Error al cargar eventos desde API:', e);
     }
 }
-
-// ========== INICIALIZACIÓN ==========
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Estadísticas: primera carga y luego cada 30 segundos
-    actualizarEstadisticas();
-    statsInterval = setInterval(actualizarEstadisticas, 30000);
-
-    // Eventos desde API
-    cargarEventosAPI();
-});
