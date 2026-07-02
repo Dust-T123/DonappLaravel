@@ -118,6 +118,68 @@
                     <i class="fa-solid fa-user-plus"></i> Nuevo Usuario
                 </button>
             </div>
+
+            <?php if($correcciones->isNotEmpty()): ?>
+            <div class="card" style="border-left:4px solid #b8860b;">
+                <h3 style="margin-top:0;"><i class="fa-solid fa-user-shield"></i> Correcciones de datos pendientes (<?php echo e($correcciones->count()); ?>)</h3>
+                <p class="text-muted" style="margin-top:-6px;">Solicitudes de cambio sobre campos de identidad. Quien solicita un cambio no puede aprobarlo, aunque sea de otro usuario.</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Datos de</th><th>Solicitado por</th><th>Campo</th><th>Valor actual</th><th>Valor propuesto</th>
+                                <th>Justificación</th><th>Soporte</th><th>Fecha solicitud</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php $__currentLoopData = $correcciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <tr>
+                                <td><?php echo e($c->usuario?->nombre ?? '—'); ?></td>
+                                <td>
+                                    <?php if($c->idSolicitante === $c->idUsuario): ?>
+                                        <span class="text-muted">El mismo usuario</span>
+                                    <?php else: ?>
+                                        <?php echo e($c->solicitante?->nombre ?? '—'); ?>
+
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo e($c->campo); ?></td>
+                                <td><?php echo e($c->valorAnterior); ?></td>
+                                <td><strong><?php echo e($c->valorNuevo); ?></strong></td>
+                                <td class="td-obs"><?php echo e($c->justificacion); ?></td>
+                                <td>
+                                    <?php if($c->idSolicitante === $adminActual->idUsuario): ?>
+                                        <span class="text-muted" title="No puedes ver el soporte de tu propia solicitud"><i class="fa-solid fa-lock"></i></span>
+                                    <?php elseif($c->soporteRuta): ?>
+                                        <a href="<?php echo e(route('admin.correcciones.soporte', $c->idCorreccion)); ?>" target="_blank" class="btn btn-sm btn-secondary" title="Ver documento de identidad adjunto">
+                                            <i class="fa-solid fa-file-shield"></i> Ver
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo e($c->fechaSolicitud?->format('d/m/Y') ?? '—'); ?></td>
+                                <td class="td-actions">
+                                    <?php if($c->idSolicitante === $adminActual->idUsuario): ?>
+                                        <span class="text-muted" title="No puedes aprobar una solicitud que tú mismo pediste"><i class="fa-solid fa-ban"></i> La pediste tú</span>
+                                    <?php else: ?>
+                                        <form action="<?php echo e(route('admin.correcciones.aprobar', $c->idCorreccion)); ?>" method="POST" style="display:inline" onsubmit="return confirm('¿Aprobar y aplicar este cambio al usuario?')">
+                                            <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
+                                            <button type="submit" class="btn btn-sm btn-success" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                                        </form>
+                                        <form action="<?php echo e(route('admin.correcciones.rechazar', $c->idCorreccion)); ?>" method="POST" style="display:inline" onsubmit="return confirm('¿Rechazar esta solicitud?')">
+                                            <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="card">
                 <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar">
                     <input type="hidden" name="tab" value="usuarios">
@@ -193,12 +255,19 @@
                     <i class="fa-solid fa-plus"></i> Nueva Categoría
                 </button>
             </div>
-            <?php if(session('categoria_error')): ?>
+            <?php $__errorArgs = ['nombre_categoria'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
             <div class="alert-box alert-danger">
-                <i class="fa-solid fa-triangle-exclamation"></i> <?php echo e(session('categoria_error')); ?>
+                <i class="fa-solid fa-triangle-exclamation"></i> <?php echo e($message); ?>
 
             </div>
-            <?php endif; ?>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             <div class="card">
                 <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar" style="margin-bottom:16px">
                     <input type="hidden" name="tab" value="categorias">
@@ -313,20 +382,10 @@
                                     <td><?php echo e($d->donantes->first()?->nombre ?? '—'); ?></td>
                                     <td><?php echo e($d->observacion ?? '—'); ?></td>
                                     <td>
-                                        <button onclick='abrirModalDonacion(<?php echo e(json_encode([
-    "idDonacion"    => $d->idDonacion,
-    "descripcion"   => $d->descripcion,
-    "estado"        => $d->estado,
-    "observacion"   => $d->observacion,
-    "donante"       => $d->donantes->first()?->nombre,
-    "categoria"     => $d->categoria?->nombre,
-    "stock"         => $d->stock,
-    "fechaCreacion" => $d->donantes->first()?->pivot?->FechaCreacion,
-    "imagen"        => $d->imagenBase64(),
-])); ?>)'
-        class="btn btn-sm btn-primary">
-    <i class="fa-solid fa-pen-to-square"></i>
-</button>
+                                        <button onclick='abrirModalDonacion(<?php echo e(json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock])); ?>)'
+                                                class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
@@ -389,19 +448,10 @@
                                     </td>
                                     <td><?php echo e($s->observacion ?? '—'); ?></td>
                                     <td>
-                                        <button onclick='abrirModalSolicitud(<?php echo e(json_encode([
-    "idSolicitud"   => $s->idSolicitud,
-    "descripcion"   => $s->descripcion,
-    "estado"        => $s->estado,
-    "observacion"   => $s->observacion,
-    "solicitante"   => $s->solicitante?->nombre,
-    "categoria"     => $s->categoria?->nombre,
-    "fechaCreacion" => $s->fechaCreacion,
-    "imagen"        => $s->imagenBase64(),
-])); ?>)'
-        class="btn btn-sm btn-primary">
-    <i class="fa-solid fa-pen-to-square"></i>
-</button>
+                                        <button onclick='abrirModalSolicitud(<?php echo e(json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre])); ?>)'
+                                                class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
@@ -557,7 +607,7 @@
                         <strong>Nombre, tipo/número de documento y fecha de nacimiento no se pueden editar directamente.</strong>
                         <p class="text-muted" style="margin:4px 0 0;">
                             Estos campos son datos de identidad. Si detectas un error o necesitas actualizarlos,
-                            usa el botón <b>"Solicitar corrección de datos"</b>; un administrador distinto revisará y aprobará el cambio.
+                            usa el botón <b>"Solicitar corrección de datos"</b>; un administrador distinto revisará y aprobará el cambio. Si no hay administradores disponibles, la solicitud quedará pendiente hasta que alguien pueda revisarla.
                         </p>
                     </div>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="abrirModal('modalSolicitarCorreccion')">
@@ -770,33 +820,38 @@
             <h3><i class="fa-solid fa-user-pen"></i> Editar Usuario</h3>
             <button class="modal-close" onclick="cerrarModal('modalEditarUsuario')"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
+        <div class="perfil-lock-notice" style="margin:0 24px 16px;">
+            <i class="fa-solid fa-lock"></i>
+            <div>
+                <strong>Nombre, documento y fecha de nacimiento no se editan directamente, ni siquiera desde este panel.</strong>
+                <p class="text-muted" style="margin:4px 0 0;">Si el usuario tiene un dato de identidad mal registrado, solicita la corrección; quedará pendiente hasta que otro administrador la apruebe.</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="abrirModalCorreccionUsuario()">
+                <i class="fa-solid fa-pen-to-square"></i> Solicitar corrección
+            </button>
+        </div>
+
         <form id="formEditarUsuario" method="POST"
               onsubmit="return validarPassModal('eu_pass','eu_pass2','eu_pass_err')">
             <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
             <input type="hidden" name="_id" id="eu_id">
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>Nombre completo *</label>
-                    <input type="text" name="nombre" id="eu_nombre" class="form-input" required minlength="3" maxlength="100"
-                           oninput="this.value=this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g,'')"
-                           placeholder="Modifique los nombres del usuario">
+                    <label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                    <input type="text" id="eu_nombre" class="form-input" disabled readonly>
                 </div>
                 <div class="form-group">
-                    <label>Tipo de documento *</label>
-                    <select name="tipoDocumento" id="eu_tipo" class="form-input" required>
-                        <?php $__currentLoopData = ['CC','TI','CE','PEP']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($t); ?>"><?php echo e($t); ?></option>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </select>
+                    <label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                    <input type="text" id="eu_tipo_display" class="form-input" disabled readonly>
                 </div>
                 <div class="form-group">
-                    <label>Número de documento *</label>
-                    <input type="text" name="numDocumento" id="eu_doc" class="form-input" required maxlength="15" pattern="[0-9]{4,15}">
+                    <label>Número de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                    <input type="text" id="eu_doc" class="form-input" disabled readonly>
                 </div>
                 <div class="form-group">
-                    <label>Fecha de nacimiento *</label>
-                    <input type="date" name="fechaNacimiento" id="eu_fnac" class="form-input" required
-                           max="<?php echo e(date('Y-m-d', strtotime('-5 years'))); ?>">
+                    <label>Fecha de nacimiento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                    <input type="date" id="eu_fnac" class="form-input" disabled readonly>
                 </div>
                 <div class="form-group">
                     <label>Dirección *</label>
@@ -1129,7 +1184,7 @@
             <h3><i class="fa-solid fa-user-shield"></i> Solicitar corrección de datos</h3>
             <button class="modal-close" onclick="cerrarModal('modalSolicitarCorreccion')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-            <form action="<?php echo e(route('admin.perfil.update')); ?>" method="POST">
+        <form action="<?php echo e(route('admin.perfil.solicitarCorreccion')); ?>" method="POST" enctype="multipart/form-data">
             <?php echo csrf_field(); ?>
             <p class="text-muted" style="margin-top:0;">
                 Esta solicitud quedará <b>pendiente</b> hasta que otro administrador la revise y apruebe. No modifica tus datos de inmediato.
@@ -1154,9 +1209,71 @@
                 <textarea name="justificacion" class="form-input" rows="3" required minlength="10" maxlength="300"
                           placeholder="Explica por qué necesitas este cambio (ej. error de digitación, actualización de documento, etc.)"></textarea>
             </div>
+            <div class="form-group">
+                <label>Documento de identidad (foto o PDF) *</label>
+                <input type="file" name="soporte" class="form-input" accept=".jpg,.jpeg,.png,.pdf" required>
+                <small class="text-muted">Máx. 4MB. Solo lo verá un administrador distinto a ti, y se elimina automáticamente al resolverse la solicitud.</small>
+            </div>
+            <div class="form-group">
+                <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal;">
+                    <input type="checkbox" name="consentimiento" required style="margin-top:3px;">
+                    <span>Autorizo el tratamiento de este documento únicamente para verificar mi identidad en esta solicitud, conforme a la Política de Tratamiento de Datos Personales de Donapp.</span>
+                </label>
+            </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar solicitud</button>
                 <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalSolicitarCorreccion')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="modalCorreccionUsuario" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-shield"></i> Solicitar corrección para <span id="cu_nombre_usuario"></span></h3>
+            <button class="modal-close" onclick="cerrarModal('modalCorreccionUsuario')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="formCorreccionUsuario" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
+            <p class="text-muted" style="margin-top:0;">
+                Quedará <b>pendiente</b> hasta que otro administrador la apruebe. Tú, como quien la solicita, no podrás aprobarla.
+            </p>
+            <div class="form-group">
+                <label>Campo a corregir *</label>
+                <select name="campo" class="form-input" required>
+                    <option value="">Selecciona el campo</option>
+                    <option value="nombre">Nombre completo</option>
+                    <option value="tipoDocumento">Tipo de documento</option>
+                    <option value="numDocumento">Número de documento</option>
+                    <option value="fechaNacimiento">Fecha de nacimiento</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Valor correcto propuesto *</label>
+                <input type="text" name="valorNuevo" class="form-input" required minlength="1" maxlength="150"
+                       placeholder="Escribe el valor correcto">
+            </div>
+            <div class="form-group">
+                <label>Justificación *</label>
+                <textarea name="justificacion" class="form-input" rows="3" required minlength="10" maxlength="300"
+                          placeholder="Explica el motivo del cambio (ej. error de digitación detectado por el equipo)"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Documento de identidad (foto o PDF) *</label>
+                <input type="file" name="soporte" class="form-input" accept=".jpg,.jpeg,.png,.pdf" required>
+                <small class="text-muted">Máx. 4MB. Se elimina automáticamente al resolverse la solicitud.</small>
+            </div>
+            <div class="form-group">
+                <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal;">
+                    <input type="checkbox" name="consentimiento" required style="margin-top:3px;">
+                    <span>Se deja constancia del consentimiento para el tratamiento de este documento con fines de verificación de identidad.</span>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar solicitud</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalCorreccionUsuario')">Cancelar</button>
             </div>
         </form>
     </div>
@@ -1175,6 +1292,7 @@ const ROUTES = {
     editarUsuario: (id) => `<?php echo e(url('/admin/usuarios')); ?>/${id}`,
     editarCategoria: (id) => `<?php echo e(url('/admin/categorias')); ?>/${id}`,
     editarEvento: (id) => `<?php echo e(url('/admin/eventos')); ?>/${id}`,
+    solicitarCorreccionUsuario: (id) => `<?php echo e(url('/admin/usuarios')); ?>/${id}/solicitar-correccion`,
 };
 
 // Sobrescribir abrirModalDonacion para inyectar la ruta correcta
@@ -1193,11 +1311,46 @@ window.abrirModalSolicitud = function(s) {
 };
 
 // Editar usuario: inyectar acción con ID dinámico
-const _origEditUsr = window.abrirModalEditarUsuario;
+// Reescribimos por completo (no delegamos al JS externo) porque los campos
+// sensibles ahora son <input disabled> de solo lectura, no <select>/<input> editables.
 window.abrirModalEditarUsuario = function(u) {
-    if (_origEditUsr) _origEditUsr(u);
     document.getElementById('formEditarUsuario').action = ROUTES.editarUsuario(u.idUsuario);
+    document.getElementById('eu_id').value          = u.idUsuario;
+    document.getElementById('eu_nombre').value       = u.nombre;
+    document.getElementById('eu_tipo_display').value = u.tipoDocumento;
+    document.getElementById('eu_doc').value          = u.numDocumento;
+    document.getElementById('eu_fnac').value         = u.fechaNacimiento;
+    document.getElementById('eu_dir').value          = u.direccion;
+    document.getElementById('eu_email').value        = u.email;
+    document.getElementById('eu_tel').value          = u.telefono;
+    document.getElementById('eu_nec').value          = u.necesidad || '';
+    document.getElementById('eu_rol').value          = u.rol;
+    document.getElementById('eu_estado').value       = u.estado;
+    document.getElementById('eu_pass').value         = '';
+    document.getElementById('eu_pass2').value        = '';
+
+    const prioEl = document.getElementById('eu_prioridad');
+    const obsEl  = document.getElementById('eu_obs_visita');
+    if (prioEl) prioEl.value = u.prioridad || '';
+    if (obsEl)  obsEl.value  = u.observacion_visita || '';
+
+    toggleCamposDonante('eu_rol', 'grp_eu_prioridad', 'grp_eu_obs');
+
+    // Guardamos el usuario objetivo para el botón "Solicitar corrección"
+    window._usuarioEnEdicion = { idUsuario: u.idUsuario, nombre: u.nombre };
+
+    abrirModal('modalEditarUsuario');
 };
+
+// Abre el modal de solicitud de corrección para el usuario que se está editando
+function abrirModalCorreccionUsuario() {
+    const u = window._usuarioEnEdicion;
+    if (!u) return;
+    document.getElementById('cu_nombre_usuario').textContent = u.nombre;
+    document.getElementById('formCorreccionUsuario').action  = ROUTES.solicitarCorreccionUsuario(u.idUsuario);
+    document.getElementById('formCorreccionUsuario').reset();
+    abrirModal('modalCorreccionUsuario');
+}
 
 // Editar categoría: inyectar acción con ID dinámico
 const _origEditCat = window.abrirModalEditarCategoria;
@@ -1331,6 +1484,31 @@ window.generarReporteSolicitudes = function () {
     if (!rangoFechasValido('rpt_sol_desde', 'rpt_sol_hasta')) return;
     if (typeof _origGenerarSolicitudes === 'function') _origGenerarSolicitudes();
 };
+document.addEventListener('DOMContentLoaded', function () {
+    <?php $__errorArgs = ['nombre_categoria'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+        // Si venía del modal de edición (trae idCategoria en el input viejo), reabrimos ese modal
+        <?php if(old('idCategoria')): ?>
+            document.getElementById('ecat_id').value = '<?php echo e(old('idCategoria')); ?>';
+            document.getElementById('ecat_nombre').value = '<?php echo e(old('nombre_categoria')); ?>';
+            document.getElementById('formEditarCategoria').action = ROUTES.editarCategoria('<?php echo e(old('idCategoria')); ?>');
+            document.getElementById('ecat_err').textContent = <?php echo json_encode($message, 15, 512) ?>;
+            document.getElementById('ecat_err').style.display = 'block';
+            abrirModal('modalEditarCategoria');
+        <?php else: ?>
+            document.getElementById('cat_nombre').value = '<?php echo e(old('nombre_categoria')); ?>';
+            document.getElementById('cat_err').textContent = <?php echo json_encode($message, 15, 512) ?>;
+            document.getElementById('cat_err').style.display = 'block';
+            abrirModal('modalCrearCategoria');
+        <?php endif; ?>
+    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+});
 </script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\DONAPP_Laravel11\donapp\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>

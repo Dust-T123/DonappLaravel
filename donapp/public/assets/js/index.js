@@ -176,3 +176,191 @@ style.innerHTML = `
     }
 `;
 document.head.appendChild(style);
+// ========== API: ESTADÍSTICAS EN TIEMPO REAL ==========
+
+const API_BASE = '/api';
+let statsInterval = null;
+
+function animarContador(elemento, valorFinal) {
+    if (!elemento) return;
+    const duracion  = 1200;
+    const inicio    = parseInt(elemento.textContent.replace(/\D/g, '')) || 0;
+    const diferencia = valorFinal - inicio;
+    const pasos     = 40;
+    let paso        = 0;
+
+    const timer = setInterval(() => {
+        paso++;
+        const progreso = paso / pasos;
+        const ease     = 1 - Math.pow(1 - progreso, 3); // ease-out cúbico
+        const actual   = Math.round(inicio + diferencia * ease);
+        elemento.textContent = '+' + actual;
+        if (paso >= pasos) {
+            clearInterval(timer);
+            elemento.textContent = '+' + valorFinal;
+        }
+    }, duracion / pasos);
+}
+
+async function actualizarEstadisticas() {
+    try {
+        const res  = await fetch(`${API_BASE}/estadisticas`);
+        const json = await res.json();
+        if (!json.success) return;
+
+        const d = json.data;
+
+        // Actualiza los contadores del hero con animación
+        const statEls = document.querySelectorAll('.hero-stat');
+        statEls.forEach(el => {
+            const label = el.querySelector('span')?.textContent?.trim().toLowerCase();
+            const strong = el.querySelector('strong');
+            if (!strong) return;
+
+            if (label?.includes('donacion'))
+                animarContador(strong, d.total_donaciones);
+            else if (label?.includes('usuario'))
+                animarContador(strong, d.total_donantes);
+            else if (label?.includes('evento'))
+                animarContador(strong, d.eventos_activos);
+        });
+
+        // Indicador de actualización
+        const indicador = document.getElementById('stats-live-indicator');
+        if (indicador) {
+            indicador.classList.add('pulso');
+            setTimeout(() => indicador.classList.remove('pulso'), 1000);
+            indicador.title = `Última actualización: ${json.generado}`;
+        }
+    } catch (e) {
+        console.warn('No se pudieron actualizar las estadísticas:', e);
+    }
+}
+
+// ========== API: EVENTOS EN VIVO ==========
+
+function formatearFechaEvento(fechaStr) {
+    if (!fechaStr) return 'Pendiente';
+    const partes = String(fechaStr).substring(0, 10).split('-');
+    if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return fechaStr;
+}
+
+function renderizarTarjetaEvento(ev) {
+    const pub       = ev.publicacion  || {};
+    const prog      = ev.programacion || {};
+    const titulo    = pub.titulo    || ev.nombre;
+    const contenido = pub.contenido || '';
+    const fecha     = formatearFechaEvento(prog.fecha_entrega);
+    const lugar     = prog.lugar    || 'No especificado';
+    const imagen    = pub.imagen    || '';
+    const autor     = pub.autor     || '';
+    const fechaPub  = pub.fecha_publicacion
+        ? formatearFechaEvento(pub.fecha_publicacion) : '';
+
+    const datosModal = JSON.stringify({
+        titulo,
+        contenido,
+        evento:   ev.nombre,
+        fecha:    fechaPub,
+        entrega:  fecha,
+        lugar,
+        autor,
+        estado:   ev.estado,
+        imagen,
+    }).replace(/'/g, '&#39;');
+
+    return `
+        <div class="publicacion-card publicacion-activa api-evento-card"
+             onclick='verDetallePublicacion(${datosModal})'>
+            ${imagen ? `
+            <div class="api-evento-img">
+                <img src="${imagen}" alt="${titulo}" loading="lazy">
+                <span class="publicacion-badge badge-activo api-live-badge">
+                    <i class="fa-solid fa-circle api-dot"></i> En vivo
+                </span>
+            </div>` : `
+            <div class="api-evento-img api-evento-img--placeholder">
+                <i class="fa-solid fa-calendar-star"></i>
+                <span class="publicacion-badge badge-activo api-live-badge">
+                    <i class="fa-solid fa-circle api-dot"></i> En vivo
+                </span>
+            </div>`}
+
+            <div class="publicacion-header" style="margin-top:12px">
+                <span class="publicacion-fecha">
+                    <i class="fa-regular fa-calendar"></i> ${fechaPub || fecha}
+                </span>
+            </div>
+
+            <div class="publicacion-body">
+                <h3 class="publicacion-titulo">${titulo}</h3>
+                <p class="publicacion-evento">
+                    <i class="fa-solid fa-tag"></i> ${ev.nombre}
+                </p>
+                <p class="publicacion-contenido">
+                    ${contenido.length > 100 ? contenido.substring(0, 100) + '…' : contenido}
+                </p>
+            </div>
+
+            <div class="publicacion-footer" style="margin-top:auto;padding-top:12px;border-top:1px solid rgba(0,0,0,0.07)">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.82rem;color:var(--color-text-muted)">
+                    <span><i class="fa-solid fa-location-dot"></i> ${lugar}</span>
+                    <span><i class="fa-solid fa-truck"></i> ${fecha}</span>
+                </div>
+                <p class="publicacion-autor" style="margin-top:8px">
+                    Ver detalles <i class="fa-solid fa-plus"></i>
+                </p>
+            </div>
+        </div>`;
+}
+
+async function cargarEventosAPI() {
+    const contenedor = document.getElementById('eventos-api-grid');
+    const contador   = document.getElementById('eventos-api-count');
+    const spinner    = document.getElementById('eventos-api-spinner');
+    if (!contenedor) return;
+
+    try {
+        const res  = await fetch(`${API_BASE}/eventos`);
+        const json = await res.json();
+
+        if (spinner) spinner.style.display = 'none';
+
+        if (!json.success || !json.data?.length) {
+            contenedor.innerHTML = `
+                <div class="publicaciones-empty" style="grid-column:1/-1">
+                    <i class="fa-regular fa-calendar-xmark"></i>
+                    <p>No hay eventos activos en este momento.</p>
+                </div>`;
+            return;
+        }
+
+        if (contador) {
+            contador.textContent = json.total;
+            contador.style.display = 'inline-flex';
+        }
+
+        contenedor.innerHTML = json.data.map(renderizarTarjetaEvento).join('');
+
+    } catch (e) {
+        if (spinner) spinner.style.display = 'none';
+        contenedor.innerHTML = `
+            <div class="publicaciones-empty" style="grid-column:1/-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <p>No se pudieron cargar los eventos. Intenta de nuevo más tarde.</p>
+            </div>`;
+        console.warn('Error al cargar eventos desde API:', e);
+    }
+}
+
+// ========== INICIALIZACIÓN ==========
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Estadísticas: primera carga y luego cada 30 segundos
+    actualizarEstadisticas();
+    statsInterval = setInterval(actualizarEstadisticas, 30000);
+
+    // Eventos desde API
+    cargarEventosAPI();
+});
