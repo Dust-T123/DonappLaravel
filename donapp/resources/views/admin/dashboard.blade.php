@@ -311,10 +311,20 @@
                                     <td>{{ $d->donantes->first()?->nombre ?? '—' }}</td>
                                     <td>{{ $d->observacion ?? '—' }}</td>
                                     <td>
-                                        <button onclick='abrirModalDonacion({{ json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock]) }})'
-                                                class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
+                                        <button onclick='abrirModalDonacion({{ json_encode([
+    "idDonacion"    => $d->idDonacion,
+    "descripcion"   => $d->descripcion,
+    "estado"        => $d->estado,
+    "observacion"   => $d->observacion,
+    "donante"       => $d->donantes->first()?->nombre,
+    "categoria"     => $d->categoria?->nombre,
+    "stock"         => $d->stock,
+    "fechaCreacion" => $d->donantes->first()?->pivot?->FechaCreacion,
+    "imagen"        => $d->imagenBase64(),
+]) }})'
+        class="btn btn-sm btn-primary">
+    <i class="fa-solid fa-pen-to-square"></i>
+</button>
                                     </td>
                                 </tr>
                                 @empty
@@ -365,7 +375,7 @@
                                     <td>{{ $s->descripcion }}</td>
                                     <td>{{ $s->categoria?->nombre ?? '—' }}</td>
                                     <td><span class="badge estado-{{ $s->estado }}">{{ $s->estado }}</span></td>
-                                    <td>{{ \Carbon\Carbon::parse($s->created_at ?? now())->format('d/m/Y') }}</td>
+                                    <td>{{ $s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—' }}</td>
                                     <td>{{ $s->solicitante?->nombre ?? '—' }}</td>
                                     <td>
                                         @if($s->gestor)
@@ -376,10 +386,19 @@
                                     </td>
                                     <td>{{ $s->observacion ?? '—' }}</td>
                                     <td>
-                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre]) }})'
-                                                class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
+                                        <button onclick='abrirModalSolicitud({{ json_encode([
+    "idSolicitud"   => $s->idSolicitud,
+    "descripcion"   => $s->descripcion,
+    "estado"        => $s->estado,
+    "observacion"   => $s->observacion,
+    "solicitante"   => $s->solicitante?->nombre,
+    "categoria"     => $s->categoria?->nombre,
+    "fechaCreacion" => $s->fechaCreacion,
+    "imagen"        => $s->imagenBase64(),
+]) }})'
+        class="btn btn-sm btn-primary">
+    <i class="fa-solid fa-pen-to-square"></i>
+</button>
                                     </td>
                                 </tr>
                                 @empty
@@ -423,18 +442,17 @@
                         <tbody>
                             @forelse($eventos as $ev)
                             @php
-                                $evJson = json_encode([
-                                    'idEvento'        => $ev->idEvento,
-                                    'Nombre'          => $ev->Nombre,
-                                    'estado'          => $ev->estado,
-                                    'fecha_entrega'   => $ev->programacion?->FechaEntrega ?? '',
-                                    'lugar_entrega'   => $ev->programacion?->Lugar ?? '',
-                                    'titulo_pub'      => $ev->publicacion?->titulo ?? '',
-                                    'contenido_pub'   => $ev->publicacion?->contenido ?? '',
-                                    'idPublicacion'   => $ev->publicacion?->idPublicacion ?? '',
-                                    'imagen'          => $ev->publicacion?->imagenBase64() ?? '',
-                                ]);
-                            @endphp
+$evJson = json_encode([
+    'idEvento'  => $ev->idEvento,
+    'Nombre'    => $ev->Nombre,
+    'estado'    => $ev->estado,
+    'FechaEntrega' => $ev->programacion?->FechaEntrega ?? '',
+    'Lugar'        => $ev->programacion?->Lugar ?? '',
+    'titulo'       => $ev->publicacion?->titulo ?? '',
+    'contenido'    => $ev->publicacion?->contenido ?? '',
+    'imagen'       => $ev->publicacion?->imagenBase64() ?? '',
+]);
+@endphp
                             <tr>
                                 <td>{{ $ev->idEvento }}</td>
                                 <td>{{ $ev->Nombre }}</td>
@@ -1105,7 +1123,7 @@
             <h3><i class="fa-solid fa-user-shield"></i> Solicitar corrección de datos</h3>
             <button class="modal-close" onclick="cerrarModal('modalSolicitarCorreccion')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ route('admin.perfil.solicitarCorreccion') }}" method="POST">
+            <form action="{{ route('admin.perfil.update') }}" method="POST">
             @csrf
             <p class="text-muted" style="margin-top:0;">
                 Esta solicitud quedará <b>pendiente</b> hasta que otro administrador la revise y apruebe. No modifica tus datos de inmediato.

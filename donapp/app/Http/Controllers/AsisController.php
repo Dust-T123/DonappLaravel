@@ -68,11 +68,27 @@ class AsisController extends Controller
         $asisActual       = Usuario::findOrFail($idAsis);
 
         $donacionesRpt = Donacion::with(['categoria', 'donantes'])->orderByDesc('idDonacion')->get()
-            ->map(fn($d) => ['id'=>$d->idDonacion,'descripcion'=>$d->descripcion,'categoria'=>$d->categoria?->nombre??'—','stock'=>$d->stock,'estado'=>$d->estado,'donante'=>$d->donantes->first()?->nombre??'—','observacion'=>$d->observacion??''])->toArray();
-
-        $solicitudesRpt = Solicitud::with(['categoria','solicitante'])->orderByDesc('idSolicitud')->get()
-            ->map(fn($s) => ['id'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'solicitante'=>$s->solicitante?->nombre??'—','observacion'=>$s->observacion??''])->toArray();
-
+    ->map(fn($d) => [
+        'idDonacion'    => $d->idDonacion,
+        'descripcion'   => $d->descripcion,
+        'categoria'     => $d->categoria?->nombre ?? '—',
+        'stock'         => $d->stock,
+        'estado'        => $d->estado,
+        'donante'       => $d->donantes->first()?->nombre ?? '—',
+        'fechaCreacion' => $d->donantes->first()?->pivot?->FechaCreacion ?? null,
+        'observacion'   => $d->observacion ?? '',
+    ])->toArray();
+        $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])->orderByDesc('idSolicitud')->get()
+    ->map(fn($s) => [
+        'idSolicitud'   => $s->idSolicitud,
+        'descripcion'   => $s->descripcion,
+        'categoria'     => $s->categoria?->nombre ?? '—',
+        'estado'        => $s->estado,
+        'solicitante'   => $s->solicitante?->nombre ?? '—',
+        'fechaCreacion' => $s->fechaCreacion ?? null,
+        'observacion'   => $s->observacion ?? '',
+    ])->toArray();
+    
         return view('asis.dashboard', compact(
             'clientes', 'categorias', 'donaciones', 'solicitudes', 'eventos', 'asisActual',
             'totalPendientes', 'totalDonaciones', 'totalSolicitudes',

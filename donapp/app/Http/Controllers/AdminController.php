@@ -73,28 +73,29 @@ class AdminController extends Controller
 
         // ── Datos para reportes PDF (JSON) ────────────────────────────────────
         $donacionesRpt = Donacion::with(['categoria', 'donantes'])
-            ->orderByDesc('idDonacion')->get()
-            ->map(fn($d) => [
-                'id'          => $d->idDonacion,
-                'descripcion' => $d->descripcion,
-                'categoria'   => $d->categoria?->nombre ?? '—',
-                'stock'       => $d->stock,
-                'estado'      => $d->estado,
-                'fecha'       => $d->donantes->first()?->pivot->FechaCreacion ?? '',
-                'donante'     => $d->donantes->first()?->nombre ?? '—',
-                'observacion' => $d->observacion ?? '',
-            ])->toArray();
+    ->orderByDesc('idDonacion')->get()
+    ->map(fn($d) => [
+        'idDonacion'    => $d->idDonacion,
+        'descripcion'   => $d->descripcion,
+        'categoria'     => $d->categoria?->nombre ?? '—',
+        'stock'         => $d->stock,
+        'estado'        => $d->estado,
+        'fechaCreacion' => $d->donantes->first()?->pivot?->FechaCreacion ?? null,
+        'donante'       => $d->donantes->first()?->nombre ?? '—',
+        'observacion'   => $d->observacion ?? '',
+    ])->toArray();
 
-        $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
-            ->orderByDesc('idSolicitud')->get()
-            ->map(fn($s) => [
-                'id'           => $s->idSolicitud,
-                'descripcion'  => $s->descripcion,
-                'categoria'    => $s->categoria?->nombre ?? '—',
-                'estado'       => $s->estado,
-                'solicitante'  => $s->solicitante?->nombre ?? '—',
-                'observacion'  => $s->observacion ?? '',
-            ])->toArray();
+$solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
+    ->orderByDesc('idSolicitud')->get()
+    ->map(fn($s) => [
+        'idSolicitud'   => $s->idSolicitud,
+        'descripcion'   => $s->descripcion,
+        'categoria'     => $s->categoria?->nombre ?? '—',
+        'estado'        => $s->estado,
+        'fechaCreacion' => $s->fechaCreacion ?? null,
+        'solicitante'   => $s->solicitante?->nombre ?? '—',
+        'observacion'   => $s->observacion ?? '',
+    ])->toArray();
 
         return view('admin.dashboard', compact(
             'usuarios', 'categorias', 'donaciones', 'solicitudes', 'eventos',

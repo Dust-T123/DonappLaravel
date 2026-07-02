@@ -12,9 +12,9 @@ class Solicitud extends Model
     public    $timestamps = false;
 
     protected $fillable = [
-        'descripcion', 'imagen', 'estado', 'observacion',
-        'idSolicitante', 'idCategoria', 'idGestor',
-    ];
+    'descripcion', 'imagen', 'estado', 'observacion',
+    'fechaCreacion', 'idSolicitante', 'idCategoria', 'idGestor',
+];
 
     public function categoria(): BelongsTo
     {

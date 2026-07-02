@@ -36,7 +36,7 @@ class Usuario extends Model
         'nombre', 'tipoDocumento', 'numDocumento', 'fechaNacimiento',
         'direccion', 'email', 'contrasena', 'telefono', 'rol', 'estado',
         'necesidad', 'prioridad', 'observacion_visita',
-        'reset_token', 'reset_token_expira',
+        'reset_token', 'reset_expira',
     ];
 
     protected $hidden = ['contrasena', 'reset_token'];

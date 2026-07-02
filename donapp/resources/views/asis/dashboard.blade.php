@@ -210,8 +210,18 @@
                             <td>{{ $d->donantes->first()?->nombre ?? '—' }}</td>
                             <td>{{ $d->observacion ?? '—' }}</td>
                             <td>
-                                <button onclick='abrirModalDonacion({{ json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock]) }})'
-                                        class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick='abrirModalDonacion({{ json_encode([
+    "idDonacion"    => $d->idDonacion,
+    "descripcion"   => $d->descripcion,
+    "estado"        => $d->estado,
+    "observacion"   => $d->observacion,
+    "donante"       => $d->donantes->first()?->nombre,
+    "categoria"     => $d->categoria?->nombre,
+    "stock"         => $d->stock,
+    "fechaCreacion" => $d->donantes->first()?->pivot?->FechaCreacion,
+    "imagen"        => $d->imagenBase64(),
+]) }})'
+        class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
                             </td>
                         </tr>
                         @empty
@@ -256,10 +266,18 @@
                             <td>{{ $s->solicitante?->nombre ?? '—' }}</td>
                             <td>{{ $s->gestor?->nombre ?? '—' }}</td>
                             <td>{{ $s->observacion ?? '—' }}</td>
-                            <td>
-                                <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre]) }})'
-                                        class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
-                            </td>
+                            <td>{{ $s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—' }}</td>
+                            <button onclick='abrirModalSolicitud({{ json_encode([
+    "idSolicitud"   => $s->idSolicitud,
+    "descripcion"   => $s->descripcion,
+    "estado"        => $s->estado,
+    "observacion"   => $s->observacion,
+    "solicitante"   => $s->solicitante?->nombre,
+    "categoria"     => $s->categoria?->nombre,
+    "fechaCreacion" => $s->fechaCreacion,
+    "imagen"        => $s->imagenBase64(),
+]) }})'
+        class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
                         </tr>
                         @empty
                         <tr><td colspan="9" class="empty-row">No se encontraron solicitudes.</td></tr>
@@ -296,13 +314,26 @@
                     <thead><tr><th>#</th><th>Nombre</th><th>Estado</th><th>Fecha Entrega</th><th>Lugar</th><th>Acciones</th></tr></thead>
                     <tbody>
                         @forelse($eventos as $ev)
-                        @php $evJson = json_encode($ev) @endphp
+                        @php
+$evJson = json_encode([
+    'idEvento'     => $ev->idEvento,
+    'Nombre'       => $ev->Nombre,
+    'estado'       => $ev->estado,
+    'FechaEntrega' => $ev->programacion?->FechaEntrega,
+    'Lugar'        => $ev->programacion?->Lugar,
+    'titulo'       => $ev->publicacion?->titulo,
+    'contenido'    => $ev->publicacion?->contenido,
+    'imagen'       => $ev->publicacion?->imagen
+                        ? 'data:image/jpeg;base64,'.base64_encode($ev->publicacion->imagen)
+                        : null,
+]);
+@endphp
                         <tr>
                             <td>{{ $ev->idEvento }}</td>
-                            <td>{{ $ev->nombre_evento }}</td>
-                            <td><span class="badge estado-{{ $ev->estado_evento }}">{{ $ev->estado_evento }}</span></td>
-                            <td>{{ $ev->fecha_entrega ? \Carbon\Carbon::parse($ev->fecha_entrega)->format('d/m/Y') : '—' }}</td>
-                            <td>{{ $ev->lugar_entrega ?? '—' }}</td>
+                            <td>{{ $ev->Nombre }}</td>
+<td><span class="badge estado-{{ $ev->estado }}">{{ $ev->estado }}</span></td>
+<td>{{ $ev->programacion?->FechaEntrega ? \Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d/m/Y') : '—' }}</td>
+<td>{{ $ev->programacion?->Lugar ?? '—' }}</td>
                             <td class="td-actions">
                                 <button onclick='abrirModalEditarEvento({{ $evJson }})' class="btn btn-sm btn-primary"><i class="fa-solid fa-pen"></i></button>
                                 <form action="{{ route('asis.eventos.estado', $ev->idEvento) }}" method="POST" style="display:inline">
@@ -777,5 +808,38 @@ window.abrirModalHistorialCliente = async function(cli) {
             `<p style="color:red"><i class="fa-solid fa-triangle-exclamation"></i> Error al cargar el historial. Intenta de nuevo.</p>`;
     }
 };
+// ── VALIDACIÓN FECHAS DE EVENTOS ─────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const hoyStr = new Date().toISOString().split('T')[0];
+
+    // Fecha mínima = hoy en ambos formularios
+    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_entrega"]');
+    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_entrega"]');
+    if (fCrear)  fCrear.min  = hoyStr;
+    if (fEditar) fEditar.min = hoyStr;
+
+    // Validar antes de enviar
+    const formCrear  = document.querySelector('#modalCrearEvento form');
+    const formEditar = document.getElementById('formEditarEvento');
+
+    function fechaEsPasada(valor) {
+        if (!valor) return false;
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        return new Date(valor + 'T00:00:00') < hoy;
+    }
+
+    function validarFechaEvento(form) {
+        const input = form.querySelector('input[name="fecha_entrega"]');
+        if (input && fechaEsPasada(input.value)) {
+            alert('No se pueden programar eventos con fechas pasadas. Selecciona hoy o una fecha futura.');
+            input.focus();
+            return false;
+        }
+        return true;
+    }
+
+    if (formCrear)  formCrear.addEventListener('submit',  e => { if (!validarFechaEvento(formCrear))  e.preventDefault(); });
+    if (formEditar) formEditar.addEventListener('submit', e => { if (!validarFechaEvento(formEditar)) e.preventDefault(); });
+});
 </script>
 @endsection

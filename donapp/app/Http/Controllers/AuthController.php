@@ -137,7 +137,7 @@ return response()->view('auth.login_success', [
 
             $usuario->update([
                 'reset_token'        => $tokenHash,
-                'reset_token_expira' => $expira,
+                'reset_expira' => $expira,
             ]);
 
             $link = route('restablecer', ['token' => $tokenRaw]);
@@ -151,7 +151,7 @@ return response()->view('auth.login_success', [
     {
         $tokenHash = hash('sha256', $token);
         $usuario   = Usuario::where('reset_token', $tokenHash)
-            ->where('reset_token_expira', '>', now())
+            ->where('reset_expira', '>', now())
             ->where('estado', 'activo')
             ->first();
 
@@ -171,7 +171,7 @@ return response()->view('auth.login_success', [
 
         $tokenHash = hash('sha256', $request->token);
         $usuario   = Usuario::where('reset_token', $tokenHash)
-            ->where('reset_token_expira', '>', now())
+            ->where('reset_expira', '>', now())
             ->where('estado', 'activo')
             ->first();
 
@@ -182,7 +182,7 @@ return response()->view('auth.login_success', [
         $usuario->update([
             'contrasena'         => Hash::make($request->password),
             'reset_token'        => null,
-            'reset_token_expira' => null,
+            'reset_expira' => null,
         ]);
 
         return redirect()->route('login')->with('success', 'Contraseña restablecida. Ya puedes iniciar sesión.');
