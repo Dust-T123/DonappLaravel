@@ -120,6 +120,12 @@ function filtrarSolicitudesPorCliente(nombre) {
 }
 
 // ── GESTIONAR DONACIÓN ────────────────────────────────────────────────────
+function formatearFecha(fechaStr) {
+    if (!fechaStr) return '—';
+    const partes = String(fechaStr).substring(0, 10).split('-');
+    if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return fechaStr;
+}
 function abrirModalDonacion(d) {
     document.getElementById('don_id').value     = d.idDonacion;
     document.getElementById('don_estado').value = d.estado;
@@ -135,7 +141,7 @@ function abrirModalDonacion(d) {
          <div class="modal-info-text">
             <p><strong>Descripción:</strong> ${d.descripcion}</p>
             <p><strong>Categoría:</strong> ${d.categoria || '—'}</p>
-            <p><strong>Stock:</strong> ${d.stock} &nbsp;|&nbsp; <strong>Fecha:</strong> ${d.fechaCreacion}</p>
+            <p><strong>Stock:</strong> ${d.stock} &nbsp;|&nbsp; <strong>Fecha:</strong> ${formatearFecha(d.fechaCreacion)}</p>
          </div>`;
     abrirModal('modalDonacion');
 }
@@ -156,7 +162,7 @@ function abrirModalSolicitud(s) {
          <div class="modal-info-text">
             <p><strong>Descripción:</strong> ${s.descripcion}</p>
             <p><strong>Categoría:</strong> ${s.categoria || '—'}</p>
-            <p><strong>Solicitante:</strong> ${s.solicitante || '—'} &nbsp;|&nbsp; <strong>Fecha:</strong> ${s.fechaCreacion}</p>
+           <p><strong>Solicitante:</strong> ${s.solicitante || '—'} &nbsp;|&nbsp; <strong>Fecha:</strong> ${formatearFecha(s.fechaCreacion)}</p>
          </div>`;
     abrirModal('modalSolicitud');
 }
@@ -305,6 +311,12 @@ if (flashNotif) setTimeout(() => flashNotif.style.opacity = '0', 4000);
 const donacionesData  = JSON.parse(document.getElementById('donacionesData').textContent);
 const solicitudesData = JSON.parse(document.getElementById('solicitudesData').textContent);
 
+function formatearFecha(fechaStr) {
+    if (!fechaStr) return '—';
+    const partes = String(fechaStr).substring(0, 10).split('-');
+    if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return fechaStr;
+}
 function filtrarPorCriterios(data, estadoId, desdeId, hastaId) {
     const estado = document.getElementById(estadoId).value;
     const desde  = document.getElementById(desdeId).value;

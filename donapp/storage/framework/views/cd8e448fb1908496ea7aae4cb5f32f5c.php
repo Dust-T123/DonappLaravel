@@ -3,6 +3,17 @@
     <link rel="stylesheet" href="<?php echo e(asset('assets/css/admin_style.css')); ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .perfil-lock-notice{display:flex;align-items:center;gap:14px;background:#fff8e6;border:1px solid #f0d78c;
+            border-radius:10px;padding:14px 16px;margin-bottom:20px;}
+        .perfil-lock-notice > i{font-size:22px;color:#b8860b;flex-shrink:0;}
+        .perfil-lock-notice > div{flex:1;}
+        .perfil-lock-notice .btn{flex-shrink:0;white-space:nowrap;}
+        .form-group input:disabled, .form-group select:disabled{background:#f2f2f2;color:#666;cursor:not-allowed;}
+        .alert-box{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;}
+        .alert-success{background:#e6f6ea;border:1px solid #9bd8ac;color:#1e7a34;}
+        .alert-danger{background:#fdecea;border:1px solid #f3a6a0;color:#a12a22;}
+    </style>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('content'); ?>
@@ -182,6 +193,12 @@
                     <i class="fa-solid fa-plus"></i> Nueva Categoría
                 </button>
             </div>
+            <?php if(session('categoria_error')): ?>
+            <div class="alert-box alert-danger">
+                <i class="fa-solid fa-triangle-exclamation"></i> <?php echo e(session('categoria_error')); ?>
+
+            </div>
+            <?php endif; ?>
             <div class="card">
                 <form method="GET" action="<?php echo e(route('admin.dashboard')); ?>" class="filter-bar" style="margin-bottom:16px">
                     <input type="hidden" name="tab" value="categorias">
@@ -235,6 +252,10 @@
                     </table>
                 </div>
             </div>
+            <script id="categoriasExistentes" type="application/json">
+                <?php echo json_encode($categorias->map(fn($c) => ['id' => $c->idCategoria, 'nombre' => mb_strtolower(trim($c->nombre))])->values(), JSON_UNESCAPED_UNICODE); ?>
+
+            </script>
         </div>
 
         
@@ -292,10 +313,20 @@
                                     <td><?php echo e($d->donantes->first()?->nombre ?? '—'); ?></td>
                                     <td><?php echo e($d->observacion ?? '—'); ?></td>
                                     <td>
-                                        <button onclick='abrirModalDonacion(<?php echo e(json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock])); ?>)'
-                                                class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
+                                        <button onclick='abrirModalDonacion(<?php echo e(json_encode([
+    "idDonacion"    => $d->idDonacion,
+    "descripcion"   => $d->descripcion,
+    "estado"        => $d->estado,
+    "observacion"   => $d->observacion,
+    "donante"       => $d->donantes->first()?->nombre,
+    "categoria"     => $d->categoria?->nombre,
+    "stock"         => $d->stock,
+    "fechaCreacion" => $d->donantes->first()?->pivot?->FechaCreacion,
+    "imagen"        => $d->imagenBase64(),
+])); ?>)'
+        class="btn btn-sm btn-primary">
+    <i class="fa-solid fa-pen-to-square"></i>
+</button>
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
@@ -347,7 +378,7 @@
                                     <td><?php echo e($s->descripcion); ?></td>
                                     <td><?php echo e($s->categoria?->nombre ?? '—'); ?></td>
                                     <td><span class="badge estado-<?php echo e($s->estado); ?>"><?php echo e($s->estado); ?></span></td>
-                                    <td><?php echo e(\Carbon\Carbon::parse($s->created_at ?? now())->format('d/m/Y')); ?></td>
+                                    <td><?php echo e($s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—'); ?></td>
                                     <td><?php echo e($s->solicitante?->nombre ?? '—'); ?></td>
                                     <td>
                                         <?php if($s->gestor): ?>
@@ -358,10 +389,19 @@
                                     </td>
                                     <td><?php echo e($s->observacion ?? '—'); ?></td>
                                     <td>
-                                        <button onclick='abrirModalSolicitud(<?php echo e(json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre])); ?>)'
-                                                class="btn btn-sm btn-primary">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
+                                        <button onclick='abrirModalSolicitud(<?php echo e(json_encode([
+    "idSolicitud"   => $s->idSolicitud,
+    "descripcion"   => $s->descripcion,
+    "estado"        => $s->estado,
+    "observacion"   => $s->observacion,
+    "solicitante"   => $s->solicitante?->nombre,
+    "categoria"     => $s->categoria?->nombre,
+    "fechaCreacion" => $s->fechaCreacion,
+    "imagen"        => $s->imagenBase64(),
+])); ?>)'
+        class="btn btn-sm btn-primary">
+    <i class="fa-solid fa-pen-to-square"></i>
+</button>
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
@@ -458,9 +498,9 @@
                             <option value="pendiente">Pendientes</option>
                         </select>
                         <label>Fecha desde:</label>
-                        <input type="date" id="rpt_don_desde" class="form-input">
+                        <input type="date" id="rpt_don_desde" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                         <label>Fecha hasta:</label>
-                        <input type="date" id="rpt_don_hasta" class="form-input">
+                        <input type="date" id="rpt_don_hasta" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                     </div>
                     <button class="btn btn-primary" onclick="generarReporteDonaciones()">
                         <i class="fa-solid fa-file-pdf"></i> Generar PDF
@@ -480,9 +520,9 @@
                             <option value="pendiente">Pendientes</option>
                         </select>
                         <label>Fecha desde:</label>
-                        <input type="date" id="rpt_sol_desde" class="form-input">
+                        <input type="date" id="rpt_sol_desde" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                         <label>Fecha hasta:</label>
-                        <input type="date" id="rpt_sol_hasta" class="form-input">
+                        <input type="date" id="rpt_sol_hasta" class="form-input" max="<?php echo e(date('Y-m-d')); ?>">
                     </div>
                     <button class="btn btn-primary" onclick="generarReporteSolicitudes()">
                         <i class="fa-solid fa-file-pdf"></i> Generar PDF
@@ -503,35 +543,51 @@
         
         <div id="perfil" class="tab-pane">
             <h2 class="page-title">Mi Perfil</h2>
+
+            <?php if(session('correccion_ok')): ?>
+            <div class="alert-box alert-success">
+                <i class="fa-solid fa-circle-check"></i> Tu solicitud de corrección fue enviada y quedará pendiente de aprobación por otro administrador.
+            </div>
+            <?php endif; ?>
+
             <div class="card card-perfil">
+                <div class="perfil-lock-notice">
+                    <i class="fa-solid fa-lock"></i>
+                    <div>
+                        <strong>Nombre, tipo/número de documento y fecha de nacimiento no se pueden editar directamente.</strong>
+                        <p class="text-muted" style="margin:4px 0 0;">
+                            Estos campos son datos de identidad. Si detectas un error o necesitas actualizarlos,
+                            usa el botón <b>"Solicitar corrección de datos"</b>; un administrador distinto revisará y aprobará el cambio.
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="abrirModal('modalSolicitarCorreccion')">
+                        <i class="fa-solid fa-pen-to-square"></i> Solicitar corrección de datos
+                    </button>
+                </div>
+
                 <form action="<?php echo e(route('admin.perfil.update')); ?>" method="POST" id="formPerfil">
                     <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
                     <div class="form-grid-2">
                         <div class="form-group">
-                            <label>Nombre completo</label>
-                            <input type="text" name="nombre" class="form-input"
+                            <label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                            <input type="text" class="form-input"
                                    value="<?php echo e($adminActual->nombre); ?>"
-                                   required minlength="3" maxlength="100"
-                                   placeholder="Digita tus nombres y apellidos completos">
+                                   disabled readonly>
                         </div>
                         <div class="form-group">
-                            <label>Tipo de documento</label>
-                            <select name="tipoDocumento" class="form-input" required>
-                                <?php $__currentLoopData = ['CC','TI','CE','PEP']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($t); ?>" <?php echo e($adminActual->tipoDocumento==$t ? 'selected' : ''); ?>><?php echo e($t); ?></option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
+                            <label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                            <input type="text" class="form-input" value="<?php echo e($adminActual->tipoDocumento); ?>" disabled readonly>
                         </div>
                         <div class="form-group">
-                            <label>Número de documento</label>
-                            <input type="text" name="numDocumento" class="form-input"
+                            <label>Número de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                            <input type="text" class="form-input"
                                    value="<?php echo e($adminActual->numDocumento); ?>"
-                                   required maxlength="15" placeholder="Ingresa los dígitos de tu documento">
+                                   disabled readonly>
                         </div>
                         <div class="form-group">
-                            <label>Fecha de nacimiento</label>
-                            <input type="date" name="fechaNacimiento" class="form-input"
-                                   value="<?php echo e($adminActual->fechaNacimiento); ?>" required>
+                            <label>Fecha de nacimiento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                            <input type="date" class="form-input"
+                                   value="<?php echo e($adminActual->fechaNacimiento); ?>" disabled readonly>
                         </div>
                         <div class="form-group">
                             <label>Teléfono</label>
@@ -1066,6 +1122,46 @@
     </div>
 </div>
 
+
+<div id="modalSolicitarCorreccion" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-shield"></i> Solicitar corrección de datos</h3>
+            <button class="modal-close" onclick="cerrarModal('modalSolicitarCorreccion')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+            <form action="<?php echo e(route('admin.perfil.update')); ?>" method="POST">
+            <?php echo csrf_field(); ?>
+            <p class="text-muted" style="margin-top:0;">
+                Esta solicitud quedará <b>pendiente</b> hasta que otro administrador la revise y apruebe. No modifica tus datos de inmediato.
+            </p>
+            <div class="form-group">
+                <label>Campo a corregir *</label>
+                <select name="campo" class="form-input" required>
+                    <option value="">Selecciona el campo</option>
+                    <option value="nombre">Nombre completo</option>
+                    <option value="tipoDocumento">Tipo de documento</option>
+                    <option value="numDocumento">Número de documento</option>
+                    <option value="fechaNacimiento">Fecha de nacimiento</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Valor correcto propuesto *</label>
+                <input type="text" name="valorNuevo" class="form-input" required minlength="1" maxlength="150"
+                       placeholder="Escribe el valor correcto">
+            </div>
+            <div class="form-group">
+                <label>Justificación *</label>
+                <textarea name="justificacion" class="form-input" rows="3" required minlength="10" maxlength="300"
+                          placeholder="Explica por qué necesitas este cambio (ej. error de digitación, actualización de documento, etc.)"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar solicitud</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalSolicitarCorreccion')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('scripts'); ?>
@@ -1119,7 +1215,122 @@ window.abrirModalEditarEvento = function(ev) {
     if (_origEditEvt) _origEditEvt(ev);
     document.getElementById('formEditarEvento').action = ROUTES.editarEvento(ev.idEvento);
 };
+
+// ══════════ VALIDACIÓN: CATEGORÍAS DUPLICADAS (cliente) ══════════
+// El backend SIEMPRE debe validar de nuevo (ver trigger tg_validar_categoria_duplicada);
+// esto solo evita un viaje al servidor innecesario y da feedback inmediato.
+function categoriasExistentesList() {
+    const el = document.getElementById('categoriasExistentes');
+    if (!el) return [];
+    try { return JSON.parse(el.textContent); } catch (e) { return []; }
+}
+
+function nombreCategoriaDuplicado(nombre, idExcluir = null) {
+    const normalizado = nombre.trim().toLowerCase();
+    return categoriasExistentesList().some(c =>
+        c.nombre === normalizado && (idExcluir === null || String(c.id) !== String(idExcluir))
+    );
+}
+
+const _origValidarCategoria = window.validarCategoria;
+window.validarCategoria = function(modo) {
+    // Deja que la validación original (longitud, caracteres, etc.) corra primero si existe
+    if (typeof _origValidarCategoria === 'function' && _origValidarCategoria(modo) === false) {
+        return false;
+    }
+    const inputId = modo === 'crear' ? 'cat_nombre' : 'ecat_nombre';
+    const errId    = modo === 'crear' ? 'cat_err'    : 'ecat_err';
+    const input    = document.getElementById(inputId);
+    const errEl    = document.getElementById(errId);
+    const idExcluir = modo === 'editar' ? document.getElementById('ecat_id').value : null;
+
+    if (!input.value.trim()) {
+        errEl.textContent = 'El nombre de la categoría es obligatorio.';
+        errEl.style.display = 'block';
+        return false;
+    }
+
+    if (nombreCategoriaDuplicado(input.value, idExcluir)) {
+        errEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Ya existe una categoría con este nombre. Verifica antes de crear una nueva.';
+        errEl.style.display = 'block';
+        return false;
+    }
+
+    errEl.style.display = 'none';
+    return true;
+};
+
+// ══════════ VALIDACIÓN: EVENTOS SOLO CON FECHAS FUTURAS ══════════
+function fechaEsPasada(valorFecha) {
+    if (!valorFecha) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fecha = new Date(valorFecha + 'T00:00:00');
+    return fecha < hoy;
+}
+
+function validarFechaEventoForm(form) {
+    const input = form.querySelector('input[name="fecha_entrega"]');
+    if (!input) return true;
+    if (fechaEsPasada(input.value)) {
+        alert('No se pueden programar eventos con fechas pasadas. Selecciona hoy o una fecha futura.');
+        input.focus();
+        return false;
+    }
+    return true;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const hoyStr = new Date().toISOString().split('T')[0];
+
+    // Fecha mínima = hoy en ambos formularios de evento
+    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_entrega"]');
+    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_entrega"]');
+    if (fCrear)  fCrear.min  = hoyStr;
+    if (fEditar) fEditar.min = hoyStr;
+
+    const formCrearEvento  = document.querySelector('#modalCrearEvento form');
+    const formEditarEvento = document.getElementById('formEditarEvento');
+    if (formCrearEvento)  formCrearEvento.addEventListener('submit', (e) => { if (!validarFechaEventoForm(formCrearEvento))  e.preventDefault(); });
+    if (formEditarEvento) formEditarEvento.addEventListener('submit', (e) => { if (!validarFechaEventoForm(formEditarEvento)) e.preventDefault(); });
+});
+
+// ══════════ VALIDACIÓN: FECHAS DE REPORTES ══════════
+// Envuelve las funciones generadoras de PDF (definidas en admin_dashboard.js)
+// para asegurar que "desde" <= "hasta" y que ninguna sea futura, antes de generar el reporte.
+function rangoFechasValido(desdeId, hastaId) {
+    const desdeEl = document.getElementById(desdeId);
+    const hastaEl = document.getElementById(hastaId);
+    const desde = desdeEl.value;
+    const hasta = hastaEl.value;
+    const hoyStr = new Date().toISOString().split('T')[0];
+
+    if (desde && desde > hoyStr) {
+        alert('La fecha "desde" no puede ser futura.');
+        return false;
+    }
+    if (hasta && hasta > hoyStr) {
+        alert('La fecha "hasta" no puede ser futura.');
+        return false;
+    }
+    if (desde && hasta && desde > hasta) {
+        alert('La fecha "desde" no puede ser posterior a la fecha "hasta".');
+        return false;
+    }
+    return true;
+}
+
+const _origGenerarDonaciones = window.generarReporteDonaciones;
+window.generarReporteDonaciones = function () {
+    if (!rangoFechasValido('rpt_don_desde', 'rpt_don_hasta')) return;
+    if (typeof _origGenerarDonaciones === 'function') _origGenerarDonaciones();
+};
+
+const _origGenerarSolicitudes = window.generarReporteSolicitudes;
+window.generarReporteSolicitudes = function () {
+    if (!rangoFechasValido('rpt_sol_desde', 'rpt_sol_hasta')) return;
+    if (typeof _origGenerarSolicitudes === 'function') _origGenerarSolicitudes();
+};
 </script>
 <?php $__env->stopSection(); ?>
-
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\DONAPP_Laravel11\donapp\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>

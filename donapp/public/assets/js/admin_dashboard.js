@@ -152,7 +152,7 @@ function abrirModalDonacion(d) {
         <p><strong>Categoría:</strong> ${escHtml(d.categoria || '—')}</p>
         <p><strong>Stock:</strong> ${d.stock}</p>
         <p><strong>Donante:</strong> ${escHtml(d.donante || '—')}</p>
-        <p><strong>Fecha:</strong> ${d.fechaCreacion}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(d.fechaCreacion)}</p>
     `;
 
     actualizarHintObservacion('don_estado', 'don_obs_hint', 'don_obs', 'don_obs_err');
@@ -181,7 +181,7 @@ function abrirModalSolicitud(s) {
         <p><strong>Categoría:</strong> ${escHtml(s.categoria || '—')}</p>
         <p><strong>Solicitante:</strong> ${escHtml(s.nombre_solicitante || '—')}</p>
         <p><strong>Gestor:</strong> ${escHtml(s.nombre_gestor || 'Sin asignar')}</p>
-        <p><strong>Fecha:</strong> ${s.fechaCreacion}</p>
+        <p><strong>Fecha:</strong> ${formatearFecha(s.fechaCreacion)}</p>
     `;
 
     actualizarHintObservacion('sol_estado', 'sol_obs_hint', 'sol_obs', 'sol_obs_err');
@@ -399,6 +399,12 @@ function togglePass(inputId, iconId) {
 // REPORTES PDF (jsPDF + AutoTable)
 // ─────────────────────────────────────────────
 
+function formatearFecha(fechaStr) {
+    if (!fechaStr) return '—';
+    const partes = String(fechaStr).substring(0, 10).split('-');
+    if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return fechaStr;
+}
 function generarReporteDonaciones() {
     const estado = document.getElementById('rpt_don_estado').value;
     const desde = document.getElementById('rpt_don_desde').value;
