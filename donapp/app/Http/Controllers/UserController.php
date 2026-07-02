@@ -7,6 +7,7 @@ use App\Models\Donacion;
 use App\Models\Solicitud;
 use App\Models\Categoria;
 use App\Models\Evento;
+use App\Models\CorreccionDatos;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -47,6 +48,12 @@ class UserController extends Controller
 
         $usuario = Usuario::findOrFail($id);
 
+        // Solicitudes de corrección de datos sensibles hechas por este donante.
+        // Solo lectura: la aprobación es exclusiva del admin.
+        $misCorrecciones = CorreccionDatos::where('idSolicitante', $id)
+            ->orderByDesc('idCorreccion')
+            ->get();
+
         // Stats del usuario
         $donBase = Donacion::whereHas('donantes', fn($q) => $q->where('idDonante', $id));
         $stats = [
@@ -60,7 +67,7 @@ class UserController extends Controller
 
         return view('user.dashboard', compact(
             'misDonaciones', 'misSolicitudes', 'categorias',
-            'eventos', 'usuario', 'stats', 'tabActivo'
+            'eventos', 'usuario', 'stats', 'tabActivo', 'misCorrecciones'
         ));
     }
 
@@ -193,11 +200,14 @@ class UserController extends Controller
     public function actualizarPerfil(Request $request): RedirectResponse
     {
         $id = $this->idCliente($request);
+        // nombre / tipoDocumento / numDocumento / fechaNacimiento son datos de
+        // identidad protegidos: el formulario los muestra deshabilitados y SIN
+        // atributo "name", así que nunca llegan en el request. Para cambiarlos
+        // existe el flujo aparte solicitarCorreccionPerfil().
         $request->validate([
-            'nombre'       => 'required|min:3|max:100',
-            'email'        => "required|email|unique:usuario,email,$id,idUsuario",
-            'numDocumento' => "required|numeric|unique:usuario,numDocumento,$id,idUsuario",
-            'telefono'     => 'required|digits:10',
+            'email'    => "required|email|unique:usuario,email,$id,idUsuario",
+            'telefono' => 'required|digits:10',
+            'direccion'=> 'required|min:5',
         ]);
 
         $usuario = Usuario::findOrFail($id);
@@ -208,16 +218,65 @@ class UserController extends Controller
             $request->validate(['password' => 'min:6|confirmed']);
         }
 
-        $data = $request->only(['nombre','tipoDocumento','numDocumento','fechaNacimiento','direccion','email','telefono']);
+        $data = $request->only(['direccion','email','telefono']);
         $data['necesidad'] = $request->necesidad ?: null;
 
         if ($request->filled('password'))
             $data['contrasena'] = Hash::make($request->password);
 
         $usuario->update($data);
-        $request->session()->put('usuario.nombre', $request->nombre);
 
         return redirect()->route('usuario.dashboard', ['tab' => 'perfil'])
             ->with('success', 'Perfil actualizado correctamente.');
+    }
+
+    // ── CORRECCIÓN DE DATOS SENSIBLES (habeas data) ─────────────────────────────
+
+    /**
+     * Guarda el soporte (foto/PDF del documento de identidad) en disco privado
+     * y calcula su hash SHA-256 para verificar integridad. El archivo NUNCA
+     * se guarda en la base de datos, solo se referencia la ruta.
+     */
+    private function guardarSoporte($file): array
+    {
+        $ruta = $file->store('correcciones', 'local'); // storage/app/correcciones (disco privado)
+        return [
+            'ruta' => $ruta,
+            'mime' => $file->getMimeType(),
+            'hash' => hash_file('sha256', $file->getRealPath()),
+        ];
+    }
+
+    public function solicitarCorreccionPerfil(Request $request): RedirectResponse
+    {
+        $id = $this->idCliente($request);
+
+        $request->validate([
+            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|min:1|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'accepted',
+        ]);
+
+        $usuario = Usuario::findOrFail($id);
+        $soporte = $this->guardarSoporte($request->file('soporte'));
+
+        CorreccionDatos::create([
+            'idUsuario'      => $usuario->idUsuario,
+            'idSolicitante'  => $id,
+            'campo'          => $request->campo,
+            'valorAnterior'  => (string) $usuario->{$request->campo},
+            'valorNuevo'     => $request->valorNuevo,
+            'justificacion'  => $request->justificacion,
+            'estado'         => 'pendiente',
+            'soporteRuta'    => $soporte['ruta'],
+            'soporteMime'    => $soporte['mime'],
+            'soporteHash'    => $soporte['hash'],
+            'consentimiento' => 1,
+        ]);
+
+        return redirect()->route('usuario.dashboard', ['tab' => 'perfil'])
+            ->with('correccion_ok', true);
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\Publicacion;
 use App\Models\ProgramadorEventos;
+use App\Models\CorreccionDatos;
 use App\Mail\NotificacionEstado;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -62,6 +63,12 @@ class AdminController extends Controller
             ->when($request->ev_estado, fn($q, $e) => $q->where('estado', $e))
             ->orderByDesc('idEvento')->get();
 
+        // ── Correcciones de datos sensibles pendientes ───────────────────────
+        $correcciones = CorreccionDatos::with(['usuario', 'solicitante'])
+            ->where('estado', 'pendiente')
+            ->orderByDesc('idCorreccion')
+            ->get();
+
         // ── Estadísticas del dashboard ────────────────────────────────────────
         $totalUsuarios   = Usuario::count();
         $totalDonaciones = Donacion::count();
@@ -72,33 +79,37 @@ class AdminController extends Controller
         $adminActual     = Usuario::findOrFail($idAdmin);
 
         // ── Datos para reportes PDF (JSON) ────────────────────────────────────
+        // OJO: la llave 'fechaCreacion' debe coincidir EXACTAMENTE con lo que
+        // lee admin_dashboard.js al filtrar por fecha. Antes se llamaba 'fecha'
+        // (donaciones) o no existía (solicitudes), por eso el filtro de fechas
+        // de los reportes nunca funcionaba: el campo llegaba como undefined.
         $donacionesRpt = Donacion::with(['categoria', 'donantes'])
-    ->orderByDesc('idDonacion')->get()
-    ->map(fn($d) => [
-        'idDonacion'    => $d->idDonacion,
-        'descripcion'   => $d->descripcion,
-        'categoria'     => $d->categoria?->nombre ?? '—',
-        'stock'         => $d->stock,
-        'estado'        => $d->estado,
-        'fechaCreacion' => $d->donantes->first()?->pivot?->FechaCreacion ?? null,
-        'donante'       => $d->donantes->first()?->nombre ?? '—',
-        'observacion'   => $d->observacion ?? '',
-    ])->toArray();
+            ->orderByDesc('idDonacion')->get()
+            ->map(fn($d) => [
+                'id'            => $d->idDonacion,
+                'descripcion'   => $d->descripcion,
+                'categoria'     => $d->categoria?->nombre ?? '—',
+                'stock'         => $d->stock,
+                'estado'        => $d->estado,
+                'fechaCreacion' => $d->donantes->first()?->pivot->FechaCreacion ?? $d->fechaCreacion ?? '',
+                'donante'       => $d->donantes->first()?->nombre ?? '—',
+                'observacion'   => $d->observacion ?? '',
+            ])->toArray();
 
-$solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
-    ->orderByDesc('idSolicitud')->get()
-    ->map(fn($s) => [
-        'idSolicitud'   => $s->idSolicitud,
-        'descripcion'   => $s->descripcion,
-        'categoria'     => $s->categoria?->nombre ?? '—',
-        'estado'        => $s->estado,
-        'fechaCreacion' => $s->fechaCreacion ?? null,
-        'solicitante'   => $s->solicitante?->nombre ?? '—',
-        'observacion'   => $s->observacion ?? '',
-    ])->toArray();
+        $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
+            ->orderByDesc('idSolicitud')->get()
+            ->map(fn($s) => [
+                'id'            => $s->idSolicitud,
+                'descripcion'   => $s->descripcion,
+                'categoria'     => $s->categoria?->nombre ?? '—',
+                'estado'        => $s->estado,
+                'fechaCreacion' => $s->fechaCreacion ?? '',
+                'solicitante'   => $s->solicitante?->nombre ?? '—',
+                'observacion'   => $s->observacion ?? '',
+            ])->toArray();
 
         return view('admin.dashboard', compact(
-            'usuarios', 'categorias', 'donaciones', 'solicitudes', 'eventos',
+            'usuarios', 'categorias', 'donaciones', 'solicitudes', 'eventos', 'correcciones',
             'totalUsuarios', 'totalDonaciones', 'totalSolicitudes', 'totalEventos',
             'totalAprobadas', 'totalCategorias', 'adminActual',
             'donacionesRpt', 'solicitudesRpt'
@@ -146,10 +157,6 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
     {
         $sesionId = $request->session()->get('usuario.idUsuario');
         $rules = [
-            'nombre'         => 'required|min:3|max:100',
-            'tipoDocumento'  => 'required',
-            'numDocumento'   => "required|numeric|unique:usuario,numDocumento,$id,idUsuario",
-            'fechaNacimiento'=> 'required|date',
             'direccion'      => 'required|min:5',
             'email'          => "required|email|unique:usuario,email,$id,idUsuario",
             'telefono'       => 'required|digits:10',
@@ -159,6 +166,10 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
         if ($request->filled('password')) $rules['password'] = 'min:6|confirmed';
         $request->validate($rules);
 
+        // NOTA: esta pantalla la usa el administrador para editar a OTROS usuarios.
+        // nombre/tipoDocumento/numDocumento/fechaNacimiento NO se reciben aquí
+        // (los inputs están disabled en la vista): para corregirlos existe el
+        // flujo de solicitarCorreccionUsuario() + aprobarCorreccion().
         if ($id === $sesionId) {
             if ($request->rol !== $request->session()->get('usuario.rol'))
                 return back()->withErrors(['msg' => 'No puedes cambiar tu propio rol.']);
@@ -169,10 +180,6 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
         $usuario = Usuario::findOrFail($id);
         $rol     = $request->rol;
         $data = [
-            'nombre'             => $request->nombre,
-            'tipoDocumento'      => $request->tipoDocumento,
-            'numDocumento'       => $request->numDocumento,
-            'fechaNacimiento'    => $request->fechaNacimiento,
             'direccion'          => $request->direccion,
             'email'              => $request->email,
             'telefono'           => $request->telefono,
@@ -199,27 +206,254 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
             ->with('success', "Usuario $nuevo correctamente.");
     }
 
+    /**
+     * Actualiza SOLO los campos no sensibles del propio perfil del admin.
+     * nombre / tipoDocumento / numDocumento / fechaNacimiento ya NO se
+     * reciben desde este formulario (los inputs están disabled en la vista
+     * y no se envían), así que tampoco se validan ni se tocan aquí.
+     * Para corregirlos existe el flujo de solicitarCorreccionPerfil().
+     */
     public function actualizarPerfil(Request $request): RedirectResponse
     {
         $id = $request->session()->get('usuario.idUsuario');
         $request->validate([
-            'nombre'         => 'required|min:3|max:100',
-            'tipoDocumento'  => 'required',
-            'numDocumento'   => "required|numeric|unique:usuario,numDocumento,$id,idUsuario",
-            'fechaNacimiento'=> 'required|date',
-            'direccion'      => 'required|min:5',
-            'email'          => "required|email|unique:usuario,email,$id,idUsuario",
-            'telefono'       => 'required|digits:10',
+            'direccion' => 'required|min:5|max:255',
+            'email'     => "required|email|unique:usuario,email,$id,idUsuario",
+            'telefono'  => 'required|digits:10',
         ]);
+
         $usuario = Usuario::findOrFail($id);
-        $data    = $request->only(['nombre','tipoDocumento','numDocumento','fechaNacimiento','direccion','email','telefono']);
+        $data    = $request->only(['direccion', 'email', 'telefono']);
+
         if ($request->filled('password')) {
             $request->validate(['password' => 'min:6|confirmed']);
             $data['contrasena'] = Hash::make($request->password);
         }
+
         $usuario->update($data);
-        $request->session()->put('usuario.nombre', $request->nombre);
+
         return redirect()->route('admin.dashboard', ['tab' => 'perfil'])->with('success', 'Perfil actualizado.');
+    }
+
+    /**
+     * Crea una solicitud de corrección para un campo sensible propio.
+     * No modifica el usuario: queda 'pendiente' hasta que OTRO administrador
+     * la apruebe desde el tab de Usuarios (ver aprobarCorreccion/rechazarCorreccion).
+     */
+    public function solicitarCorreccionPerfil(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'required|accepted',
+        ]);
+
+        $idUsuario = $request->session()->get('usuario.idUsuario');
+        $usuario   = Usuario::findOrFail($idUsuario);
+        $soporte   = $this->guardarSoporte($request);
+
+        try {
+            CorreccionDatos::create([
+                'idUsuario'      => $idUsuario,
+                'idSolicitante'  => $idUsuario, // solicita sobre sus propios datos
+                'campo'          => $request->campo,
+                'valorAnterior'  => (string) $usuario->{$request->campo},
+                'valorNuevo'     => $request->valorNuevo,
+                'justificacion'  => $request->justificacion,
+                'estado'         => 'pendiente',
+                'soporteRuta'    => $soporte['ruta'],
+                'soporteMime'    => $soporte['mime'],
+                'soporteHash'    => $soporte['hash'],
+                'consentimiento' => true,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($soporte['ruta']); // evita huérfanos si el trigger rechaza el insert
+            // Captura el mensaje del trigger tg_evitar_correccion_duplicada
+            return back()->with('error', 'Ya tienes una solicitud pendiente para ese campo. Espera su resolución.');
+        }
+
+        return redirect()->route('admin.dashboard', ['tab' => 'perfil'])->with('correccion_ok', true);
+    }
+
+    /**
+     * Un administrador solicita corregir un campo sensible de OTRO usuario
+     * (donante, asistente o incluso otro admin). No aplica el cambio: solo
+     * queda registrado como pendiente. Quien la solicita NO podrá aprobarla
+     * (ver aprobarCorreccion), aunque los datos no sean los suyos.
+     */
+    public function solicitarCorreccionUsuario(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'required|accepted',
+        ]);
+
+        $idSolicitante = $request->session()->get('usuario.idUsuario');
+        $usuarioObjetivo = Usuario::findOrFail($id);
+        $soporte = $this->guardarSoporte($request);
+
+        try {
+            CorreccionDatos::create([
+                'idUsuario'      => $usuarioObjetivo->idUsuario,
+                'idSolicitante'  => $idSolicitante,
+                'campo'          => $request->campo,
+                'valorAnterior'  => (string) $usuarioObjetivo->{$request->campo},
+                'valorNuevo'     => $request->valorNuevo,
+                'justificacion'  => $request->justificacion,
+                'estado'         => 'pendiente',
+                'soporteRuta'    => $soporte['ruta'],
+                'soporteMime'    => $soporte['mime'],
+                'soporteHash'    => $soporte['hash'],
+                'consentimiento' => true,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($soporte['ruta']);
+            return back()->with('error', 'Ese usuario ya tiene una solicitud pendiente para ese campo. Espera su resolución.');
+        }
+
+        return redirect()->route('admin.dashboard', ['tab' => 'usuarios'])
+            ->with('success', "Solicitud de corrección enviada para {$usuarioObjetivo->nombre}. Quedará pendiente de aprobación por otro administrador.");
+    }
+
+    /**
+     * Aprueba una solicitud de corrección y aplica el cambio real al usuario.
+     * Nunca puede aprobarla quien la solicitó (doble control), sin importar
+     * si los datos corregidos son suyos o de otra persona.
+     */
+    public function aprobarCorreccion(Request $request, int $id): RedirectResponse
+    {
+        $idAprobador = $request->session()->get('usuario.idUsuario');
+        $correccion  = CorreccionDatos::findOrFail($id);
+
+        if ($correccion->estado !== 'pendiente') {
+            return back()->with('error', 'Esta solicitud ya fue resuelta anteriormente.');
+        }
+        if ($correccion->idSolicitante === $idAprobador) {
+            return back()->with('error', 'No puedes aprobar una solicitud de corrección que tú mismo pediste. Debe hacerlo otro administrador.');
+        }
+
+        $valor = trim($correccion->valorNuevo);
+
+        switch ($correccion->campo) {
+            case 'numDocumento':
+                if (!ctype_digit($valor)) {
+                    return back()->with('error', 'El número de documento propuesto no es válido (solo dígitos).');
+                }
+                if (Usuario::where('numDocumento', $valor)->where('idUsuario', '!=', $correccion->idUsuario)->exists()) {
+                    return back()->with('error', 'Ese número de documento ya está registrado por otro usuario.');
+                }
+                break;
+            case 'tipoDocumento':
+                if (!in_array($valor, ['CC', 'TI', 'CE', 'PEP'])) {
+                    return back()->with('error', 'Tipo de documento propuesto no es válido.');
+                }
+                break;
+            case 'fechaNacimiento':
+                if (!strtotime($valor)) {
+                    return back()->with('error', 'La fecha de nacimiento propuesta no es válida.');
+                }
+                break;
+            case 'nombre':
+                if (mb_strlen($valor) < 3) {
+                    return back()->with('error', 'El nombre propuesto debe tener al menos 3 caracteres.');
+                }
+                break;
+        }
+
+        Usuario::findOrFail($correccion->idUsuario)->update([$correccion->campo => $valor]);
+
+        $correccion->update([
+            'estado'          => 'aprobada',
+            'idAprobador'     => $idAprobador,
+            'fechaResolucion' => now(),
+        ]);
+
+        $this->purgarSoporte($correccion); // el documento de identidad ya cumplió su propósito, no se conserva
+
+        return redirect()->route('admin.dashboard', ['tab' => 'usuarios'])->with('success', 'Corrección aprobada y aplicada al usuario.');
+    }
+
+    /**
+     * Guarda el soporte (foto/PDF del documento) en disco PRIVADO, nunca público
+     * ni por correo. Solo se referencia por ruta + hash de integridad en la BD.
+     */
+    private function guardarSoporte(Request $request): array
+    {
+        $archivo = $request->file('soporte');
+        $ruta    = $archivo->store('correcciones-soportes', 'local');
+        return [
+            'ruta' => $ruta,
+            'mime' => $archivo->getClientMimeType(),
+            'hash' => hash_file('sha256', $archivo->getRealPath()),
+        ];
+    }
+
+    /**
+     * Borra físicamente el soporte una vez la corrección fue resuelta
+     * (aprobada o rechazada). Principio de minimización/retención limitada.
+     */
+    private function purgarSoporte(CorreccionDatos $correccion): void
+    {
+        if ($correccion->soporteRuta) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($correccion->soporteRuta);
+            $correccion->update(['soporteRuta' => null, 'soporteMime' => null]);
+        }
+    }
+
+    /**
+     * Muestra el soporte SOLO a un administrador distinto de quien solicitó
+     * la corrección, y deja rastro en logs de quién lo consultó y cuándo
+     * (accountability / responsabilidad demostrada, Ley 1581).
+     */
+    public function verSoporte(Request $request, int $id)
+    {
+        $idAdmin    = $request->session()->get('usuario.idUsuario');
+        $correccion = CorreccionDatos::findOrFail($id);
+
+        if ($correccion->idSolicitante === $idAdmin) {
+            abort(403, 'No puedes ver el soporte de una solicitud que tú mismo hiciste.');
+        }
+        if (!$correccion->soporteRuta || !\Illuminate\Support\Facades\Storage::disk('local')->exists($correccion->soporteRuta)) {
+            abort(404, 'El soporte ya no está disponible (fue purgado o la solicitud ya se resolvió).');
+        }
+
+        \Illuminate\Support\Facades\Log::info('Consulta de soporte de corrección', [
+            'idCorreccion' => $id, 'idAdminConsulta' => $idAdmin, 'fecha' => now(),
+        ]);
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->response(
+            $correccion->soporteRuta,
+            null,
+            ['Content-Disposition' => 'inline; filename="soporte-correccion-' . $id . '.' . ($correccion->soporteMime === 'application/pdf' ? 'pdf' : 'jpg') . '"']
+        );
+    }
+
+    public function rechazarCorreccion(Request $request, int $id): RedirectResponse
+    {
+        $idAprobador = $request->session()->get('usuario.idUsuario');
+        $correccion  = CorreccionDatos::findOrFail($id);
+
+        if ($correccion->estado !== 'pendiente') {
+            return back()->with('error', 'Esta solicitud ya fue resuelta anteriormente.');
+        }
+
+        $request->validate(['motivo' => 'nullable|max:300']);
+
+        $correccion->update([
+            'estado'                => 'rechazada',
+            'idAprobador'           => $idAprobador,
+            'fechaResolucion'       => now(),
+            'observacionResolucion' => $request->input('motivo'),
+        ]);
+
+        $this->purgarSoporte($correccion);
+
+        return redirect()->route('admin.dashboard', ['tab' => 'usuarios'])->with('success', 'Corrección rechazada.');
     }
 
     // ── CATEGORÍAS ────────────────────────────────────────────────────────────
@@ -227,18 +461,31 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
     public function crearCategoria(Request $request): RedirectResponse
     {
         $request->validate([
-            'nombre_categoria' => 'required|min:3|regex:/^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+$/u|unique:categoria,nombre',
-        ], ['nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.']);
-        Categoria::create(['nombre' => $request->nombre_categoria, 'idUsuario' => $request->session()->get('usuario.idUsuario')]);
+            'nombre_categoria' => 'required|min:3|max:100|regex:/^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+$/u|unique:categoria,nombre',
+        ], [
+            'nombre_categoria.unique' => 'Ya existe una categoría con este nombre. Verifica antes de crear una nueva.',
+            'nombre_categoria.regex'  => 'Solo se permiten letras, espacios, guiones y paréntesis.',
+        ]);
+
+        Categoria::create([
+            'nombre'    => trim($request->nombre_categoria),
+            'idUsuario' => $request->session()->get('usuario.idUsuario'),
+        ]);
+
         return redirect()->route('admin.dashboard', ['tab' => 'categorias'])->with('success', 'Categoría creada.');
     }
 
     public function editarCategoria(Request $request, int $id): RedirectResponse
     {
         $request->validate([
-            'nombre_categoria' => "required|min:3|regex:/^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+$/u|unique:categoria,nombre,$id,idCategoria",
-        ], ['nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.']);
-        Categoria::findOrFail($id)->update(['nombre' => $request->nombre_categoria]);
+            'nombre_categoria' => "required|min:3|max:100|regex:/^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+$/u|unique:categoria,nombre,$id,idCategoria",
+        ], [
+            'nombre_categoria.unique' => 'Ya existe una categoría con este nombre. Verifica antes de guardar.',
+            'nombre_categoria.regex'  => 'Solo se permiten letras, espacios, guiones y paréntesis.',
+        ]);
+
+        Categoria::findOrFail($id)->update(['nombre' => trim($request->nombre_categoria)]);
+
         return redirect()->route('admin.dashboard', ['tab' => 'categorias'])->with('success', 'Categoría actualizada.');
     }
 
@@ -253,13 +500,16 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
     public function crearEvento(Request $request): RedirectResponse
     {
         $request->validate([
-            'nombre_evento'  => 'required|min:3',
+            'nombre_evento'  => 'required|min:3|max:150',
             'estado_evento'  => 'required|in:activo,inactivo',
-            'fecha_entrega'  => 'required|date',
-            'lugar_entrega'  => 'required|min:3',
-            'titulo_pub'     => 'required|min:3',
-            'contenido_pub'  => 'required|min:10',
+            'fecha_entrega'  => 'required|date|after_or_equal:today',
+            'lugar_entrega'  => 'required|min:3|max:255',
+            'titulo_pub'     => 'required|min:3|max:200',
+            'contenido_pub'  => 'required|min:10|max:500',
+        ], [
+            'fecha_entrega.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.',
         ]);
+
         DB::transaction(function () use ($request) {
             $evento = Evento::create(['Nombre' => $request->nombre_evento, 'estado' => $request->estado_evento]);
             ProgramadorEventos::create(['idEvento' => $evento->idEvento, 'FechaEntrega' => $request->fecha_entrega, 'Lugar' => $request->lugar_entrega]);
@@ -277,7 +527,15 @@ $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])
 
     public function editarEvento(Request $request, int $id): RedirectResponse
     {
-        $request->validate(['titulo_pub' => 'required', 'contenido_pub' => 'required', 'nombre_evento' => 'required']);
+        $request->validate([
+            'nombre_evento'  => 'required|min:3|max:150',
+            'titulo_pub'     => 'required|min:3|max:200',
+            'contenido_pub'  => 'required|min:10|max:500',
+            'fecha_entrega'  => 'required|date|after_or_equal:today',
+            'lugar_entrega'  => 'required|min:3|max:255',
+        ], [
+            'fecha_entrega.after_or_equal' => 'No se pueden reprogramar eventos con fechas pasadas.',
+        ]);
 
         DB::transaction(function () use ($request, $id) {
             $evento = Evento::findOrFail($id);

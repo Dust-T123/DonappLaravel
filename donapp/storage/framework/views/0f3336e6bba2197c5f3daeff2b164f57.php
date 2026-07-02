@@ -1,27 +1,26 @@
-@extends('layouts.app')
-@section('title', 'DONAPP — Mi Panel')
-@section('styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/usuario_style.css') }}">
+<?php $__env->startSection('title', 'DONAPP — Mi Panel'); ?>
+<?php $__env->startSection('styles'); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('assets/css/usuario_style.css')); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="sidebar">
     <div class="sidebar-logo">
-        <a href="{{ route('home') }}"><img src="{{ asset('assets/uploads/Red-Logo.png') }}" alt="Donapp" onerror="this.style.display='none'"></a>
+        <a href="<?php echo e(route('home')); ?>"><img src="<?php echo e(asset('assets/uploads/Red-Logo.png')); ?>" alt="Donapp" onerror="this.style.display='none'"></a>
         <span class="sidebar-role">Donante / Solicitante</span>
-        <div class="sidebar-username">{{ $usuario->nombre }}</div>
+        <div class="sidebar-username"><?php echo e($usuario->nombre); ?></div>
     </div>
     <ul class="nav-menu">
-        <li><a href="?tab=inicio"      class="nav-link {{ $tabActivo==='inicio'      ? 'active' : '' }}"><i class="fa-solid fa-house"></i><span> Inicio</span></a></li>
-        <li><a href="?tab=donaciones"  class="nav-link {{ $tabActivo==='donaciones'  ? 'active' : '' }}"><i class="fa-solid fa-box-open"></i><span> Mis Donaciones</span></a></li>
-        <li><a href="?tab=solicitudes" class="nav-link {{ $tabActivo==='solicitudes' ? 'active' : '' }}"><i class="fa-solid fa-clipboard-list"></i><span> Mis Solicitudes</span></a></li>
-        <li><a href="?tab=eventos"     class="nav-link {{ $tabActivo==='eventos'     ? 'active' : '' }}"><i class="fa-solid fa-calendar-days"></i><span> Eventos</span></a></li>
-        <li><a href="?tab=perfil"      class="nav-link {{ $tabActivo==='perfil'      ? 'active' : '' }}"><i class="fa-solid fa-user-gear"></i><span> Mi Perfil</span></a></li>
+        <li><a href="?tab=inicio"      class="nav-link <?php echo e($tabActivo==='inicio'      ? 'active' : ''); ?>"><i class="fa-solid fa-house"></i><span> Inicio</span></a></li>
+        <li><a href="?tab=donaciones"  class="nav-link <?php echo e($tabActivo==='donaciones'  ? 'active' : ''); ?>"><i class="fa-solid fa-box-open"></i><span> Mis Donaciones</span></a></li>
+        <li><a href="?tab=solicitudes" class="nav-link <?php echo e($tabActivo==='solicitudes' ? 'active' : ''); ?>"><i class="fa-solid fa-clipboard-list"></i><span> Mis Solicitudes</span></a></li>
+        <li><a href="?tab=eventos"     class="nav-link <?php echo e($tabActivo==='eventos'     ? 'active' : ''); ?>"><i class="fa-solid fa-calendar-days"></i><span> Eventos</span></a></li>
+        <li><a href="?tab=perfil"      class="nav-link <?php echo e($tabActivo==='perfil'      ? 'active' : ''); ?>"><i class="fa-solid fa-user-gear"></i><span> Mi Perfil</span></a></li>
         <li><hr></li>
         <li>
-            <form action="{{ route('logout') }}" method="POST" style="margin:0">
-                @csrf
+            <form action="<?php echo e(route('logout')); ?>" method="POST" style="margin:0">
+                <?php echo csrf_field(); ?>
                 <button type="submit" class="nav-link logout">
                     <i class="fa-solid fa-power-off"></i><span> Cerrar Sesión</span>
                 </button>
@@ -32,10 +31,10 @@
 
 <main class="main-content">
 
-    {{-- ══ INICIO ══ --}}
-    <div id="inicio" class="tab-pane {{ $tabActivo==='inicio' ? 'active' : '' }}">
+    
+    <div id="inicio" class="tab-pane <?php echo e($tabActivo==='inicio' ? 'active' : ''); ?>">
         <div class="welcome-hero">
-            <h1>Hola, {{ explode(' ', $usuario->nombre)[0] }} 👋</h1>
+            <h1>Hola, <?php echo e(explode(' ', $usuario->nombre)[0]); ?> 👋</h1>
             <p>Bienvenido a tu panel personal de DONAPP — aquí puedes gestionar tus donaciones y solicitudes.</p>
             <div class="hero-actions">
                 <button class="btn-hero btn-hero-primary" onclick="abrirModal('modalNuevaDonacion')">
@@ -50,69 +49,69 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon orange"><i class="fa-solid fa-box-open"></i></div>
-                <div><h3>{{ $stats['total_don'] }}</h3><p>Total donaciones</p></div>
+                <div><h3><?php echo e($stats['total_don']); ?></h3><p>Total donaciones</p></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
-                <div><h3>{{ $stats['don_pendientes'] }}</h3><p>Donaciones pendientes</p></div>
+                <div><h3><?php echo e($stats['don_pendientes']); ?></h3><p>Donaciones pendientes</p></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-                <div><h3>{{ $stats['don_aprobadas'] }}</h3><p>Donaciones aprobadas</p></div>
+                <div><h3><?php echo e($stats['don_aprobadas']); ?></h3><p>Donaciones aprobadas</p></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon blue"><i class="fa-solid fa-clipboard-list"></i></div>
-                <div><h3>{{ $stats['total_sol'] }}</h3><p>Total solicitudes</p></div>
+                <div><h3><?php echo e($stats['total_sol']); ?></h3><p>Total solicitudes</p></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-                <div><h3>{{ $stats['sol_pendientes'] }}</h3><p>Solicitudes pendientes</p></div>
+                <div><h3><?php echo e($stats['sol_pendientes']); ?></h3><p>Solicitudes pendientes</p></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon green"><i class="fa-solid fa-handshake-angle"></i></div>
-                <div><h3>{{ $stats['sol_aprobadas'] }}</h3><p>Solicitudes aprobadas</p></div>
+                <div><h3><?php echo e($stats['sol_aprobadas']); ?></h3><p>Solicitudes aprobadas</p></div>
             </div>
         </div>
 
-        @if($eventos->isNotEmpty())
+        <?php if($eventos->isNotEmpty()): ?>
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-calendar-star"></i> Próximos Eventos Activos</div>
             <div class="eventos-grid">
-                @foreach($eventos->take(3) as $ev)
+                <?php $__currentLoopData = $eventos->take(3); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ev): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="event-card">
-                    @if($ev->publicacion?->imagen)
-                        <img src="{{ $ev->publicacion->imagenBase64() }}" alt="Evento" class="event-card-img">
-                    @else
+                    <?php if($ev->publicacion?->imagen): ?>
+                        <img src="<?php echo e($ev->publicacion->imagenBase64()); ?>" alt="Evento" class="event-card-img">
+                    <?php else: ?>
                         <div class="event-card-noimg"><i class="fa-solid fa-calendar-days"></i></div>
-                    @endif
+                    <?php endif; ?>
                     <div class="event-card-body">
-                        <h3>{{ $ev->Nombre }}</h3>
-                        @if($ev->publicacion?->contenido)
-                        <p>{{ mb_substr($ev->publicacion->contenido, 0, 100) }}...</p>
-                        @endif
+                        <h3><?php echo e($ev->Nombre); ?></h3>
+                        <?php if($ev->publicacion?->contenido): ?>
+                        <p><?php echo e(mb_substr($ev->publicacion->contenido, 0, 100)); ?>...</p>
+                        <?php endif; ?>
                         <div class="event-meta">
-                            @if($ev->programacion?->FechaEntrega)
-                            <span><i class="fa-solid fa-calendar"></i> {{ \Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d/m/Y') }}</span>
-                            @endif
-                            @if($ev->programacion?->Lugar)
-                            <span><i class="fa-solid fa-location-dot"></i> {{ mb_substr($ev->programacion->Lugar, 0, 40) }}</span>
-                            @endif
+                            <?php if($ev->programacion?->FechaEntrega): ?>
+                            <span><i class="fa-solid fa-calendar"></i> <?php echo e(\Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d/m/Y')); ?></span>
+                            <?php endif; ?>
+                            <?php if($ev->programacion?->Lugar): ?>
+                            <span><i class="fa-solid fa-location-dot"></i> <?php echo e(mb_substr($ev->programacion->Lugar, 0, 40)); ?></span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
-            @if($eventos->count() > 3)
+            <?php if($eventos->count() > 3): ?>
             <div class="eventos-more">
                 <a href="?tab=eventos" class="btn btn-secondary btn-sm">Ver todos los eventos <i class="fa-solid fa-arrow-right"></i></a>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 
-    {{-- ══ DONACIONES ══ --}}
-    <div id="donaciones" class="tab-pane {{ $tabActivo==='donaciones' ? 'active' : '' }}">
+    
+    <div id="donaciones" class="tab-pane <?php echo e($tabActivo==='donaciones' ? 'active' : ''); ?>">
         <div class="section-header">
             <div>
                 <h2 class="page-title">Mis Donaciones</h2>
@@ -123,40 +122,40 @@
             </button>
         </div>
         <div class="card">
-            <form method="GET" action="{{ route('usuario.dashboard') }}" class="filter-bar" id="formFiltrosDon">
+            <form method="GET" action="<?php echo e(route('usuario.dashboard')); ?>" class="filter-bar" id="formFiltrosDon">
                 <input type="hidden" name="tab" value="donaciones">
                 <input type="text" name="don_buscar" class="form-input search-input"
-                       placeholder="🔍 Buscar por descripción..." value="{{ request('don_buscar') }}" maxlength="200"
+                       placeholder="🔍 Buscar por descripción..." value="<?php echo e(request('don_buscar')); ?>" maxlength="200"
                        onchange="this.form.submit()">
                 <select name="don_estado" class="form-input" onchange="this.form.submit()">
                     <option value="">Todos los estados</option>
-                    <option value="pendiente" {{ request('don_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
-                    <option value="aprobada"  {{ request('don_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
-                    <option value="rechazada" {{ request('don_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="pendiente" <?php echo e(request('don_estado')=='pendiente' ? 'selected' : ''); ?>>Pendiente</option>
+                    <option value="aprobada"  <?php echo e(request('don_estado')=='aprobada'  ? 'selected' : ''); ?>>Aprobada</option>
+                    <option value="rechazada" <?php echo e(request('don_estado')=='rechazada' ? 'selected' : ''); ?>>Rechazada</option>
                 </select>
                 <select name="don_cat" class="form-input" onchange="this.form.submit()">
                     <option value="0">Todas las categorías</option>
-                    @foreach($categorias as $cat)
-                        <option value="{{ $cat->idCategoria }}" {{ request('don_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($cat->idCategoria); ?>" <?php echo e(request('don_cat')==$cat->idCategoria ? 'selected' : ''); ?>><?php echo e($cat->nombre); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
-                <a href="{{ route('usuario.dashboard', ['tab'=>'donaciones']) }}" class="btn btn-secondary btn-sm">
+                <a href="<?php echo e(route('usuario.dashboard', ['tab'=>'donaciones'])); ?>" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-xmark"></i> Limpiar filtros
                 </a>
             </form>
 
-            @if($misDonaciones->isEmpty())
+            <?php if($misDonaciones->isEmpty()): ?>
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fa-solid fa-box-open"></i></div>
                 <h3>Sin donaciones registradas</h3>
-                <p>Aún no has realizado ninguna donación{{ request('don_estado') || request('don_cat') ? ' con estos filtros' : '' }}.</p>
-                @if(!request('don_estado') && !request('don_cat'))
+                <p>Aún no has realizado ninguna donación<?php echo e(request('don_estado') || request('don_cat') ? ' con estos filtros' : ''); ?>.</p>
+                <?php if(!request('don_estado') && !request('don_cat')): ?>
                 <button class="btn btn-primary" onclick="abrirModal('modalNuevaDonacion')">
                     <i class="fa-solid fa-plus"></i> Hacer mi primera donación
                 </button>
-                @endif
+                <?php endif; ?>
             </div>
-            @else
+            <?php else: ?>
             <div class="table-wrap">
                 <table>
                     <thead><tr>
@@ -164,44 +163,44 @@
                         <th>Estado</th><th>Fecha</th><th>Observación</th><th>Acciones</th>
                     </tr></thead>
                     <tbody>
-                        @foreach($misDonaciones as $d)
-                        @php $dJson = json_encode(['idDonacion'=>$d->idDonacion,'descripcion'=>$d->descripcion,'categoria'=>$d->categoria?->nombre??'—','stock'=>$d->stock,'estado'=>$d->estado,'fechaCreacion'=>$d->donantes->first()?->pivot->FechaCreacion??'','observacion'=>$d->observacion??'','imagen'=>$d->imagenBase64()??'','idCategoria'=>$d->idCategoria]); @endphp
+                        <?php $__currentLoopData = $misDonaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php $dJson = json_encode(['idDonacion'=>$d->idDonacion,'descripcion'=>$d->descripcion,'categoria'=>$d->categoria?->nombre??'—','stock'=>$d->stock,'estado'=>$d->estado,'fechaCreacion'=>$d->donantes->first()?->pivot->FechaCreacion??'','observacion'=>$d->observacion??'','imagen'=>$d->imagenBase64()??'','idCategoria'=>$d->idCategoria]); ?>
                         <tr>
-                            <td>{{ $d->idDonacion }}</td>
-                            <td class="td-desc" title="{{ $d->descripcion }}">{{ $d->descripcion }}</td>
-                            <td class="td-cat">{{ $d->categoria?->nombre ?? '—' }}</td>
-                            <td>{{ $d->stock }}</td>
-                            <td><span class="badge estado-{{ $d->estado }}">{{ $d->estado }}</span></td>
-                            <td>{{ $d->donantes->first()?->pivot->FechaCreacion ? \Carbon\Carbon::parse($d->donantes->first()->pivot->FechaCreacion)->format('d/m/Y') : '—' }}</td>
-                            <td class="td-obs">{{ $d->observacion ?? '—' }}</td>
+                            <td><?php echo e($d->idDonacion); ?></td>
+                            <td class="td-desc" title="<?php echo e($d->descripcion); ?>"><?php echo e($d->descripcion); ?></td>
+                            <td class="td-cat"><?php echo e($d->categoria?->nombre ?? '—'); ?></td>
+                            <td><?php echo e($d->stock); ?></td>
+                            <td><span class="badge estado-<?php echo e($d->estado); ?>"><?php echo e($d->estado); ?></span></td>
+                            <td><?php echo e($d->donantes->first()?->pivot->FechaCreacion ? \Carbon\Carbon::parse($d->donantes->first()->pivot->FechaCreacion)->format('d/m/Y') : '—'); ?></td>
+                            <td class="td-obs"><?php echo e($d->observacion ?? '—'); ?></td>
                             <td class="td-actions">
-                                <button onclick='verDetalleDonacion({{ $dJson }})' class="btn btn-sm btn-secondary" title="Ver detalle">
+                                <button onclick='verDetalleDonacion(<?php echo e($dJson); ?>)' class="btn btn-sm btn-secondary" title="Ver detalle">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
-                                @if($d->estado === 'pendiente')
-                                <button onclick='abrirModalEditarDonacion({{ $dJson }})' class="btn btn-sm btn-primary" title="Editar">
+                                <?php if($d->estado === 'pendiente'): ?>
+                                <button onclick='abrirModalEditarDonacion(<?php echo e($dJson); ?>)' class="btn btn-sm btn-primary" title="Editar">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <form action="{{ route('usuario.donaciones.cancelar', $d->idDonacion) }}" method="POST" style="display:inline"
+                                <form action="<?php echo e(route('usuario.donaciones.cancelar', $d->idDonacion)); ?>" method="POST" style="display:inline"
                                       onsubmit="return confirm('¿Cancelar esta donación? Esta acción no se puede deshacer.')">
-                                    @csrf @method('DELETE')
+                                    <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                                     <button type="submit" class="btn btn-sm btn-danger" title="Cancelar">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 </form>
-                                @endif
+                                <?php endif; ?>
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
-    {{-- ══ SOLICITUDES ══ --}}
-    <div id="solicitudes" class="tab-pane {{ $tabActivo==='solicitudes' ? 'active' : '' }}">
+    
+    <div id="solicitudes" class="tab-pane <?php echo e($tabActivo==='solicitudes' ? 'active' : ''); ?>">
         <div class="section-header">
             <div>
                 <h2 class="page-title">Mis Solicitudes</h2>
@@ -212,40 +211,40 @@
             </button>
         </div>
         <div class="card">
-            <form method="GET" action="{{ route('usuario.dashboard') }}" class="filter-bar" id="formFiltrosSol">
+            <form method="GET" action="<?php echo e(route('usuario.dashboard')); ?>" class="filter-bar" id="formFiltrosSol">
                 <input type="hidden" name="tab" value="solicitudes">
                 <input type="text" name="sol_buscar" class="form-input search-input"
-                       placeholder="🔍 Buscar por descripción..." value="{{ request('sol_buscar') }}" maxlength="200"
+                       placeholder="🔍 Buscar por descripción..." value="<?php echo e(request('sol_buscar')); ?>" maxlength="200"
                        onchange="this.form.submit()">
                 <select name="sol_estado" class="form-input" onchange="this.form.submit()">
                     <option value="">Todos los estados</option>
-                    <option value="pendiente" {{ request('sol_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
-                    <option value="aprobada"  {{ request('sol_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
-                    <option value="rechazada" {{ request('sol_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="pendiente" <?php echo e(request('sol_estado')=='pendiente' ? 'selected' : ''); ?>>Pendiente</option>
+                    <option value="aprobada"  <?php echo e(request('sol_estado')=='aprobada'  ? 'selected' : ''); ?>>Aprobada</option>
+                    <option value="rechazada" <?php echo e(request('sol_estado')=='rechazada' ? 'selected' : ''); ?>>Rechazada</option>
                 </select>
                 <select name="sol_cat" class="form-input" onchange="this.form.submit()">
                     <option value="0">Todas las categorías</option>
-                    @foreach($categorias as $cat)
-                        <option value="{{ $cat->idCategoria }}" {{ request('sol_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($cat->idCategoria); ?>" <?php echo e(request('sol_cat')==$cat->idCategoria ? 'selected' : ''); ?>><?php echo e($cat->nombre); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
-                <a href="{{ route('usuario.dashboard', ['tab'=>'solicitudes']) }}" class="btn btn-secondary btn-sm">
+                <a href="<?php echo e(route('usuario.dashboard', ['tab'=>'solicitudes'])); ?>" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-xmark"></i> Limpiar filtros
                 </a>
             </form>
 
-            @if($misSolicitudes->isEmpty())
+            <?php if($misSolicitudes->isEmpty()): ?>
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fa-solid fa-clipboard-list"></i></div>
                 <h3>Sin solicitudes registradas</h3>
-                <p>No tienes solicitudes{{ request('sol_estado') || request('sol_cat') ? ' con estos filtros' : ' registradas aún' }}.</p>
-                @if(!request('sol_estado') && !request('sol_cat'))
+                <p>No tienes solicitudes<?php echo e(request('sol_estado') || request('sol_cat') ? ' con estos filtros' : ' registradas aún'); ?>.</p>
+                <?php if(!request('sol_estado') && !request('sol_cat')): ?>
                 <button class="btn btn-primary" onclick="abrirModal('modalNuevaSolicitud')">
                     <i class="fa-solid fa-plus"></i> Hacer mi primera solicitud
                 </button>
-                @endif
+                <?php endif; ?>
             </div>
-            @else
+            <?php else: ?>
             <div class="table-wrap">
                 <table>
                     <thead><tr>
@@ -253,48 +252,48 @@
                         <th>Estado</th><th>Fecha</th><th>Observación</th><th>Acciones</th>
                     </tr></thead>
                     <tbody>
-                        @foreach($misSolicitudes as $s)
-                        @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>'','observacion'=>$s->observacion??'','imagen'=>$s->imagenBase64()??'','idCategoria'=>$s->idCategoria]); @endphp
+                        <?php $__currentLoopData = $misSolicitudes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>'','observacion'=>$s->observacion??'','imagen'=>$s->imagenBase64()??'','idCategoria'=>$s->idCategoria]); ?>
                         <tr>
-                            <td>{{ $s->idSolicitud }}</td>
-                            <td class="td-desc">{{ $s->descripcion }}</td>
-                            <td class="td-cat">{{ $s->categoria?->nombre ?? '—' }}</td>
-                            <td><span class="badge estado-{{ $s->estado }}">{{ $s->estado }}</span></td>
+                            <td><?php echo e($s->idSolicitud); ?></td>
+                            <td class="td-desc"><?php echo e($s->descripcion); ?></td>
+                            <td class="td-cat"><?php echo e($s->categoria?->nombre ?? '—'); ?></td>
+                            <td><span class="badge estado-<?php echo e($s->estado); ?>"><?php echo e($s->estado); ?></span></td>
                             <td>—</td>
-                            <td class="td-obs">{{ $s->observacion ?? '—' }}</td>
+                            <td class="td-obs"><?php echo e($s->observacion ?? '—'); ?></td>
                             <td class="td-actions">
-                                <button onclick='verDetalleSolicitud({{ $sJson }})' class="btn btn-sm btn-secondary" title="Ver detalle">
+                                <button onclick='verDetalleSolicitud(<?php echo e($sJson); ?>)' class="btn btn-sm btn-secondary" title="Ver detalle">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
-                                @if($s->estado === 'pendiente')
-                                <button onclick='abrirModalEditarSolicitud({{ $sJson }})' class="btn btn-sm btn-primary" title="Editar">
+                                <?php if($s->estado === 'pendiente'): ?>
+                                <button onclick='abrirModalEditarSolicitud(<?php echo e($sJson); ?>)' class="btn btn-sm btn-primary" title="Editar">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <form action="{{ route('usuario.solicitudes.cancelar', $s->idSolicitud) }}" method="POST" style="display:inline"
+                                <form action="<?php echo e(route('usuario.solicitudes.cancelar', $s->idSolicitud)); ?>" method="POST" style="display:inline"
                                       onsubmit="return confirm('¿Cancelar esta solicitud? Esta acción no se puede deshacer.')">
-                                    @csrf @method('DELETE')
+                                    <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                                     <button type="submit" class="btn btn-sm btn-danger" title="Cancelar">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 </form>
-                                @endif
+                                <?php endif; ?>
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
-    {{-- ══ EVENTOS ══ --}}
-    <div id="eventos" class="tab-pane {{ $tabActivo==='eventos' ? 'active' : '' }}">
+    
+    <div id="eventos" class="tab-pane <?php echo e($tabActivo==='eventos' ? 'active' : ''); ?>">
         <div>
             <h2 class="page-title">Eventos de la Fundación</h2>
             <p class="page-subtitle">Conoce las jornadas de entrega y actividades publicadas.</p>
         </div>
-        @if($eventos->isEmpty())
+        <?php if($eventos->isEmpty()): ?>
         <div class="card">
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fa-solid fa-calendar-xmark"></i></div>
@@ -302,59 +301,59 @@
                 <p>Por el momento no hay eventos publicados. ¡Vuelve pronto!</p>
             </div>
         </div>
-        @else
+        <?php else: ?>
         <div class="eventos-grid">
-            @foreach($eventos as $ev)
+            <?php $__currentLoopData = $eventos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ev): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <div class="event-card">
-                @if($ev->publicacion?->imagen)
-                    <img src="{{ $ev->publicacion->imagenBase64() }}" alt="Evento" class="event-card-img">
-                @else
+                <?php if($ev->publicacion?->imagen): ?>
+                    <img src="<?php echo e($ev->publicacion->imagenBase64()); ?>" alt="Evento" class="event-card-img">
+                <?php else: ?>
                     <div class="event-card-noimg"><i class="fa-solid fa-calendar-days"></i></div>
-                @endif
+                <?php endif; ?>
                 <div class="event-card-body">
-                    <h3>{{ $ev->Nombre }}</h3>
-                    @if($ev->publicacion?->titulo)
-                    <p class="event-pub-title">{{ $ev->publicacion->titulo }}</p>
-                    @endif
-                    @if($ev->publicacion?->contenido)
-                    <p>{{ $ev->publicacion->contenido }}</p>
-                    @endif
+                    <h3><?php echo e($ev->Nombre); ?></h3>
+                    <?php if($ev->publicacion?->titulo): ?>
+                    <p class="event-pub-title"><?php echo e($ev->publicacion->titulo); ?></p>
+                    <?php endif; ?>
+                    <?php if($ev->publicacion?->contenido): ?>
+                    <p><?php echo e($ev->publicacion->contenido); ?></p>
+                    <?php endif; ?>
                     <div class="event-meta">
-                        @if($ev->programacion?->FechaEntrega)
-                        <span><i class="fa-solid fa-calendar-check"></i> {{ \Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d \d\e F \d\e Y') }}</span>
-                        @endif
-                        @if($ev->programacion?->Lugar)
-                        <span><i class="fa-solid fa-location-dot"></i> {{ $ev->programacion->Lugar }}</span>
-                        @endif
-                        @if($ev->publicacion?->fechaPublicacion)
-                        <span><i class="fa-solid fa-clock"></i> Publicado: {{ \Carbon\Carbon::parse($ev->publicacion->fechaPublicacion)->format('d/m/Y') }}</span>
-                        @endif
+                        <?php if($ev->programacion?->FechaEntrega): ?>
+                        <span><i class="fa-solid fa-calendar-check"></i> <?php echo e(\Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d \d\e F \d\e Y')); ?></span>
+                        <?php endif; ?>
+                        <?php if($ev->programacion?->Lugar): ?>
+                        <span><i class="fa-solid fa-location-dot"></i> <?php echo e($ev->programacion->Lugar); ?></span>
+                        <?php endif; ?>
+                        <?php if($ev->publicacion?->fechaPublicacion): ?>
+                        <span><i class="fa-solid fa-clock"></i> Publicado: <?php echo e(\Carbon\Carbon::parse($ev->publicacion->fechaPublicacion)->format('d/m/Y')); ?></span>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 
-    {{-- ══ PERFIL ══ --}}
-    <div id="perfil" class="tab-pane {{ $tabActivo==='perfil' ? 'active' : '' }}">
+    
+    <div id="perfil" class="tab-pane <?php echo e($tabActivo==='perfil' ? 'active' : ''); ?>">
         <h2 class="page-title">Mi Perfil</h2>
         <p class="page-subtitle">Actualiza tu información personal y contraseña.</p>
 
-        @if(session('correccion_ok'))
+        <?php if(session('correccion_ok')): ?>
         <div class="alert-box alert-success">
             <i class="fa-solid fa-circle-check"></i> Tu solicitud de corrección fue enviada y quedará pendiente de aprobación por un administrador.
         </div>
-        @endif
+        <?php endif; ?>
 
         <div class="card card-perfil">
             <div class="perfil-header">
-                <div class="perfil-avatar">{{ mb_strtoupper(mb_substr($usuario->nombre, 0, 1)) }}</div>
+                <div class="perfil-avatar"><?php echo e(mb_strtoupper(mb_substr($usuario->nombre, 0, 1))); ?></div>
                 <div class="perfil-header-info">
-                    <h2>{{ $usuario->nombre }}</h2>
-                    <p><i class="fa-solid fa-envelope"></i> {{ $usuario->email }}</p>
-                    <p class="perfil-estado"><span class="badge estado-{{ $usuario->estado }}">{{ $usuario->estado }}</span></p>
+                    <h2><?php echo e($usuario->nombre); ?></h2>
+                    <p><i class="fa-solid fa-envelope"></i> <?php echo e($usuario->email); ?></p>
+                    <p class="perfil-estado"><span class="badge estado-<?php echo e($usuario->estado); ?>"><?php echo e($usuario->estado); ?></span></p>
                 </div>
             </div>
 
@@ -372,25 +371,25 @@
                 </button>
             </div>
 
-            <form action="{{ route('usuario.perfil.update') }}" method="POST" id="formPerfil">
-                @csrf @method('PUT')
+            <form action="<?php echo e(route('usuario.perfil.update')); ?>" method="POST" id="formPerfil">
+                <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
                 <div class="form-grid-2">
                     <div class="form-group"><label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
-                        <input type="text" class="form-input" value="{{ $usuario->nombre }}" disabled readonly></div>
+                        <input type="text" class="form-input" value="<?php echo e($usuario->nombre); ?>" disabled readonly></div>
                     <div class="form-group"><label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
-                        <input type="text" class="form-input" value="{{ $usuario->tipoDocumento }}" disabled readonly></div>
+                        <input type="text" class="form-input" value="<?php echo e($usuario->tipoDocumento); ?>" disabled readonly></div>
                     <div class="form-group"><label>Número de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
-                        <input type="text" class="form-input" value="{{ $usuario->numDocumento }}" disabled readonly></div>
+                        <input type="text" class="form-input" value="<?php echo e($usuario->numDocumento); ?>" disabled readonly></div>
                     <div class="form-group"><label>Fecha de nacimiento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
-                        <input type="date" class="form-input" value="{{ $usuario->fechaNacimiento }}" disabled readonly></div>
+                        <input type="date" class="form-input" value="<?php echo e($usuario->fechaNacimiento); ?>" disabled readonly></div>
                     <div class="form-group"><label>Teléfono *</label>
-                        <input type="tel" name="telefono" class="form-input" value="{{ $usuario->telefono }}" required pattern="[0-9]{10}" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
+                        <input type="tel" name="telefono" class="form-input" value="<?php echo e($usuario->telefono); ?>" required pattern="[0-9]{10}" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
                     <div class="form-group"><label>Dirección *</label>
-                        <input type="text" name="direccion" class="form-input" value="{{ $usuario->direccion }}" required minlength="5" maxlength="255"></div>
+                        <input type="text" name="direccion" class="form-input" value="<?php echo e($usuario->direccion); ?>" required minlength="5" maxlength="255"></div>
                     <div class="form-group form-group-full"><label>Email *</label>
-                        <input type="email" name="email" class="form-input" value="{{ $usuario->email }}" required maxlength="150"></div>
+                        <input type="email" name="email" class="form-input" value="<?php echo e($usuario->email); ?>" required maxlength="150"></div>
                     <div class="form-group form-group-full"><label>Necesidad <small class="text-muted">(describe tu situación)</small></label>
-                        <textarea name="necesidad" class="form-input" maxlength="255" rows="3" placeholder="Describe brevemente tu necesidad...">{{ $usuario->necesidad }}</textarea></div>
+                        <textarea name="necesidad" class="form-input" maxlength="255" rows="3" placeholder="Describe brevemente tu necesidad..."><?php echo e($usuario->necesidad); ?></textarea></div>
                 </div>
                 <hr class="section-divider">
                 <p class="hint-text"><i class="fa-solid fa-lock"></i> Cambiar contraseña — deja vacío para no cambiar</p>
@@ -399,7 +398,7 @@
                         <input type="password" name="password_actual" id="perfil_pass_actual" class="form-input" maxlength="30" placeholder="Ingresa tu contraseña actual para confirmar el cambio">
                         <button type="button" class="eye-btn" onclick="togglePass('perfil_pass_actual','eye_actual')"><i class="fa-solid fa-eye" id="eye_actual"></i></button>
                     </div>
-                    <p class="hint-text">¿No recuerdas tu contraseña? <a href="{{ route('recuperar') }}" class="link-primary">Recupérala aquí</a></p>
+                    <p class="hint-text">¿No recuerdas tu contraseña? <a href="<?php echo e(route('recuperar')); ?>" class="link-primary">Recupérala aquí</a></p>
                 </div>
                 <div class="form-grid-2">
                     <div class="form-group"><label>Nueva contraseña</label>
@@ -420,7 +419,7 @@
             </form>
         </div>
 
-        @if(isset($misCorrecciones) && $misCorrecciones->isNotEmpty())
+        <?php if(isset($misCorrecciones) && $misCorrecciones->isNotEmpty()): ?>
         <div class="card" style="border-left:4px solid #b8860b;">
             <h3 style="margin-top:0;"><i class="fa-solid fa-user-shield"></i> Mis solicitudes de corrección de datos</h3>
             <p class="text-muted" style="margin-top:-6px;">Solo un administrador puede aprobarlas o rechazarlas. Aquí solo consultas su estado.</p>
@@ -428,37 +427,37 @@
                 <table>
                     <thead><tr><th>Campo</th><th>Valor propuesto</th><th>Estado</th><th>Fecha</th></tr></thead>
                     <tbody>
-                        @foreach($misCorrecciones as $c)
+                        <?php $__currentLoopData = $misCorrecciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr>
-                            <td>{{ $c->campo }}</td>
-                            <td><strong>{{ $c->valorNuevo }}</strong></td>
-                            <td><span class="badge estado-{{ $c->estado }}">{{ $c->estado }}</span></td>
-                            <td>{{ $c->fechaSolicitud?->format('d/m/Y') ?? '—' }}</td>
+                            <td><?php echo e($c->campo); ?></td>
+                            <td><strong><?php echo e($c->valorNuevo); ?></strong></td>
+                            <td><span class="badge estado-<?php echo e($c->estado); ?>"><?php echo e($c->estado); ?></span></td>
+                            <td><?php echo e($c->fechaSolicitud?->format('d/m/Y') ?? '—'); ?></td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 
 </main>
 
 
-{{-- MODALES --}}
+
 <div id="modalNuevaDonacion" class="modal"><div class="modal-content">
     <div class="modal-header"><h3><i class="fa-solid fa-box-open"></i> Registrar Donación</h3>
         <button class="modal-close" onclick="cerrarModal('modalNuevaDonacion')"><i class="fa-solid fa-xmark"></i></button></div>
-    <form action="{{ route('usuario.donaciones.crear') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+    <form action="<?php echo e(route('usuario.donaciones.crear')); ?>" method="POST" enctype="multipart/form-data">
+        <?php echo csrf_field(); ?>
         <div class="form-group"><label>Descripción del artículo *</label>
             <textarea name="descripcion" class="form-input" required maxlength="200" rows="3" placeholder="Describe el artículo que deseas donar..."></textarea></div>
         <div class="form-grid-2">
             <div class="form-group"><label>Categoría *</label>
                 <select name="idCategoria" class="form-input" required>
                     <option value="">Selecciona una categoría</option>
-                    @foreach($categorias as $cat)<option value="{{ $cat->idCategoria }}">{{ $cat->nombre }}</option>@endforeach
+                    <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($cat->idCategoria); ?>"><?php echo e($cat->nombre); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select></div>
             <div class="form-group"><label>Cantidad / Stock *</label>
                 <input type="number" name="stock" class="form-input" required min="1" max="9999" value="1"></div>
@@ -478,7 +477,7 @@
     <div class="modal-header"><h3><i class="fa-solid fa-pen"></i> Editar Donación</h3>
         <button class="modal-close" onclick="cerrarModal('modalEditarDonacion')"><i class="fa-solid fa-xmark"></i></button></div>
     <form id="formEditarDonacion" method="POST" enctype="multipart/form-data">
-        @csrf @method('PUT')
+        <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
         <input type="hidden" name="idDonacion" id="ed_id">
         <div class="form-group"><label>Descripción *</label>
             <textarea name="descripcion" id="ed_desc" class="form-input" required maxlength="200" rows="3"></textarea></div>
@@ -486,7 +485,7 @@
             <div class="form-group"><label>Categoría *</label>
                 <select name="idCategoria" id="ed_cat" class="form-input" required>
                     <option value="">Selecciona una categoría</option>
-                    @foreach($categorias as $cat)<option value="{{ $cat->idCategoria }}">{{ $cat->nombre }}</option>@endforeach
+                    <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($cat->idCategoria); ?>"><?php echo e($cat->nombre); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select></div>
             <div class="form-group"><label>Stock *</label>
                 <input type="number" name="stock" id="ed_stock" class="form-input" required min="1" max="9999"></div>
@@ -511,14 +510,14 @@
 <div id="modalNuevaSolicitud" class="modal"><div class="modal-content">
     <div class="modal-header"><h3><i class="fa-solid fa-clipboard-list"></i> Registrar Solicitud</h3>
         <button class="modal-close" onclick="cerrarModal('modalNuevaSolicitud')"><i class="fa-solid fa-xmark"></i></button></div>
-    <form action="{{ route('usuario.solicitudes.crear') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+    <form action="<?php echo e(route('usuario.solicitudes.crear')); ?>" method="POST" enctype="multipart/form-data">
+        <?php echo csrf_field(); ?>
         <div class="form-group"><label>Descripción de la solicitud *</label>
             <textarea name="descripcion" class="form-input" required maxlength="300" rows="3" placeholder="Describe qué necesitas..."></textarea></div>
         <div class="form-group"><label>Categoría *</label>
             <select name="idCategoria" class="form-input" required>
                 <option value="">Selecciona la categoría de tu necesidad</option>
-                @foreach($categorias as $cat)<option value="{{ $cat->idCategoria }}">{{ $cat->nombre }}</option>@endforeach
+                <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($cat->idCategoria); ?>"><?php echo e($cat->nombre); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select></div>
         <div class="form-group"><label>Imagen de soporte <small class="text-muted">(opcional)</small></label>
             <input type="file" name="imagen" class="form-input" accept="image/*" onchange="previewImg(this,'prev_sol')">
@@ -535,14 +534,14 @@
     <div class="modal-header"><h3><i class="fa-solid fa-pen"></i> Editar Solicitud</h3>
         <button class="modal-close" onclick="cerrarModal('modalEditarSolicitud')"><i class="fa-solid fa-xmark"></i></button></div>
     <form id="formEditarSolicitud" method="POST" enctype="multipart/form-data">
-        @csrf @method('PUT')
+        <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
         <input type="hidden" name="idSolicitud" id="es_id">
         <div class="form-group"><label>Descripción *</label>
             <textarea name="descripcion" id="es_desc" class="form-input" required maxlength="300" rows="3"></textarea></div>
         <div class="form-group"><label>Categoría *</label>
             <select name="idCategoria" id="es_cat" class="form-input" required>
                 <option value="">Selecciona una categoría</option>
-                @foreach($categorias as $cat)<option value="{{ $cat->idCategoria }}">{{ $cat->nombre }}</option>@endforeach
+                <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($cat->idCategoria); ?>"><?php echo e($cat->nombre); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select></div>
         <div class="form-group"><label>Nueva imagen <small class="text-muted">(deja vacío para mantener la actual)</small></label>
             <input type="file" name="imagen" class="form-input" accept="image/*" onchange="previewImg(this,'prev_ed_sol')">
@@ -561,15 +560,15 @@
     <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalDetalleSolicitud')">Cerrar</button></div>
 </div></div>
 
-{{-- Solicitar corrección de datos sensibles del propio donante --}}
+
 <div id="modalSolicitarCorreccionPerfil" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3><i class="fa-solid fa-user-shield"></i> Solicitar corrección de datos</h3>
             <button class="modal-close" onclick="cerrarModal('modalSolicitarCorreccionPerfil')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="{{ route('usuario.perfil.solicitarCorreccion') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        <form action="<?php echo e(route('usuario.perfil.solicitarCorreccion')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
             <p class="text-muted" style="margin-top:0;">
                 Esta solicitud quedará <b>pendiente</b> hasta que un administrador la revise y apruebe. No modifica tus datos de inmediato.
             </p>
@@ -611,22 +610,23 @@
     </div>
 </div>
 
-@endsection
-@section('scripts')
-<script src="{{ asset('assets/js/usuario.js') }}"></script>
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('scripts'); ?>
+<script src="<?php echo e(asset('assets/js/usuario.js')); ?>"></script>
 <script>
 // Conectar formularios de edición con rutas Laravel
 const _origEditDon = window.abrirModalEditarDonacion;
 window.abrirModalEditarDonacion = function(d) {
     if(_origEditDon) _origEditDon(d);
-    document.getElementById('formEditarDonacion').action = `{{ url('/usuario/donaciones') }}/${d.idDonacion}`;
+    document.getElementById('formEditarDonacion').action = `<?php echo e(url('/usuario/donaciones')); ?>/${d.idDonacion}`;
     document.getElementById('ed_id').value = d.idDonacion;
 };
 const _origEditSol = window.abrirModalEditarSolicitud;
 window.abrirModalEditarSolicitud = function(s) {
     if(_origEditSol) _origEditSol(s);
-    document.getElementById('formEditarSolicitud').action = `{{ url('/usuario/solicitudes') }}/${s.idSolicitud}`;
+    document.getElementById('formEditarSolicitud').action = `<?php echo e(url('/usuario/solicitudes')); ?>/${s.idSolicitud}`;
     document.getElementById('es_id').value = s.idSolicitud;
 };
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\DonappLaravel\donapp\resources\views/user/dashboard.blade.php ENDPATH**/ ?>

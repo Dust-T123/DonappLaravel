@@ -9,6 +9,7 @@ use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\Publicacion;
 use App\Models\ProgramadorEventos;
+use App\Models\CorreccionDatos;
 use App\Mail\NotificacionEstado;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -67,6 +68,13 @@ class AsisController extends Controller
         $totalClientes    = Usuario::where('rol', 'donante')->count();
         $asisActual       = Usuario::findOrFail($idAsis);
 
+        // Solicitudes de corrección de datos sensibles hechas por este asistente
+        // (propias o de clientes). Solo lectura: la aprobación es exclusiva del admin.
+        $misCorrecciones = CorreccionDatos::with('usuario')
+            ->where('idSolicitante', $idAsis)
+            ->orderByDesc('idCorreccion')
+            ->get();
+
         $donacionesRpt = Donacion::with(['categoria', 'donantes'])->orderByDesc('idDonacion')->get()
     ->map(fn($d) => [
         'idDonacion'    => $d->idDonacion,
@@ -90,7 +98,7 @@ class AsisController extends Controller
     ])->toArray();
     
         return view('asis.dashboard', compact(
-            'clientes', 'categorias', 'donaciones', 'solicitudes', 'eventos', 'asisActual',
+            'clientes', 'categorias', 'donaciones', 'solicitudes', 'eventos', 'asisActual', 'misCorrecciones',
             'totalPendientes', 'totalDonaciones', 'totalSolicitudes',
             'totalAprobadas', 'totalEventos', 'totalClientes',
             'donacionesRpt', 'solicitudesRpt'
@@ -188,15 +196,105 @@ class AsisController extends Controller
 
     public function editarCliente(Request $request, int $id): RedirectResponse
     {
-        $request->validate(['nombre'=>'required|min:3',"email"=>"required|email|unique:usuario,email,$id,idUsuario","numDocumento"=>"required|numeric|unique:usuario,numDocumento,$id,idUsuario",'telefono'=>'required|digits:10']);
+        // nombre / tipoDocumento / numDocumento / fechaNacimiento son datos de
+        // identidad protegidos: el modal de edición los muestra deshabilitados
+        // y SIN atributo "name", por lo que nunca llegan en el request. Solo
+        // se validan y actualizan aquí los campos no sensibles. Para cambiar
+        // un dato sensible existe el flujo aparte solicitarCorreccionCliente().
+        $request->validate([
+            'email'    => "required|email|unique:usuario,email,$id,idUsuario",
+            'telefono' => 'required|digits:10',
+            'direccion'=> 'required|min:5',
+        ]);
         $usuario = Usuario::findOrFail($id);
-        $data = $request->only(['nombre','tipoDocumento','numDocumento','fechaNacimiento','direccion','email','telefono','necesidad','prioridad','observacion_visita']);
+        $data = $request->only(['direccion','email','telefono','necesidad','prioridad','observacion_visita']);
         if ($request->filled('password')) {
             $request->validate(['password'=>'min:6|confirmed']);
             $data['contrasena'] = Hash::make($request->password);
         }
         $usuario->update($data);
         return redirect()->route('asis.dashboard', ['tab' => 'clientes'])->with('success', 'Cliente actualizado correctamente.');
+    }
+
+    // ── CORRECCIÓN DE DATOS SENSIBLES (habeas data) ─────────────────────────────
+
+    /**
+     * Guarda el soporte (foto/PDF del documento de identidad) en disco privado
+     * y calcula su hash SHA-256 para verificar integridad. El archivo NUNCA
+     * se guarda en la base de datos, solo se referencia la ruta.
+     */
+    private function guardarSoporte($file): array
+    {
+        $ruta = $file->store('correcciones', 'local'); // storage/app/correcciones (disco privado)
+        return [
+            'ruta' => $ruta,
+            'mime' => $file->getMimeType(),
+            'hash' => hash_file('sha256', $file->getRealPath()),
+        ];
+    }
+
+    public function solicitarCorreccionCliente(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|min:1|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'accepted',
+        ]);
+
+        $usuario = Usuario::findOrFail($id);
+        $soporte = $this->guardarSoporte($request->file('soporte'));
+
+        CorreccionDatos::create([
+            'idUsuario'      => $usuario->idUsuario,
+            'idSolicitante'  => $request->session()->get('usuario.idUsuario'),
+            'campo'          => $request->campo,
+            'valorAnterior'  => (string) $usuario->{$request->campo},
+            'valorNuevo'     => $request->valorNuevo,
+            'justificacion'  => $request->justificacion,
+            'estado'         => 'pendiente',
+            'soporteRuta'    => $soporte['ruta'],
+            'soporteMime'    => $soporte['mime'],
+            'soporteHash'    => $soporte['hash'],
+            'consentimiento' => 1,
+        ]);
+
+        return redirect()->route('asis.dashboard', ['tab' => 'clientes'])
+            ->with('success', 'Solicitud de corrección enviada. Un administrador la revisará.');
+    }
+
+    public function solicitarCorreccionPerfil(Request $request): RedirectResponse
+    {
+        $idAsis = $request->session()->get('usuario.idUsuario');
+
+        $request->validate([
+            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|min:1|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'accepted',
+        ]);
+
+        $usuario = Usuario::findOrFail($idAsis);
+        $soporte = $this->guardarSoporte($request->file('soporte'));
+
+        CorreccionDatos::create([
+            'idUsuario'      => $usuario->idUsuario,
+            'idSolicitante'  => $idAsis,
+            'campo'          => $request->campo,
+            'valorAnterior'  => (string) $usuario->{$request->campo},
+            'valorNuevo'     => $request->valorNuevo,
+            'justificacion'  => $request->justificacion,
+            'estado'         => 'pendiente',
+            'soporteRuta'    => $soporte['ruta'],
+            'soporteMime'    => $soporte['mime'],
+            'soporteHash'    => $soporte['hash'],
+            'consentimiento' => 1,
+        ]);
+
+        return redirect()->route('asis.dashboard', ['tab' => 'perfil'])
+            ->with('success', 'Solicitud de corrección enviada. Un administrador la revisará.');
     }
 
     // ── PERFIL ────────────────────────────────────────────────────────────────

@@ -1,0 +1,321 @@
+<?php $__env->startSection('title', 'Donapp'); ?>
+<?php $__env->startSection('styles'); ?>
+    <link rel="stylesheet" href="<?php echo e(asset('assets/css/styles.css')); ?>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('content'); ?>
+
+<div id="landing-page" class="page active">
+
+    
+    <section class="hero-video-section">
+        <div class="hero-particles" id="particles-container"></div>
+        <div class="hero-overlay"></div>
+
+        <div class="hero-video-content">
+            <a href="<?php echo e(route('home')); ?>">
+                <img src="<?php echo e(asset('assets/uploads/White-Logo.png')); ?>" alt="Donapp Logo" class="logo-site">
+            </a>
+            <h1 class="hero-title">
+                <span class="title-gradient">Dona</span> lo que no usas,<br>
+                <span class="title-gradient">Recibe</span> lo que necesitas
+            </h1>
+            <p class="hero-subtitle">
+                Conectamos a la comunidad de Ciudad Bolívar a través de donaciones seguras
+                y verificadas para la fundación CES Waldorf.
+            </p>
+            <div class="hero-buttons">
+                <a class="btn btn-primary" href="<?php echo e(route('login')); ?>">Iniciar Sesión</a>
+                <a class="btn btn-secondary" href="<?php echo e(route('registro')); ?>">Registrarse</a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="stat-icon">🎁</span>
+                    <div>
+                        <strong>+<?php echo e($statsDonaciones); ?></strong>
+                        <span>Donaciones</span>
+                    </div>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-icon">👥</span>
+                    <div>
+                        <strong>+<?php echo e($statsUsuarios); ?></strong>
+                        <span>Usuarios</span>
+                    </div>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-icon">📅</span>
+                    <div>
+                        <strong><?php echo e($statsEventos); ?></strong>
+                        <span>Eventos activos</span>
+                    </div>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-icon">📍</span>
+                    <div>
+                        <strong>1</strong>
+                        <span>Punto de entrega</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="landing-container">
+
+        
+        <div class="features-section">
+            <h2 class="section-title">¿Cómo funciona?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-number">01</div>
+                    <h3>Regístrate</h3>
+                    <p>Crea tu cuenta en Donapp y forma parte de la comunidad solidaria de Ciudad Bolívar</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-number">02</div>
+                    <h3>Publica</h3>
+                    <p>Ofrece productos que ya no usas o solicita lo que necesitas a través de la plataforma</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-number">03</div>
+                    <h3>Acércate</h3>
+                    <p>La fundación CES Waldorf gestiona la entrega. Todo se hace en Sierra Morena, Ciudad Bolívar</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-number">04</div>
+                    <h3>Impacta</h3>
+                    <p>Cada donación ayuda a reutilizar y darle una segunda oportunidad a los productos</p>
+                </div>
+            </div>
+        </div>
+
+        
+        <section class="sobre-nosotros-section">
+            <div class="sobre-content">
+                <div class="sobre-text">
+                    <span class="sobre-tag">¿Quiénes somos?</span>
+                    <h2 class="sobre-title">Fundación CES Waldorf</h2>
+                    <p class="sobre-description">
+                        Somos una organización ubicada en <strong>Sierra Morena, Ciudad Bolívar</strong>,
+                        dedicada a promover el desarrollo integral del ser humano a través del arte.
+                        Trabajamos con niños, jóvenes y adultos en la transformación de sus condiciones de vida.
+                    </p>
+                    <div class="sobre-mision-vision">
+                        <div class="mv-card">
+                            <div class="mv-icon"><i class="fa-solid fa-bullseye"></i></div>
+                            <div>
+                                <h4>Misión</h4>
+                                <p>Corporación sin ánimo de lucro que contribuye a la formación de niños, jóvenes y familias en condición de vulnerabilidad, mediante programas educativos, artísticos y culturales que rescaten su individualidad y promuevan el desarrollo solidario y comunitario.</p>
+                            </div>
+                        </div>
+                        <div class="mv-card">
+                            <div class="mv-icon"><i class="fa-solid fa-eye"></i></div>
+                            <div>
+                                <h4>Visión</h4>
+                                <p>Ser una entidad reconocida por su proyección social y estrategias de desarrollo autosostenible, por la dignificación de las condiciones de vida y la protección de los derechos humanos de las comunidades marginales.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="https://www.ceswaldorf.org/" target="_blank" class="btn btn-primary sobre-btn">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        Conoce más sobre nosotros
+                    </a>
+                </div>
+                <div class="sobre-visual">
+                    <div class="sobre-badge-grid">
+                        <div class="sobre-badge">
+                            <i class="fa-solid fa-child-reaching"></i>
+                            <span>Niños y jóvenes</span>
+                        </div>
+                        <div class="sobre-badge">
+                            <i class="fa-solid fa-palette"></i>
+                            <span>Arte y cultura</span>
+                        </div>
+                        <div class="sobre-badge">
+                            <i class="fa-solid fa-heart"></i>
+                            <span>Comunidad</span>
+                        </div>
+                        <div class="sobre-badge">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            <span>Educación</span>
+                        </div>
+                        <div class="sobre-badge sobre-badge-main">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <a href="https://maps.app.goo.gl/vnfgQmNTdWB2v4Yg7" class="link-sin-subrayado">
+                                <span>Sierra Morena<br>Ciudad Bolívar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <div class="publicaciones-section">
+            <h2 class="section-title">Próximos Eventos</h2>
+            <p class="section-subtitle">Entérate de las próximas actividades de la fundación</p>
+
+            <?php if($publicaciones->isEmpty()): ?>
+                <div class="publicaciones-empty">
+                    <i class="fa-regular fa-calendar-xmark"></i>
+                    <p>No hay publicaciones disponibles por el momento.</p>
+                </div>
+            <?php else: ?>
+                <div class="publicaciones-grid">
+                    <?php $__currentLoopData = $publicaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
+                            $estado     = strtolower($pub->evento->estado ?? 'activo');
+                            $esActivo   = $estado === 'activo';
+                            $datosJson  = json_encode([
+                                'titulo'    => $pub->titulo,
+                                'contenido' => $pub->contenido,
+                                'evento'    => $pub->evento->Nombre ?? '',
+                                'fecha'     => \Carbon\Carbon::parse($pub->fechaPublicacion)->format('d/m/Y'),
+                                'entrega'   => $pub->evento?->programacion?->FechaEntrega
+                                               ? \Carbon\Carbon::parse($pub->evento->programacion->FechaEntrega)->format('d/m/Y')
+                                               : 'Pendiente',
+                                'lugar'     => $pub->evento?->programacion?->Lugar ?? 'No especificado',
+                                'autor'     => $pub->autor?->nombre ?? '',
+                                'estado'    => $pub->evento->estado ?? 'activo',
+                                'imagen'    => $pub->imagenBase64() ?? '',
+                            ], JSON_HEX_QUOT | JSON_HEX_APOS);
+                        ?>
+
+                        <div class="publicacion-card <?php echo e($esActivo ? 'publicacion-activa' : 'publicacion-inactiva'); ?>"
+                             onclick='verDetallePublicacion(<?php echo e($datosJson); ?>)'>
+
+                            <div class="publicacion-header">
+                                <span class="publicacion-badge <?php echo e($esActivo ? 'badge-activo' : 'badge-inactivo'); ?>">
+                                    <?php echo e($esActivo ? 'Activo' : 'Finalizado'); ?>
+
+                                </span>
+                                <span class="publicacion-fecha">
+                                    <i class="fa-regular fa-calendar"></i>
+                                    <?php echo e(\Carbon\Carbon::parse($pub->fechaPublicacion)->format('d/m/Y')); ?>
+
+                                </span>
+                            </div>
+
+                            <div class="publicacion-body">
+                                <h3 class="publicacion-titulo"><?php echo e($pub->titulo); ?></h3>
+                                <p class="publicacion-evento">
+                                    <i class="fa-solid fa-tag"></i>
+                                    <?php echo e($pub->evento->Nombre ?? ''); ?>
+
+                                </p>
+                                <p class="publicacion-contenido"><?php echo e(Str::limit($pub->contenido, 100)); ?></p>
+                            </div>
+
+                            <div class="publicacion-footer">
+                                <p class="publicacion-autor">Ver detalles <i class="fa-solid fa-plus"></i></p>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+    </div>
+</div>
+
+
+<div id="modal-detalle-publicacion" class="modal">
+    <div class="modal-content detalle-publicacion-content">
+        <button class="modal-close" onclick="closeModal('modal-detalle-publicacion')">&times;</button>
+
+        <div id="detalle-header"></div>
+
+        <div class="detalle-body">
+            <h2 id="detalle-titulo" class="hero-title"></h2>
+            <p id="detalle-evento" class="publicacion-evento"></p>
+
+            <div class="detalle-info-box">
+                <h3><i class="fa-solid fa-circle-info"></i> Descripción</h3>
+                <p id="detalle-contenido"></p>
+            </div>
+
+            <div class="detalle-grid">
+                <div class="detalle-item">
+                    <i class="fa-solid fa-truck"></i>
+                    <div>
+                        <strong>Fecha Programada</strong>
+                        <p id="detalle-entrega"></p>
+                    </div>
+                </div>
+                <div class="detalle-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <strong>Lugar</strong>
+                        <p id="detalle-lugar"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detalle-footer">
+            <p id="detalle-autor"></p>
+            <button class="btn btn-primary btn-full" onclick="closeModal('modal-detalle-publicacion')">Entendido</button>
+        </div>
+    </div>
+</div>
+
+
+<footer class="main-footer">
+    <div class="footer-content">
+        <div class="footer-brand">
+            <a href="<?php echo e(route('home')); ?>">
+                <img src="<?php echo e(asset('assets/uploads/Red-Logo.png')); ?>" alt="Donapp" class="footer-logo">
+            </a>
+            <p>Plataforma de donaciones para la comunidad de Ciudad Bolívar.</p>
+        </div>
+        <div class="footer-info">
+            <p>
+                <i class="fa-solid fa-location-dot"></i>
+                <a href="https://maps.app.goo.gl/vnfgQmNTdWB2v4Yg7">
+                    Transversal 73 H Bis # 75B - 46 Sur, Sierra Morena V Sector, Ciudad Bolívar, Bogotá
+                </a>
+            </p>
+            <p><i class="fa-solid fa-building"></i> Corporación Educativa y Social WALDORF</p>
+            <a href="https://www.ceswaldorf.org/" target="_blank">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> ceswaldorf.org
+            </a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; <?php echo e(date('Y')); ?> Donapp – Corporación Educatica y Social WALDORF. Todos los derechos reservados.</p>
+    </div>
+</footer>
+
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('scripts'); ?>
+<script src="<?php echo e(asset('assets/js/index.js')); ?>"></script>
+<script>
+    // Partículas animadas para el hero
+    (function() {
+        const container = document.getElementById('particles-container');
+        if (!container) return;
+        for (let i = 0; i < 40; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.cssText = `
+                left: ${Math.random() * 100}%;
+                top: ${Math.random() * 100}%;
+                width: ${4 + Math.random() * 8}px;
+                height: ${4 + Math.random() * 8}px;
+                animation-delay: ${Math.random() * 8}s;
+                animation-duration: ${6 + Math.random() * 10}s;
+                opacity: ${0.1 + Math.random() * 0.4};
+            `;
+            container.appendChild(p);
+        }
+    })();
+</script>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\DonappLaravel\donapp\resources\views/public/index.blade.php ENDPATH**/ ?>
