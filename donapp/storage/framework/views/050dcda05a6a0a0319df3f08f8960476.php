@@ -62,6 +62,14 @@
                     </div>
                 </div>
             </div>
+
+            
+            <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-top:10px;opacity:0.75">
+                <span id="stats-live-indicator" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 12px;font-size:0.78rem;color:#fff;cursor:default;transition:all 0.3s" title="Estadísticas actualizándose cada 30 segundos">
+                    <i class="fa-solid fa-circle" style="font-size:0.5rem;color:#4ade80;animation:pulse 2s infinite"></i>
+                    Actualizando en tiempo real
+                </span>
+            </div>
         </div>
     </section>
 
@@ -157,67 +165,28 @@
 
         
         <div class="publicaciones-section">
-            <h2 class="section-title">Próximos Eventos</h2>
-            <p class="section-subtitle">Entérate de las próximas actividades de la fundación</p>
-
-            <?php if($publicaciones->isEmpty()): ?>
-                <div class="publicaciones-empty">
-                    <i class="fa-regular fa-calendar-xmark"></i>
-                    <p>No hay publicaciones disponibles por el momento.</p>
+            <div style="text-align:center;margin-bottom:0.5rem">
+                <h2 class="section-title" style="margin-bottom:0.25rem">Próximos Eventos</h2>
+                <p class="section-subtitle" style="margin-bottom:1rem">
+                    Entérate de las próximas actividades de la fundación
+                </p>
+                <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(211,47,47,0.07);border:1px solid rgba(211,47,47,0.18);border-radius:20px;padding:5px 14px;font-size:0.82rem;color:var(--color-primary);font-weight:600;margin-bottom:1.5rem">
+                    <i class="fa-solid fa-circle" style="font-size:0.5rem;color:#22c55e;animation:pulse 2s infinite"></i>
+                    Datos en tiempo real
+                    <span id="eventos-api-count" style="display:none;background:var(--color-primary);color:#fff;border-radius:20px;padding:1px 8px;font-size:0.75rem;margin-left:4px"></span>
                 </div>
-            <?php else: ?>
-                <div class="publicaciones-grid">
-                    <?php $__currentLoopData = $publicaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <?php
-                            $estado     = strtolower($pub->evento->estado ?? 'activo');
-                            $esActivo   = $estado === 'activo';
-                            $datosJson  = json_encode([
-                                'titulo'    => $pub->titulo,
-                                'contenido' => $pub->contenido,
-                                'evento'    => $pub->evento->Nombre ?? '',
-                                'fecha'     => \Carbon\Carbon::parse($pub->fechaPublicacion)->format('d/m/Y'),
-                                'entrega'   => $pub->evento?->programacion?->FechaEntrega
-                                               ? \Carbon\Carbon::parse($pub->evento->programacion->FechaEntrega)->format('d/m/Y')
-                                               : 'Pendiente',
-                                'lugar'     => $pub->evento?->programacion?->Lugar ?? 'No especificado',
-                                'autor'     => $pub->autor?->nombre ?? '',
-                                'estado'    => $pub->evento->estado ?? 'activo',
-                                'imagen'    => $pub->imagenBase64() ?? '',
-                            ], JSON_HEX_QUOT | JSON_HEX_APOS);
-                        ?>
+            </div>
 
-                        <div class="publicacion-card <?php echo e($esActivo ? 'publicacion-activa' : 'publicacion-inactiva'); ?>"
-                             onclick='verDetallePublicacion(<?php echo e($datosJson); ?>)'>
-
-                            <div class="publicacion-header">
-                                <span class="publicacion-badge <?php echo e($esActivo ? 'badge-activo' : 'badge-inactivo'); ?>">
-                                    <?php echo e($esActivo ? 'Activo' : 'Finalizado'); ?>
-
-                                </span>
-                                <span class="publicacion-fecha">
-                                    <i class="fa-regular fa-calendar"></i>
-                                    <?php echo e(\Carbon\Carbon::parse($pub->fechaPublicacion)->format('d/m/Y')); ?>
-
-                                </span>
-                            </div>
-
-                            <div class="publicacion-body">
-                                <h3 class="publicacion-titulo"><?php echo e($pub->titulo); ?></h3>
-                                <p class="publicacion-evento">
-                                    <i class="fa-solid fa-tag"></i>
-                                    <?php echo e($pub->evento->Nombre ?? ''); ?>
-
-                                </p>
-                                <p class="publicacion-contenido"><?php echo e(Str::limit($pub->contenido, 100)); ?></p>
-                            </div>
-
-                            <div class="publicacion-footer">
-                                <p class="publicacion-autor">Ver detalles <i class="fa-solid fa-plus"></i></p>
-                            </div>
-                        </div>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            
+            <div id="eventos-api-spinner" style="display:flex;justify-content:center;padding:3rem 0">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--color-text-muted)">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--color-primary)"></i>
+                    <span style="font-size:0.9rem">Cargando eventos...</span>
                 </div>
-            <?php endif; ?>
+            </div>
+
+            
+            <div id="eventos-api-grid" class="publicaciones-grid"></div>
         </div>
 
     </div>
