@@ -11,6 +11,7 @@ use App\Models\Publicacion;
 use App\Models\ProgramadorEventos;
 use App\Models\CorreccionDatos;
 use App\Mail\NotificacionEstado;
+use App\Mail\NotificacionCorreccion;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -365,7 +366,8 @@ class AdminController extends Controller
                 break;
         }
 
-        Usuario::findOrFail($correccion->idUsuario)->update([$correccion->campo => $valor]);
+        $usuarioAfectado = Usuario::findOrFail($correccion->idUsuario);
+        $usuarioAfectado->update([$correccion->campo => $valor]);
 
         $correccion->update([
             'estado'          => 'aprobada',
@@ -374,6 +376,12 @@ class AdminController extends Controller
         ]);
 
         $this->purgarSoporte($correccion); // el documento de identidad ya cumplió su propósito, no se conserva
+
+        try {
+            Mail::to($usuarioAfectado->email)->send(new NotificacionCorreccion(
+                $usuarioAfectado->nombre, $correccion->campo, 'aprobada', $valor
+            ));
+        } catch (\Exception) {}
 
         return redirect()->route('admin.dashboard', ['tab' => 'usuarios'])->with('success', 'Corrección aprobada y aplicada al usuario.');
     }
@@ -452,6 +460,15 @@ class AdminController extends Controller
         ]);
 
         $this->purgarSoporte($correccion);
+
+        $usuarioAfectado = $correccion->usuario;
+        if ($usuarioAfectado) {
+            try {
+                Mail::to($usuarioAfectado->email)->send(new NotificacionCorreccion(
+                    $usuarioAfectado->nombre, $correccion->campo, 'rechazada', '', $request->input('motivo', '')
+                ));
+            } catch (\Exception) {}
+        }
 
         return redirect()->route('admin.dashboard', ['tab' => 'usuarios'])->with('success', 'Corrección rechazada.');
     }

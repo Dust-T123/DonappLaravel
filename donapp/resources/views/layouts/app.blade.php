@@ -32,7 +32,7 @@
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: '{{ addslashes($errors->first('msg') ?? $errors->first()) }}',
+            text: '{{ addslashes($errors->first('msg') ?: $errors->first()) }}',
             confirmButtonColor: '#df0b0b',
             confirmButtonText: 'ENTENDIDO',
         });

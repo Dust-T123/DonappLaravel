@@ -127,7 +127,7 @@ class AsisController extends Controller
 
     public function crearEvento(Request $request): RedirectResponse
     {
-        $request->validate(['nombre_evento'=>'required|min:3','fecha_entrega'=>'required|date','lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10']);
+        $request->validate(['nombre_evento'=>'required|min:3','fecha_entrega'=>'required|date|after_or_equal:today','lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10'], ['fecha_entrega.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.']);
         DB::transaction(function () use ($request) {
             $evento = Evento::create(['Nombre'=>$request->nombre_evento,'estado'=>$request->estado_evento??'activo']);
             ProgramadorEventos::create(['idEvento'=>$evento->idEvento,'FechaEntrega'=>$request->fecha_entrega,'Lugar'=>$request->lugar_entrega]);
@@ -139,7 +139,7 @@ class AsisController extends Controller
 
     public function editarEvento(Request $request, int $id): RedirectResponse
     {
-        $request->validate(['titulo_pub'=>'required','contenido_pub'=>'required','nombre_evento'=>'required']);
+        $request->validate(['titulo_pub'=>'required','contenido_pub'=>'required','nombre_evento'=>'required','fecha_entrega'=>'required|date|after_or_equal:today','lugar_entrega'=>'required|min:3'], ['fecha_entrega.after_or_equal' => 'No se pueden reprogramar eventos con fechas pasadas.']);
         DB::transaction(function () use ($request, $id) {
             $evento = Evento::findOrFail($id);
             $evento->update(['Nombre'=>$request->nombre_evento,'estado'=>$request->estado_evento??$evento->estado]);

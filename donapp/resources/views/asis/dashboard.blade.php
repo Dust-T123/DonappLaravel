@@ -174,15 +174,15 @@
                                 <td><span class="badge estado-{{ $cli->estado }}">{{ $cli->estado }}</span></td>
                                 <td class="td-actions">
                                     {{-- Botón 1: Ver detalles --}}
-                                    <button onclick='abrirModalVerDonante({{ json_encode($cli) }})' class="btn btn-sm btn-primary" title="Ver detalles">
+                                    <button onclick='abrirModalVerDonante({{ json_encode($cli, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})' class="btn btn-sm btn-primary" title="Ver detalles">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
                                     {{-- Botón 2: Editar --}}
-                                    <button onclick='abrirModalEditarDonante({{ json_encode($cli) }})' class="btn btn-sm btn-warning" title="Editar">
+                                    <button onclick='abrirModalEditarDonante({{ json_encode($cli, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})' class="btn btn-sm btn-warning" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
                                     {{-- Botón 3: Ver donaciones y solicitudes del cliente --}}
-                                    <button onclick='abrirModalHistorialCliente({{ json_encode(["idUsuario"=>$cli->idUsuario,"nombre"=>$cli->nombre]) }})'
+                                    <button onclick='abrirModalHistorialCliente({{ json_encode(["idUsuario"=>$cli->idUsuario,"nombre"=>$cli->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                             class="btn btn-sm btn-success" title="Ver donaciones y solicitudes">
                                         <i class="fa-solid fa-list-check"></i>
                                     </button>
@@ -253,7 +253,7 @@
     "stock"         => $d->stock,
     "fechaCreacion" => $d->donantes->first()?->pivot?->FechaCreacion,
     "imagen"        => $d->imagenBase64(),
-]) }})'
+], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
         class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
                             </td>
                         </tr>
@@ -309,7 +309,7 @@
     "categoria"     => $s->categoria?->nombre,
     "fechaCreacion" => $s->fechaCreacion,
     "imagen"        => $s->imagenBase64(),
-]) }})'
+], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
         class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
                         </tr>
                         @empty
@@ -359,7 +359,7 @@ $evJson = json_encode([
     'imagen'       => $ev->publicacion?->imagen
                         ? 'data:image/jpeg;base64,'.base64_encode($ev->publicacion->imagen)
                         : null,
-]);
+], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
 @endphp
                         <tr>
                             <td>{{ $ev->idEvento }}</td>
@@ -409,7 +409,7 @@ $evJson = json_encode([
                             <td>{{ $cat->idCategoria }}</td>
                             <td>{{ $cat->nombre }}</td>
                             <td class="td-actions">
-                                <button onclick='abrirModalEditarCategoria({{ json_encode(["idCategoria"=>$cat->idCategoria,"nombre"=>$cat->nombre]) }})' class="btn btn-sm btn-warning"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick='abrirModalEditarCategoria({{ json_encode(["idCategoria"=>$cat->idCategoria,"nombre"=>$cat->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})' class="btn btn-sm btn-warning"><i class="fa-solid fa-pen"></i></button>
                             </td>
                         </tr>
                         @empty

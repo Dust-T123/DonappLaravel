@@ -165,7 +165,7 @@
                     </tr></thead>
                     <tbody>
                         @foreach($misDonaciones as $d)
-                        @php $dJson = json_encode(['idDonacion'=>$d->idDonacion,'descripcion'=>$d->descripcion,'categoria'=>$d->categoria?->nombre??'—','stock'=>$d->stock,'estado'=>$d->estado,'fechaCreacion'=>$d->donantes->first()?->pivot->FechaCreacion??'','observacion'=>$d->observacion??'','imagen'=>$d->imagenBase64()??'','idCategoria'=>$d->idCategoria]); @endphp
+                        @php $dJson = json_encode(['idDonacion'=>$d->idDonacion,'descripcion'=>$d->descripcion,'categoria'=>$d->categoria?->nombre??'—','stock'=>$d->stock,'estado'=>$d->estado,'fechaCreacion'=>$d->donantes->first()?->pivot->FechaCreacion??'','observacion'=>$d->observacion??'','imagen'=>$d->imagenBase64()??'','idCategoria'=>$d->idCategoria], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); @endphp
                         <tr>
                             <td>{{ $d->idDonacion }}</td>
                             <td class="td-desc" title="{{ $d->descripcion }}">{{ $d->descripcion }}</td>
@@ -254,7 +254,7 @@
                     </tr></thead>
                     <tbody>
                         @foreach($misSolicitudes as $s)
-                        @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>'','observacion'=>$s->observacion??'','imagen'=>$s->imagenBase64()??'','idCategoria'=>$s->idCategoria]); @endphp
+                        @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>$s->fechaCreacion??'','observacion'=>$s->observacion??'','imagen'=>$s->imagenBase64()??'','idCategoria'=>$s->idCategoria], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); @endphp
                         <tr>
                             <td>{{ $s->idSolicitud }}</td>
                             <td class="td-desc">{{ $s->descripcion }}</td>

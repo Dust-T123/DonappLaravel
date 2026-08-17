@@ -224,7 +224,7 @@
                                 <td><span class="badge {{ $u->rol }}">{{ $u->rol }}</span></td>
                                 <td><span class="badge estado-{{ $u->estado }}">{{ $u->estado }}</span></td>
                                 <td class="td-actions">
-                                    <button onclick='abrirModalEditarUsuario({{ json_encode($u) }})'
+                                    <button onclick='abrirModalEditarUsuario({{ json_encode($u, JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                             class="btn btn-sm btn-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
@@ -287,7 +287,7 @@
                                 <td>{{ $cat->donaciones_count }}</td>
                                 <td>{{ $cat->solicitudes_count }}</td>
                                 <td class="td-actions">
-                                    <button onclick='abrirModalEditarCategoria({{ json_encode(["idCategoria"=>$cat->idCategoria,"nombre"=>$cat->nombre]) }})'
+                                    <button onclick='abrirModalEditarCategoria({{ json_encode(["idCategoria"=>$cat->idCategoria,"nombre"=>$cat->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                             class="btn btn-sm btn-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
@@ -372,7 +372,7 @@
                                     <td>{{ $d->donantes->first()?->nombre ?? '—' }}</td>
                                     <td>{{ $d->observacion ?? '—' }}</td>
                                     <td>
-                                        <button onclick='abrirModalDonacion({{ json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock]) }})'
+                                        <button onclick='abrirModalDonacion({{ json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                                 class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
@@ -437,7 +437,7 @@
                                     </td>
                                     <td>{{ $s->observacion ?? '—' }}</td>
                                     <td>
-                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre]) }})'
+                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                                 class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
@@ -494,7 +494,7 @@
                                     'contenido_pub'   => $ev->publicacion?->contenido ?? '',
                                     'idPublicacion'   => $ev->publicacion?->idPublicacion ?? '',
                                     'imagen'          => $ev->publicacion?->imagenBase64() ?? '',
-                                ]);
+                                ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
                             @endphp
                             <tr>
                                 <td>{{ $ev->idEvento }}</td>
