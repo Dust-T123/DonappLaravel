@@ -158,6 +158,7 @@ class UserController extends Controller
             'idSolicitante' => $id,
             'idCategoria'   => $request->idCategoria,
             'idGestor'      => $id,
+            'fechaCreacion' => now()->format('Y-m-d'),
         ]);
 
         return redirect()->route('usuario.dashboard', ['tab' => 'solicitudes'])
