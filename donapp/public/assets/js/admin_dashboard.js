@@ -204,10 +204,11 @@ function abrirModalEditarEvento(ev) {
     document.getElementById('edit_idEvento').value = ev.idEvento;
     document.getElementById('edit_nombre').value = ev.Nombre;
     document.getElementById('edit_estado').value = ev.estado;
-    document.getElementById('edit_fecha_entrega').value = ev.FechaEntrega || '';
-    document.getElementById('edit_lugar_entrega').value = ev.Lugar || '';
-    document.getElementById('edit_titulo_pub').value = ev.titulo || '';
-    document.getElementById('edit_contenido_pub').value = ev.contenido || '';
+    document.getElementById('edit_fecha_inicio').value = ev.fecha_inicio || '';
+    document.getElementById('edit_fecha_fin').value = ev.fecha_fin || '';
+    document.getElementById('edit_lugar_entrega').value = ev.lugar_entrega || '';
+    document.getElementById('edit_titulo_pub').value = ev.titulo_pub || '';
+    document.getElementById('edit_contenido_pub').value = ev.contenido_pub || '';
 
     const preview = document.getElementById('edit_img_preview');
     const wrap = document.getElementById('edit_img_preview_wrap');

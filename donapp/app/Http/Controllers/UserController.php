@@ -8,6 +8,7 @@ use App\Models\Solicitud;
 use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\CorreccionDatos;
+use App\Models\VisitaDomiciliaria;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -31,19 +32,24 @@ class UserController extends Controller
             ->when($request->don_buscar, fn($q, $s) => $q->where('descripcion', 'like', "%$s%"))
             ->when($request->don_estado, fn($q, $e) => $q->where('estado', $e))
             ->when($request->don_cat,    fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
-            ->orderByDesc('idDonacion')->get();
+            ->when($request->don_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->don_sort === 'za', fn($q) => $q->orderByDesc('descripcion'))
+            ->when(!$request->don_sort, fn($q) => $q->orderByDesc('idDonacion'))
+            ->get();
 
         $misSolicitudes = Solicitud::with('categoria')
             ->where('idSolicitante', $id)
             ->when($request->sol_buscar, fn($q, $s) => $q->where('descripcion', 'like', "%$s%"))
             ->when($request->sol_estado, fn($q, $e) => $q->where('estado', $e))
             ->when($request->sol_cat,    fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
-            ->orderByDesc('idSolicitud')->get();
+            ->when($request->sol_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->sol_sort === 'za', fn($q) => $q->orderByDesc('descripcion'))
+            ->when(!$request->sol_sort, fn($q) => $q->orderByDesc('idSolicitud'))
+            ->get();
 
         $categorias = Categoria::orderBy('nombre')->get();
 
-        $eventos = Evento::with(['publicacion', 'programacion'])
-            ->where('estado', 'activo')
+        $eventos = Evento::whereIn('estado', ['publicado', 'en_curso'])
             ->orderByDesc('idEvento')->get();
 
         $usuario = Usuario::findOrFail($id);
@@ -52,6 +58,12 @@ class UserController extends Controller
         // Solo lectura: la aprobación es exclusiva del admin.
         $misCorrecciones = CorreccionDatos::where('idSolicitante', $id)
             ->orderByDesc('idCorreccion')
+            ->get();
+
+        // Visitas domiciliarias solicitadas por este usuario
+        $misVisitas = VisitaDomiciliaria::with('gestor')
+            ->where('idUsuario', $id)
+            ->orderByDesc('idVisita')
             ->get();
 
         // Stats del usuario
@@ -67,7 +79,7 @@ class UserController extends Controller
 
         return view('user.dashboard', compact(
             'misDonaciones', 'misSolicitudes', 'categorias',
-            'eventos', 'usuario', 'stats', 'tabActivo', 'misCorrecciones'
+            'eventos', 'usuario', 'stats', 'tabActivo', 'misCorrecciones', 'misVisitas'
         ));
     }
 
@@ -148,12 +160,9 @@ class UserController extends Controller
         ]);
 
         $id      = $this->idCliente($request);
-        $imgData = $request->hasFile('imagen') && $request->file('imagen')->isValid()
-                   ? file_get_contents($request->file('imagen')->getRealPath()) : null;
 
         Solicitud::create([
             'descripcion'   => $request->descripcion,
-            'imagen'        => $imgData,
             'estado'        => 'pendiente',
             'idSolicitante' => $id,
             'idCategoria'   => $request->idCategoria,
@@ -177,8 +186,6 @@ class UserController extends Controller
             ->where('idSolicitante', $idCliente)->where('estado', 'pendiente')->firstOrFail();
 
         $data = $request->only(['descripcion', 'idCategoria']);
-        if ($request->hasFile('imagen') && $request->file('imagen')->isValid())
-            $data['imagen'] = file_get_contents($request->file('imagen')->getRealPath());
         $solicitud->update($data);
 
         return redirect()->route('usuario.dashboard', ['tab' => 'solicitudes'])
@@ -253,7 +260,7 @@ class UserController extends Controller
         $id = $this->idCliente($request);
 
         $request->validate([
-            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'campo'          => 'required|in:nombre,apellido,tipoDocumento,numDocumento,fechaNacimiento',
             'valorNuevo'     => 'required|min:1|max:150',
             'justificacion'  => 'required|min:10|max:300',
             'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
@@ -279,5 +286,43 @@ class UserController extends Controller
 
         return redirect()->route('usuario.dashboard', ['tab' => 'perfil'])
             ->with('correccion_ok', true);
+    }
+
+    // ── VISITAS DOMICILIARIAS ────────────────────────────────────────────────
+
+    public function crearVisita(Request $request): RedirectResponse
+    {
+        $id = $this->idCliente($request);
+
+        $request->validate([
+            'direccion'      => 'required|min:5|max:255',
+            'motivo'         => 'required|min:10|max:300',
+            'fechaPreferida' => 'nullable|date|after_or_equal:today',
+        ]);
+
+        VisitaDomiciliaria::create([
+            'idUsuario'      => $id,
+            'direccion'      => $request->direccion,
+            'motivo'         => $request->motivo,
+            'fechaPreferida' => $request->fechaPreferida,
+            'estado'         => 'pendiente',
+        ]);
+
+        return redirect()->route('usuario.dashboard', ['tab' => 'visitas'])
+            ->with('success', 'Tu solicitud de visita domiciliaria fue enviada. Un asistente o administrador la revisará pronto.');
+    }
+
+    public function cancelarVisita(Request $request, int $id): RedirectResponse
+    {
+        $idUsuario = $this->idCliente($request);
+        $visita = VisitaDomiciliaria::where('idVisita', $id)->where('idUsuario', $idUsuario)->firstOrFail();
+
+        if (!$visita->isPendiente()) {
+            return back()->with('error', 'Solo puedes cancelar visitas que aún están pendientes.');
+        }
+
+        $visita->update(['estado' => 'cancelada', 'fechaResolucion' => now()]);
+
+        return redirect()->route('usuario.dashboard', ['tab' => 'visitas'])->with('success', 'Visita cancelada.');
     }
 }

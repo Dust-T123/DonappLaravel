@@ -81,9 +81,10 @@ return response()->view('auth.login_success', [
     {
         $request->validate([
             'nombre'       => 'required|min:3|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/',
-            'tipoDocumento'=> 'required',
-            'numDocumento' => 'required|numeric|digits_between:4,15|unique:usuario',
-            'fechaNacimiento'=> 'required|date|before:-5 years',
+            'apellido'     => 'required|min:2|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/',
+            'tipoDocumento'=> 'required|in:CC,TI,CE,TE,PPT,Pasaporte',
+            'numDocumento' => 'required|regex:/^[A-Za-z0-9]{4,15}$/|unique:usuario',
+            'fechaNacimiento'=> 'required|date|before_or_equal:-14 years',
             'direccion'    => 'required|min:5|max:255',
             'email'        => 'required|email|unique:usuario',
             'telefono'     => 'required|digits:10',
@@ -91,12 +92,16 @@ return response()->view('auth.login_success', [
         ], [
             'email.unique'       => 'Este correo ya está registrado.',
             'numDocumento.unique'=> 'Este número de documento ya está registrado.',
+            'numDocumento.regex' => 'El número de documento no es válido.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'nombre.regex'       => 'El nombre solo puede contener letras y espacios.',
+            'apellido.regex'     => 'El apellido solo puede contener letras y espacios.',
+            'fechaNacimiento.before_or_equal' => 'Debes tener al menos 14 años para registrarte en Donapp.',
         ]);
 
         Usuario::create([
             'nombre'          => $request->nombre,
+            'apellido'        => $request->apellido,
             'tipoDocumento'   => $request->tipoDocumento,
             'numDocumento'    => $request->numDocumento,
             'fechaNacimiento' => $request->fechaNacimiento,

@@ -69,9 +69,6 @@ function abrirModalEditarSolicitud(s) {
     document.getElementById('es_id').value   = s.idSolicitud;
     document.getElementById('es_desc').value = s.descripcion;
     document.getElementById('es_cat').value  = s.idCategoria;
-    const prev = document.getElementById('prev_ed_sol');
-    prev.style.display = 'none';
-    prev.src = '';
     abrirModal('modalEditarSolicitud');
 }
 
@@ -82,7 +79,6 @@ function verDetalleSolicitud(s) {
         aprobada:  'estado-aprobada',
         rechazada: 'estado-rechazada'
     };
-    const imgHtml = s.imagen ? `<img src="${s.imagen}" alt="" class="img-preview">` : '';
     const obsHtml = s.observacion
         ? `<div class="obs-box ${s.estado === 'aprobada' ? 'green-obs' : ''}">
                <strong><i class="fa-solid fa-comment-dots"></i> Observación / Motivo:</strong><br>${s.observacion}
@@ -90,7 +86,6 @@ function verDetalleSolicitud(s) {
         : '';
 
     document.getElementById('detalle_sol_body').innerHTML = `
-        ${imgHtml}
         <div class="detalle-box">
             <p><strong>Descripción:</strong> ${s.descripcion}</p>
             <p><strong>Categoría:</strong> ${s.categoria || '—'}</p>
@@ -145,3 +140,31 @@ if (flash) setTimeout(() => {
     flash.style.opacity = '0';
     setTimeout(() => flash.remove(), 500);
 }, 3500);
+
+// ── DETALLE COMPLETO DE EVENTO ───────────────────────────────────────────
+function abrirDetalleEvento(ev) {
+    document.getElementById('det_ev_titulo').innerHTML =
+        `<i class="fa-solid fa-calendar-days"></i> ${ev.nombre}`;
+
+    const imgHtml = ev.imagen
+        ? `<img src="${ev.imagen}" alt="${ev.nombre}" class="img-preview" style="width:100%;border-radius:10px;margin-bottom:14px">`
+        : '';
+
+    const fecha = ev.fechaInicio
+        ? new Date(ev.fechaInicio + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+        : null;
+    const fechaFin = (ev.fechaFin && ev.fechaFin !== ev.fechaInicio)
+        ? new Date(ev.fechaFin + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+        : null;
+    const rangoFechas = fecha ? (fechaFin ? `${fecha} – ${fechaFin}` : fecha) : null;
+
+    document.getElementById('det_ev_body').innerHTML = `
+        ${imgHtml}
+        ${ev.contenido ? `<p>${ev.contenido}</p>` : ''}
+        <div class="event-meta" style="margin-top:12px">
+            ${rangoFechas ? `<span><i class="fa-solid fa-calendar-check"></i> ${rangoFechas}</span>` : ''}
+            ${ev.lugar ? `<span><i class="fa-solid fa-location-dot"></i> ${ev.lugar}</span>` : ''}
+        </div>`;
+
+    abrirModal('modalDetalleEvento');
+}

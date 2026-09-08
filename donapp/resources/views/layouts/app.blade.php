@@ -19,7 +19,7 @@
             icon: 'success',
             title: '¡Éxito!',
             text: '{{ addslashes(session('success')) }}',
-            confirmButtonColor: '#df0b0b',
+            confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ACEPTAR',
             customClass: { popup: 'donapp-popup', confirmButton: 'donapp-confirm-btn' }
         });
@@ -33,7 +33,7 @@
             icon: 'error',
             title: 'Error',
             text: '{{ addslashes($errors->first('msg') ?: $errors->first()) }}',
-            confirmButtonColor: '#df0b0b',
+            confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ENTENDIDO',
         });
     </script>

@@ -14,7 +14,7 @@
         icon: 'success',
         title: '¡Bienvenido!',
         text: 'Hola {{ $nombre }}, redirigiéndote a tu panel...',
-        confirmButtonColor: '#df0b0b',
+        confirmButtonColor: '#0B5AA6',
         confirmButtonText: 'ENTENDIDO',
         allowOutsideClick: false,
         allowEscapeKey: false,

@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     {
         // Admin
         DB::table('usuario')->insertOrIgnore([
-            'nombre' => 'Administrador', 'tipoDocumento' => 'CC',
+            'nombre' => 'Administrador', 'apellido' => 'Donapp', 'tipoDocumento' => 'CC',
             'numDocumento' => '1000000000', 'fechaNacimiento' => '1990-01-01',
             'direccion' => 'Sede Principal CES Waldorf', 'email' => 'admin@donapp.co',
             'contrasena' => Hash::make('admin123'), 'telefono' => '3001234567',
@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         ]);
         // Asistente
         DB::table('usuario')->insertOrIgnore([
-            'nombre' => 'Asistente Demo', 'tipoDocumento' => 'CC',
+            'nombre' => 'Asistente', 'apellido' => 'Demo', 'tipoDocumento' => 'CC',
             'numDocumento' => '2000000000', 'fechaNacimiento' => '1995-06-15',
             'direccion' => 'Sede CES Waldorf', 'email' => 'asis@donapp.co',
             'contrasena' => Hash::make('asis123'), 'telefono' => '3117654321',
@@ -28,11 +28,12 @@ class DatabaseSeeder extends Seeder
         ]);
         // Donante
         DB::table('usuario')->insertOrIgnore([
-            'nombre' => 'Donante Demo', 'tipoDocumento' => 'CC',
+            'nombre' => 'Donante', 'apellido' => 'Demo', 'tipoDocumento' => 'CC',
             'numDocumento' => '3000000000', 'fechaNacimiento' => '2000-03-20',
             'direccion' => 'Calle 10 # 5-30, Medellín', 'email' => 'donante@donapp.co',
             'contrasena' => Hash::make('donante123'), 'telefono' => '3209876543',
             'rol' => 'donante', 'estado' => 'activo', 'necesidad' => 'Artículos de primera necesidad',
+            'prioridad' => 'media',
         ]);
 
         $adminId = DB::table('usuario')->where('email', 'admin@donapp.co')->value('idUsuario');

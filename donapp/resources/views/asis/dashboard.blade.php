@@ -28,7 +28,11 @@
             <li><a href="#dashboard"  class="nav-link active"><i class="fa-solid fa-house"></i><span> Dashboard</span></a></li>
             <li><a href="#clientes"   class="nav-link"><i class="fa-solid fa-users"></i><span> Donantes / Solicitantes</span></a></li>
             <li><a href="#donapp"     class="nav-link"><i class="fa-solid fa-hand-holding-heart"></i><span> Donaciones/Sol.</span></a></li>
+            <li><a href="#stock"      class="nav-link"><i class="fa-solid fa-warehouse"></i><span> Stock Disponible</span></a></li>
             <li><a href="#eventos"    class="nav-link"><i class="fa-solid fa-calendar-days"></i><span> Eventos</span></a></li>
+            <li><a href="#visitas"    class="nav-link"><i class="fa-solid fa-house-chimney-user"></i><span> Visitas Domiciliarias</span>
+                @if($totalVisitasPendientes > 0)<span class="nav-badge">{{ $totalVisitasPendientes }}</span>@endif
+            </a></li>
             <li><a href="#categorias" class="nav-link"><i class="fa-solid fa-tags"></i><span> Categorías</span></a></li>
             <li><a href="#reportes"   class="nav-link"><i class="fa-solid fa-file-pdf"></i><span> Reportes</span></a></li>
             <li><a href="#perfil"     class="nav-link"><i class="fa-solid fa-user-gear"></i><span> Mi Perfil</span></a></li>
@@ -139,12 +143,19 @@
                            value="{{ request('cli_search') }}" class="form-input search-input" maxlength="200">
                     <select name="cli_prioridad" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todas las prioridades</option>
+                        <option value="urgente" {{ request('cli_prioridad')=='urgente' ? 'selected' : '' }}>🟣 Urgente</option>
                         <option value="alta"  {{ request('cli_prioridad')=='alta'  ? 'selected' : '' }}>🔴 Alta</option>
                         <option value="media" {{ request('cli_prioridad')=='media' ? 'selected' : '' }}>🟡 Media</option>
                         <option value="baja"  {{ request('cli_prioridad')=='baja'  ? 'selected' : '' }}>🟢 Baja</option>
                     </select>
+                    <select name="cli_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('cli_sort')=='az' ? 'selected' : '' }}>Nombre A-Z</option>
+                        <option value="za" {{ request('cli_sort')=='za' ? 'selected' : '' }}>Nombre Z-A</option>
+                        <option value="prioridad" {{ request('cli_sort')=='prioridad' ? 'selected' : '' }}>Prioridad (urgente → baja)</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    @if(request('cli_search') || request('cli_prioridad'))
+                    @if(request('cli_search') || request('cli_prioridad') || request('cli_sort'))
                         <a href="{{ route('asis.dashboard') }}#clientes" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -217,6 +228,8 @@
                         <option value="pendiente" {{ request('don_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
                         <option value="aprobada"  {{ request('don_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
                         <option value="rechazada" {{ request('don_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="completada" {{ request('don_estado')=='completada' ? 'selected' : '' }}>Completada</option>
+                    <option value="cancelada" {{ request('don_estado')=='cancelada' ? 'selected' : '' }}>Cancelada</option>
                     </select>
                     <select name="don_cat" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="0">Todas las categorías</option>
@@ -224,8 +237,13 @@
                             <option value="{{ $cat->idCategoria }}" {{ request('don_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
                         @endforeach
                     </select>
+                    <select name="don_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('don_sort')=='az' ? 'selected' : '' }}>Descripción A-Z</option>
+                        <option value="za" {{ request('don_sort')=='za' ? 'selected' : '' }}>Descripción Z-A</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('don_search') || request('don_estado') || request('don_cat'))
+                    @if(request('don_search') || request('don_estado') || request('don_cat') || request('don_sort'))
                         <a href="{{ route('asis.dashboard') }}#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -274,6 +292,8 @@
                         <option value="pendiente" {{ request('sol_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
                         <option value="aprobada"  {{ request('sol_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
                         <option value="rechazada" {{ request('sol_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="completada" {{ request('sol_estado')=='completada' ? 'selected' : '' }}>Completada</option>
+                    <option value="cancelada" {{ request('sol_estado')=='cancelada' ? 'selected' : '' }}>Cancelada</option>
                     </select>
                     <select name="sol_cat" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="0">Todas las categorías</option>
@@ -281,8 +301,13 @@
                             <option value="{{ $cat->idCategoria }}" {{ request('sol_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
                         @endforeach
                     </select>
+                    <select name="sol_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('sol_sort')=='az' ? 'selected' : '' }}>Descripción A-Z</option>
+                        <option value="prioridad" {{ request('sol_sort')=='prioridad' ? 'selected' : '' }}>Prioridad del beneficiario</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('sol_search') || request('sol_estado') || request('sol_cat'))
+                    @if(request('sol_search') || request('sol_estado') || request('sol_cat') || request('sol_sort'))
                         <a href="{{ route('asis.dashboard') }}#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -296,7 +321,12 @@
                             <td>{{ $s->categoria?->nombre ?? '—' }}</td>
                             <td><span class="badge estado-{{ $s->estado }}">{{ $s->estado }}</span></td>
                             <td>—</td>
-                            <td>{{ $s->solicitante?->nombre ?? '—' }}</td>
+                            <td>
+                                {{ $s->solicitante?->nombre ?? '—' }}
+                                @if($s->solicitante?->prioridad)
+                                    <span class="badge prioridad-{{ $s->solicitante->prioridad }}" title="Prioridad del beneficiario">{{ ucfirst($s->solicitante->prioridad) }}</span>
+                                @endif
+                            </td>
                             <td>{{ $s->gestor?->nombre ?? '—' }}</td>
                             <td>{{ $s->observacion ?? '—' }}</td>
                             <td>{{ $s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—' }}</td>
@@ -306,9 +336,9 @@
     "estado"        => $s->estado,
     "observacion"   => $s->observacion,
     "solicitante"   => $s->solicitante?->nombre,
+    "prioridad"     => $s->solicitante?->prioridad,
     "categoria"     => $s->categoria?->nombre,
     "fechaCreacion" => $s->fechaCreacion,
-    "imagen"        => $s->imagenBase64(),
 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
         class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
                         </tr>
@@ -317,6 +347,74 @@
                         @endforelse
                     </tbody>
                 </table></div></div>
+            </div>
+        </div>
+
+        {{-- STOCK DISPONIBLE --}}
+        <div id="stock" class="tab-pane">
+            <div class="section-header">
+                <h2 class="page-title">Stock Disponible en la Fundación</h2>
+                <p class="page-subtitle">Suma de todas las donaciones <strong>aprobadas</strong>, agrupadas por artículo — lo que hay listo para asignar a un beneficiario.</p>
+            </div>
+
+            <div class="stats-grid" style="margin-bottom:20px">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div class="stat-info"><h3>{{ $totalUnidadesInventario }}</h3><p>Unidades totales disponibles</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-list"></i></div>
+                    <div class="stat-info"><h3>{{ $inventario->count() }}</h3><p>Artículos distintos en stock</p></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <form method="GET" action="{{ route('asis.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+                    <input type="hidden" name="tab" value="stock">
+                    <input type="text" name="inv_search" placeholder="🔍 Buscar artículo..."
+                           value="{{ request('inv_search') }}" class="form-input search-input" maxlength="200">
+                    <select name="inv_cat" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="0">Todas las categorías</option>
+                        @foreach($categorias as $cat)
+                            <option value="{{ $cat->idCategoria }}" {{ request('inv_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
+                        @endforeach
+                    </select>
+                    <select name="inv_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Mayor cantidad primero</option>
+                        <option value="az" {{ request('inv_sort')=='az' ? 'selected' : '' }}>Artículo A-Z</option>
+                        <option value="za" {{ request('inv_sort')=='za' ? 'selected' : '' }}>Artículo Z-A</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                    @if(request('inv_search') || request('inv_cat') || request('inv_sort'))
+                        <a href="{{ route('asis.dashboard') }}#stock" class="btn btn-secondary btn-sm">Limpiar</a>
+                    @endif
+                </form>
+
+                @if($inventario->isEmpty())
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <h3>Sin stock disponible</h3>
+                    <p>Aún no hay donaciones aprobadas para mostrar en el inventario.</p>
+                </div>
+                @else
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr>
+                            <th>Artículo</th><th>Categoría</th><th>Cantidad disponible</th><th># Donaciones que lo componen</th>
+                        </tr></thead>
+                        <tbody>
+                            @foreach($inventario as $item)
+                            <tr>
+                                <td class="td-desc">{{ $item->descripcion }}</td>
+                                <td>{{ $item->categoria?->nombre ?? '—' }}</td>
+                                <td><span class="badge estado-aprobada" style="font-size:0.95rem">{{ $item->total_stock }} disponibles</span></td>
+                                <td>{{ $item->num_donaciones }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -335,44 +433,69 @@
                            value="{{ request('ev_search') }}" class="form-input search-input" maxlength="200">
                     <select name="ev_estado" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todos los estados</option>
-                        <option value="activo"   {{ request('ev_estado')=='activo'   ? 'selected' : '' }}>Activo</option>
-                        <option value="inactivo" {{ request('ev_estado')=='inactivo' ? 'selected' : '' }}>Inactivo</option>
+                        <option value="borrador"   {{ request('ev_estado')=='borrador'   ? 'selected' : '' }}>Borrador</option>
+                        <option value="publicado"  {{ request('ev_estado')=='publicado'  ? 'selected' : '' }}>Publicado</option>
+                        <option value="en_curso"   {{ request('ev_estado')=='en_curso'   ? 'selected' : '' }}>En curso</option>
+                        <option value="finalizado" {{ request('ev_estado')=='finalizado' ? 'selected' : '' }}>Finalizado</option>
+                        <option value="cancelado"  {{ request('ev_estado')=='cancelado'  ? 'selected' : '' }}>Cancelado</option>
+                    </select>
+                    <select name="ev_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('ev_sort')=='az' ? 'selected' : '' }}>Nombre A-Z</option>
+                        <option value="za" {{ request('ev_sort')=='za' ? 'selected' : '' }}>Nombre Z-A</option>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('ev_search') || request('ev_estado'))
+                    @if(request('ev_search') || request('ev_estado') || request('ev_sort'))
                         <a href="{{ route('asis.dashboard') }}#eventos" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
                 <div class="table-wrap"><table>
-                    <thead><tr><th>#</th><th>Nombre</th><th>Estado</th><th>Fecha Entrega</th><th>Lugar</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>#</th><th>Nombre</th><th>Fechas</th><th>Lugar</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody>
                         @forelse($eventos as $ev)
                         @php
 $evJson = json_encode([
-    'idEvento'     => $ev->idEvento,
-    'Nombre'       => $ev->Nombre,
-    'estado'       => $ev->estado,
-    'FechaEntrega' => $ev->programacion?->FechaEntrega,
-    'Lugar'        => $ev->programacion?->Lugar,
-    'titulo'       => $ev->publicacion?->titulo,
-    'contenido'    => $ev->publicacion?->contenido,
-    'imagen'       => $ev->publicacion?->imagen
-                        ? 'data:image/jpeg;base64,'.base64_encode($ev->publicacion->imagen)
+    'idEvento'      => $ev->idEvento,
+    'Nombre'        => $ev->Nombre,
+    'estado'        => $ev->estado,
+    'fecha_inicio'  => $ev->fechaInicio ?? '',
+    'fecha_fin'     => $ev->fechaFin ?? '',
+    'lugar_entrega' => $ev->lugar,
+    'titulo_pub'    => $ev->Nombre,
+    'contenido_pub' => $ev->contenido,
+    'imagen'        => $ev->imagen
+                        ? 'data:image/jpeg;base64,'.base64_encode($ev->imagen)
                         : null,
 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
 @endphp
                         <tr>
                             <td>{{ $ev->idEvento }}</td>
                             <td>{{ $ev->Nombre }}</td>
-<td><span class="badge estado-{{ $ev->estado }}">{{ $ev->estado }}</span></td>
-<td>{{ $ev->programacion?->FechaEntrega ? \Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d/m/Y') : '—' }}</td>
-<td>{{ $ev->programacion?->Lugar ?? '—' }}</td>
-                            <td class="td-actions">
-                                <button onclick='abrirModalEditarEvento({{ $evJson }})' class="btn btn-sm btn-primary"><i class="fa-solid fa-pen"></i></button>
+                            <td>
+                                @if($ev->fechaInicio)
+                                    {{ \Carbon\Carbon::parse($ev->fechaInicio)->format('d/m/Y') }}
+                                    @if($ev->esMultidia())
+                                        – {{ \Carbon\Carbon::parse($ev->fechaFin)->format('d/m/Y') }}
+                                    @endif
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td>{{ $ev->lugar ?? '—' }}</td>
+                            <td>
                                 <form action="{{ route('asis.eventos.estado', $ev->idEvento) }}" method="POST" style="display:inline">
                                     @csrf @method('PATCH')
-                                    <button type="submit" class="btn btn-sm btn-warning"><i class="fa-solid fa-arrows-rotate"></i> Toggle</button>
+                                    <select name="estado" class="form-input sel-small badge-select estado-{{ $ev->estado }}" onchange="this.form.submit()">
+                                        <option value="borrador"   {{ $ev->estado=='borrador'   ? 'selected' : '' }}>Borrador</option>
+                                        <option value="publicado"  {{ $ev->estado=='publicado'  ? 'selected' : '' }}>Publicado</option>
+                                        <option value="en_curso"   {{ $ev->estado=='en_curso'   ? 'selected' : '' }}>En curso</option>
+                                        <option value="finalizado" {{ $ev->estado=='finalizado' ? 'selected' : '' }}>Finalizado</option>
+                                        <option value="cancelado"  {{ $ev->estado=='cancelado'  ? 'selected' : '' }}>Cancelado</option>
+                                    </select>
                                 </form>
+                            </td>
+                            <td class="td-actions">
+                                <button onclick='abrirModalEditarEvento({{ $evJson }})' class="btn btn-sm btn-primary"><i class="fa-solid fa-pen"></i></button>
                             </td>
                         </tr>
                         @empty
@@ -396,8 +519,12 @@ $evJson = json_encode([
                     <input type="hidden" name="tab" value="categorias">
                     <input type="text" name="cat_search" placeholder="🔍 Buscar categoría..."
                            value="{{ request('cat_search') }}" class="form-input search-input" maxlength="200">
+                    <select name="cat_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Nombre A-Z</option>
+                        <option value="za" {{ request('cat_sort')=='za' ? 'selected' : '' }}>Nombre Z-A</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    @if(request('cat_search'))
+                    @if(request('cat_search') || request('cat_sort'))
                         <a href="{{ route('asis.dashboard') }}#categorias" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -420,6 +547,84 @@ $evJson = json_encode([
             </div>
         </div>
 
+        {{-- VISITAS DOMICILIARIAS --}}
+        <div id="visitas" class="tab-pane">
+            <div class="section-header">
+                <h2 class="page-title">Visitas Domiciliarias</h2>
+            </div>
+            <div class="card">
+                <form method="GET" action="{{ route('asis.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+                    <input type="hidden" name="tab" value="visitas">
+                    <select name="vis_estado" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente"  {{ request('vis_estado')=='pendiente'  ? 'selected' : '' }}>Pendiente</option>
+                        <option value="aprobada"   {{ request('vis_estado')=='aprobada'   ? 'selected' : '' }}>Aprobada</option>
+                        <option value="rechazada"  {{ request('vis_estado')=='rechazada'  ? 'selected' : '' }}>Rechazada</option>
+                        <option value="realizada"  {{ request('vis_estado')=='realizada'  ? 'selected' : '' }}>Realizada</option>
+                        <option value="cancelada"  {{ request('vis_estado')=='cancelada'  ? 'selected' : '' }}>Cancelada</option>
+                    </select>
+                    <select name="vis_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes / pendientes primero</option>
+                        <option value="az" {{ request('vis_sort')=='az' ? 'selected' : '' }}>Ordenar por beneficiario</option>
+                    </select>
+                    @if(request('vis_estado') || request('vis_sort'))
+                        <a href="{{ route('asis.dashboard') }}#visitas" class="btn btn-secondary btn-sm">Limpiar</a>
+                    @endif
+                </form>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr>
+                            <th>#</th><th>Beneficiario</th><th>Dirección</th><th>Motivo</th>
+                            <th>Fecha preferida</th><th>Estado</th><th>Gestor</th><th>Acciones</th>
+                        </tr></thead>
+                        <tbody>
+                            @forelse($visitas as $v)
+                            <tr>
+                                <td>{{ $v->idVisita }}</td>
+                                <td>
+                                    {{ $v->usuario?->nombre ?? '—' }}
+                                    @if($v->usuario?->prioridad)
+                                        <span class="badge prioridad-{{ $v->usuario->prioridad }}">{{ ucfirst($v->usuario->prioridad) }}</span>
+                                    @endif
+                                </td>
+                                <td class="td-desc">{{ $v->direccion }}</td>
+                                <td class="td-desc">{{ $v->motivo }}</td>
+                                <td>{{ $v->fechaPreferida ? \Carbon\Carbon::parse($v->fechaPreferida)->format('d/m/Y') : '—' }}</td>
+                                <td><span class="badge estado-{{ $v->estado }}">{{ $v->estado }}</span></td>
+                                <td>{{ $v->gestor?->nombre ?? '—' }}</td>
+                                <td class="td-actions">
+                                    @if($v->estado === 'pendiente')
+                                    <form action="{{ route('asis.visitas.estado', $v->idVisita) }}" method="POST" style="display:inline">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="aprobada">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                                    </form>
+                                    <form action="{{ route('asis.visitas.estado', $v->idVisita) }}" method="POST" style="display:inline"
+                                          onsubmit="return confirm('¿Rechazar esta solicitud de visita?')">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="rechazada">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
+                                    </form>
+                                    @elseif($v->estado === 'aprobada')
+                                    <form action="{{ route('asis.visitas.estado', $v->idVisita) }}" method="POST" style="display:inline">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="realizada">
+                                        <button type="submit" class="btn btn-sm btn-primary" title="Marcar como realizada"><i class="fa-solid fa-house-circle-check"></i></button>
+                                    </form>
+                                    @else
+                                    —
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="8" class="empty-row">No hay visitas domiciliarias registradas.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         {{-- REPORTES --}}
         <div id="reportes" class="tab-pane">
             <h2 class="page-title">Generador de Reportes PDF</h2>
@@ -430,7 +635,7 @@ $evJson = json_encode([
                     <p>Genera un PDF con el listado detallado de donaciones según los criterios que elijas.</p>
                     <div class="reporte-filters">
                         <label>Estado:</label>
-                        <select id="rpt_don_estado" class="form-input"><option value="todos">Todos</option><option value="aprobada">Aprobadas</option><option value="rechazada">Rechazadas</option><option value="pendiente">Pendientes</option></select>
+                        <select id="rpt_don_estado" class="form-input"><option value="todos">Todos</option><option value="aprobada">Aprobadas</option><option value="rechazada">Rechazadas</option><option value="pendiente">Pendientes</option><option value="completada">Completadas</option><option value="cancelada">Canceladas</option></select>
                         <label>Fecha desde:</label><input type="date" id="rpt_don_desde" class="form-input">
                         <label>Fecha hasta:</label><input type="date" id="rpt_don_hasta" class="form-input">
                     </div>
@@ -442,7 +647,7 @@ $evJson = json_encode([
                     <p>Genera un PDF con el detalle de solicitudes completadas o según el estado que selecciones.</p>
                     <div class="reporte-filters">
                         <label>Estado:</label>
-                        <select id="rpt_sol_estado" class="form-input"><option value="todos">Todos</option><option value="aprobada">Aprobadas</option><option value="rechazada">Rechazadas</option><option value="pendiente">Pendientes</option></select>
+                        <select id="rpt_sol_estado" class="form-input"><option value="todos">Todos</option><option value="aprobada">Aprobadas</option><option value="rechazada">Rechazadas</option><option value="pendiente">Pendientes</option><option value="completada">Completadas</option><option value="cancelada">Canceladas</option></select>
                         <label>Fecha desde:</label><input type="date" id="rpt_sol_desde" class="form-input">
                         <label>Fecha hasta:</label><input type="date" id="rpt_sol_hasta" class="form-input">
                     </div>
@@ -483,6 +688,8 @@ $evJson = json_encode([
                     <div class="form-grid-2">
                         <div class="form-group"><label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                             <input type="text" class="form-input" value="{{ $asisActual->nombre }}" disabled readonly></div>
+                        <div class="form-group"><label>Apellido <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                            <input type="text" class="form-input" value="{{ $asisActual->apellido }}" disabled readonly></div>
                         <div class="form-group"><label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                             <input type="text" class="form-input" value="{{ $asisActual->tipoDocumento }}" disabled readonly></div>
                         <div class="form-group"><label>Número de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
@@ -557,7 +764,7 @@ $evJson = json_encode([
         <input type="hidden" id="don_id">
         <div class="form-group"><label>Estado</label>
             <select name="estado" id="don_estado" class="form-input" onchange="actualizarHintObservacion('don_estado','don_obs_hint','don_obs','don_obs_err')">
-                <option value="pendiente">Pendiente</option><option value="aprobada">Aprobada</option><option value="rechazada">Rechazada</option>
+                <option value="pendiente">Pendiente</option><option value="aprobada">Aprobada</option><option value="rechazada">Rechazada</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option>
             </select></div>
         <div class="form-group"><label>Observación <span id="don_obs_hint">(opcional)</span></label>
             <textarea name="observacion" id="don_obs" class="form-input" rows="3" placeholder="Añade una observación..." maxlength="250"></textarea>
@@ -579,7 +786,7 @@ $evJson = json_encode([
         <input type="hidden" id="sol_id">
         <div class="form-group"><label>Estado</label>
             <select name="estado" id="sol_estado" class="form-input" onchange="actualizarHintObservacion('sol_estado','sol_obs_hint','sol_obs','sol_obs_err')">
-                <option value="pendiente">Pendiente</option><option value="aprobada">Aprobada</option><option value="rechazada">Rechazada</option>
+                <option value="pendiente">Pendiente</option><option value="aprobada">Aprobada</option><option value="rechazada">Rechazada</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option>
             </select></div>
         <div class="form-group"><label>Observación <span id="sol_obs_hint">(opcional)</span></label>
             <textarea name="observacion" id="sol_obs" class="form-input" rows="3" placeholder="Añade una observación..." maxlength="250"></textarea>
@@ -599,10 +806,17 @@ $evJson = json_encode([
         @csrf
         <div class="form-grid-2">
             <div class="form-group"><label>Nombre del Evento *</label><input type="text" name="nombre_evento" class="form-input" required maxlength="150" placeholder="Nombre del evento"></div>
-            <div class="form-group"><label>Estado</label><select name="estado_evento" class="form-input"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></div>
+            <div class="form-group"><label>Estado</label><select name="estado_evento" class="form-input">
+                <option value="borrador">Borrador</option><option value="publicado">Publicado</option>
+                <option value="en_curso">En curso</option><option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option></select></div>
         </div>
         <div class="form-grid-2">
-            <div class="form-group"><label>Fecha de la Entrega *</label><input type="date" name="fecha_entrega" class="form-input" required></div>
+            <div class="form-group"><label>Fecha de inicio *</label><input type="date" name="fecha_inicio" class="form-input" required></div>
+            <div class="form-group"><label>Fecha de fin *</label><input type="date" name="fecha_fin" class="form-input" required>
+                <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Usa la misma fecha si dura un solo día.</p></div>
+        </div>
+        <div class="form-grid-2">
             <div class="form-group"><label>Lugar de Entrega *</label><input type="text" name="lugar_entrega" class="form-input" required maxlength="255" value="Transversal 73 H Bis #75B 46 SUR Barrio Sierra Morena V Sector"></div>
         </div>
         <hr>
@@ -625,10 +839,16 @@ $evJson = json_encode([
         <input type="hidden" name="idEvento" id="edit_idEvento">
         <div class="form-grid-2">
             <div class="form-group"><label>Nombre del Evento</label><input type="text" name="nombre_evento" id="edit_nombre" class="form-input" required maxlength="150"></div>
-            <div class="form-group"><label>Estado</label><select name="estado_evento" id="edit_estado" class="form-input"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select></div>
+            <div class="form-group"><label>Estado</label><select name="estado_evento" id="edit_estado" class="form-input">
+                <option value="borrador">Borrador</option><option value="publicado">Publicado</option>
+                <option value="en_curso">En curso</option><option value="finalizado">Finalizado</option>
+                <option value="cancelado">Cancelado</option></select></div>
         </div>
         <div class="form-grid-2">
-            <div class="form-group"><label>Fecha de Entrega</label><input type="date" name="fecha_entrega" id="edit_fecha_entrega" class="form-input" required></div>
+            <div class="form-group"><label>Fecha de inicio</label><input type="date" name="fecha_inicio" id="edit_fecha_inicio" class="form-input" required></div>
+            <div class="form-group"><label>Fecha de fin</label><input type="date" name="fecha_fin" id="edit_fecha_fin" class="form-input" required></div>
+        </div>
+        <div class="form-grid-2">
             <div class="form-group"><label>Lugar</label><input type="text" name="lugar_entrega" id="edit_lugar_entrega" class="form-input" required maxlength="255"></div>
         </div>
         <hr>
@@ -654,15 +874,17 @@ $evJson = json_encode([
     <form action="{{ route('asis.clientes.crear') }}" method="POST">
         @csrf
         <div class="form-grid-2">
-            <div class="form-group"><label>Nombre completo *</label><input type="text" name="nombre" class="form-input" required minlength="3" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]/g,'')" placeholder="Nombres y apellidos del cliente"></div>
-            <div class="form-group"><label>Tipo de documento *</label><select name="tipoDocumento" class="form-input" required><option value="" disabled selected>Selecciona tipo</option>@foreach(['CC','TI','CE','PEP'] as $t)<option value="{{ $t }}">{{ $t }}</option>@endforeach</select></div>
-            <div class="form-group"><label>Número de documento *</label><input type="text" name="numDocumento" class="form-input" required pattern="[0-9]{4,15}" maxlength="15" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
-            <div class="form-group"><label>Fecha de nacimiento *</label><input type="date" name="fechaNacimiento" class="form-input" required max="{{ date('Y-m-d', strtotime('-5 years')) }}"></div>
+            <div class="form-group"><label>Nombre *</label><input type="text" name="nombre" class="form-input" required minlength="3" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]/g,'')" placeholder="Nombre del cliente"></div>
+            <div class="form-group"><label>Apellido *</label><input type="text" name="apellido" class="form-input" required minlength="2" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]/g,'')" placeholder="Apellido del cliente"></div>
+            <div class="form-group"><label>Tipo de documento *</label><select name="tipoDocumento" class="form-input" required><option value="" disabled selected>Selecciona tipo</option>@foreach(['CC'=>'Cédula de Ciudadanía','TI'=>'Tarjeta de Identidad','CE'=>'Cédula de Extranjería','TE'=>'Tarjeta de Extranjería','PPT'=>'Permiso por Protección Temporal'] as $t => $label)<option value="{{ $t }}">{{ $label }}</option>@endforeach</select></div>
+            <div class="form-group"><label>Número de documento *</label><input type="text" name="numDocumento" class="form-input" required pattern="[A-Za-z0-9]{4,15}" maxlength="15"></div>
+            <div class="form-group"><label>Fecha de nacimiento *</label><input type="date" name="fechaNacimiento" class="form-input" required max="{{ date('Y-m-d', strtotime('-14 years')) }}">
+                <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Debe tener al menos 14 años.</p></div>
             <div class="form-group"><label>Email *</label><input type="email" name="email" class="form-input" required maxlength="150"></div>
             <div class="form-group"><label>Teléfono *</label><input type="tel" name="telefono" class="form-input" required pattern="[0-9]{10}" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
             <div class="form-group"><label>Dirección *</label><input type="text" name="direccion" class="form-input" required minlength="5" maxlength="255"></div>
             <div class="form-group"><label>Necesidad</label><input type="text" name="necesidad" class="form-input" maxlength="255" placeholder="Necesidad principal (Opcional)"></div>
-            <div class="form-group"><label>Prioridad</label><select name="prioridad" class="form-input"><option value="">Sin prioridad</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select></div>
+            <div class="form-group"><label>Prioridad</label><select name="prioridad" class="form-input"><option value="">Sin prioridad</option><option value="urgente">Urgente</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select></div>
         </div>
         <div class="form-group"><label>Observación de visita</label><textarea name="observacion_visita" class="form-input" rows="3" maxlength="500" placeholder="Observaciones de la visita (Opcional)"></textarea></div>
         <div class="form-grid-2">
@@ -690,6 +912,7 @@ $evJson = json_encode([
         @csrf @method('PUT')
         <div class="form-grid-2">
             <div class="form-group"><label>Nombre completo</label><input type="text" id="edit_cli_nombre" class="form-input" disabled></div>
+            <div class="form-group"><label>Apellido</label><input type="text" id="edit_cli_apellido" class="form-input" disabled></div>
             <div class="form-group"><label>Tipo de documento</label><input type="text" id="edit_cli_tipoDoc" class="form-input" disabled></div>
             <div class="form-group"><label>Número de documento</label><input type="text" id="edit_cli_numDoc" class="form-input" disabled></div>
             <div class="form-group"><label>Fecha de nacimiento</label><input type="text" id="edit_cli_fechaNac" class="form-input" disabled></div>
@@ -697,7 +920,7 @@ $evJson = json_encode([
             <div class="form-group"><label>Teléfono *</label><input type="tel" name="telefono" id="edit_cli_telefono" class="form-input" required pattern="[0-9]{10}" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
             <div class="form-group"><label>Dirección *</label><input type="text" name="direccion" id="edit_cli_direccion" class="form-input" required minlength="5" maxlength="255"></div>
             <div class="form-group"><label>Necesidad</label><input type="text" name="necesidad" id="edit_cli_necesidad" class="form-input" maxlength="255"></div>
-            <div class="form-group"><label>Prioridad</label><select name="prioridad" id="edit_cli_prioridad" class="form-input"><option value="">Sin prioridad</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select></div>
+            <div class="form-group"><label>Prioridad</label><select name="prioridad" id="edit_cli_prioridad" class="form-input"><option value="">Sin prioridad</option><option value="urgente">Urgente</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select></div>
             <div class="form-group"><label>Nueva contraseña <small>(vacío = no cambiar)</small></label><div class="pass-wrap"><input type="password" name="password" id="edit_cli_pass" class="form-input" minlength="6" maxlength="20"><button type="button" class="eye-btn" onclick="togglePass('edit_cli_pass','edit_cli_eye')"><i class="fa-solid fa-eye" id="edit_cli_eye"></i></button></div></div>
             <div class="form-group"><label>Confirmar contraseña</label><div class="pass-wrap"><input type="password" name="password_confirmation" id="edit_cli_pass2" class="form-input" minlength="6" maxlength="20"><button type="button" class="eye-btn" onclick="togglePass('edit_cli_pass2','edit_cli_eye2')"><i class="fa-solid fa-eye" id="edit_cli_eye2"></i></button></div></div>
         </div>
@@ -726,7 +949,8 @@ $evJson = json_encode([
                 <label>Campo a corregir *</label>
                 <select name="campo" class="form-input" required>
                     <option value="">Selecciona el campo</option>
-                    <option value="nombre">Nombre completo</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="apellido">Apellido</option>
                     <option value="tipoDocumento">Tipo de documento</option>
                     <option value="numDocumento">Número de documento</option>
                     <option value="fechaNacimiento">Fecha de nacimiento</option>
@@ -776,7 +1000,8 @@ $evJson = json_encode([
                 <label>Campo a corregir *</label>
                 <select name="campo" class="form-input" required>
                     <option value="">Selecciona el campo</option>
-                    <option value="nombre">Nombre completo</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="apellido">Apellido</option>
                     <option value="tipoDocumento">Tipo de documento</option>
                     <option value="numDocumento">Número de documento</option>
                     <option value="fechaNacimiento">Fecha de nacimiento</option>
@@ -898,6 +1123,7 @@ window.abrirModalEditarDonante = function(cli) {
     _clienteActivo = cli;
     document.getElementById('formEditarDonante').action      = ROUTES_ASIS.editarCliente(cli.idUsuario);
     document.getElementById('edit_cli_nombre').value         = cli.nombre            ?? '';
+    document.getElementById('edit_cli_apellido').value       = cli.apellido          ?? '';
     document.getElementById('edit_cli_tipoDoc').value        = cli.tipoDocumento      ?? '';
     document.getElementById('edit_cli_numDoc').value         = cli.numDocumento       ?? '';
     document.getElementById('edit_cli_fechaNac').value       = cli.fechaNacimiento    ?? '';
@@ -984,8 +1210,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const hoyStr = new Date().toISOString().split('T')[0];
 
     // Fecha mínima = hoy en ambos formularios
-    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_entrega"]');
-    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_entrega"]');
+    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_inicio"]');
+    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_inicio"]');
     if (fCrear)  fCrear.min  = hoyStr;
     if (fEditar) fEditar.min = hoyStr;
 
@@ -1000,10 +1226,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function validarFechaEvento(form) {
-        const input = form.querySelector('input[name="fecha_entrega"]');
-        if (input && fechaEsPasada(input.value)) {
+        const inicio = form.querySelector('input[name="fecha_inicio"]');
+        const fin    = form.querySelector('input[name="fecha_fin"]');
+        if (inicio && fechaEsPasada(inicio.value)) {
             alert('No se pueden programar eventos con fechas pasadas. Selecciona hoy o una fecha futura.');
-            input.focus();
+            inicio.focus();
+            return false;
+        }
+        if (inicio && fin && fin.value && inicio.value && fin.value < inicio.value) {
+            alert('La fecha de fin no puede ser anterior a la fecha de inicio.');
+            fin.focus();
             return false;
         }
         return true;

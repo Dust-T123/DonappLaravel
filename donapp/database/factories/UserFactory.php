@@ -16,10 +16,11 @@ class UsuarioFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre'          => fake()->name(),
+            'nombre'          => fake()->firstName(),
+            'apellido'        => fake()->lastName(),
             'tipoDocumento'   => 'CC',
             'numDocumento'    => fake()->unique()->numerify('##########'),
-            'fechaNacimiento' => fake()->date(),
+            'fechaNacimiento' => fake()->dateTimeBetween('-70 years', '-14 years')->format('Y-m-d'),
             'direccion'       => fake()->address(),
             'email'           => fake()->unique()->safeEmail(),
             'contrasena'      => Hash::make('password'),

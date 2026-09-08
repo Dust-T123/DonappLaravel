@@ -6,10 +6,10 @@
         body { font-family: 'DM Sans', Arial, sans-serif; background: #f8f9fa; }
         .card { max-width: 600px; margin: 40px auto; background: #fff;
                 border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,.1); }
-        h2   { color: #df0b0b; }
+        h2   { color: #0B5AA6; }
         .badge { display:inline-block; padding:6px 18px; border-radius:999px;
-                 background:#df0b0b; color:#fff; font-weight:700; text-transform:uppercase; }
-        .obs  { background:#f4f4f4; border-left:4px solid #df0b0b;
+                 background:#0B5AA6; color:#fff; font-weight:700; text-transform:uppercase; }
+        .obs  { background:#f4f4f4; border-left:4px solid #0B5AA6;
                 padding:12px 16px; border-radius:8px; margin-top:16px; }
         .footer { margin-top:32px; color:#777; font-size:13px; }
     </style>

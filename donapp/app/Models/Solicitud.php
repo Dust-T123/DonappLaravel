@@ -12,7 +12,7 @@ class Solicitud extends Model
     public    $timestamps = false;
 
     protected $fillable = [
-    'descripcion', 'imagen', 'estado', 'observacion',
+    'descripcion', 'estado', 'observacion',
     'fechaCreacion', 'idSolicitante', 'idCategoria', 'idGestor',
 ];
 
@@ -29,10 +29,5 @@ class Solicitud extends Model
     public function gestor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'idGestor');
-    }
-
-    public function imagenBase64(): ?string
-    {
-        return $this->imagen ? 'data:image/jpeg;base64,' . base64_encode($this->imagen) : null;
     }
 }

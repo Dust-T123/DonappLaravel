@@ -6,9 +6,9 @@
         body { font-family: Arial, sans-serif; background:#f8f9fa; }
         .card { max-width:600px; margin:40px auto; background:#fff;
                 border-radius:16px; padding:32px; box-shadow:0 4px 20px rgba(0,0,0,.1); }
-        h2   { color:#df0b0b; }
+        h2   { color:#0B5AA6; }
         .btn { display:inline-block; margin-top:16px; padding:12px 28px;
-               background:#df0b0b; color:#fff; border-radius:10px;
+               background:#0B5AA6; color:#fff; border-radius:10px;
                text-decoration:none; font-weight:700; }
         .footer { margin-top:32px; color:#777; font-size:13px; }
     </style>

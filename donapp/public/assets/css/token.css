@@ -1,6 +1,6 @@
       :root {
-         --color-primary: #df0b0b;
-         --color-primary-dark: #811212;
+         --color-primary: #0B5AA6;
+         --color-primary-dark: #073E73;
      }
      
      body {
@@ -104,7 +104,7 @@
      
      .form-input:focus {
          border-color: var(--color-primary);
-         box-shadow: 0 0 0 3px rgba(223, 11, 11, 0.1);
+         box-shadow: 0 0 0 3px rgba(11, 90, 166, 0.1);
      }
      
      .btn-submit {

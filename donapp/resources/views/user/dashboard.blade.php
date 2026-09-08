@@ -16,6 +16,7 @@
         <li><a href="?tab=inicio"      class="nav-link {{ $tabActivo==='inicio'      ? 'active' : '' }}"><i class="fa-solid fa-house"></i><span> Inicio</span></a></li>
         <li><a href="?tab=donaciones"  class="nav-link {{ $tabActivo==='donaciones'  ? 'active' : '' }}"><i class="fa-solid fa-box-open"></i><span> Mis Donaciones</span></a></li>
         <li><a href="?tab=solicitudes" class="nav-link {{ $tabActivo==='solicitudes' ? 'active' : '' }}"><i class="fa-solid fa-clipboard-list"></i><span> Mis Solicitudes</span></a></li>
+        <li><a href="?tab=visitas"     class="nav-link {{ $tabActivo==='visitas'     ? 'active' : '' }}"><i class="fa-solid fa-house-chimney-user"></i><span> Visitas Domiciliarias</span></a></li>
         <li><a href="?tab=eventos"     class="nav-link {{ $tabActivo==='eventos'     ? 'active' : '' }}"><i class="fa-solid fa-calendar-days"></i><span> Eventos</span></a></li>
         <li><a href="?tab=perfil"      class="nav-link {{ $tabActivo==='perfil'      ? 'active' : '' }}"><i class="fa-solid fa-user-gear"></i><span> Mi Perfil</span></a></li>
         <li><hr></li>
@@ -80,22 +81,22 @@
             <div class="eventos-grid">
                 @foreach($eventos->take(3) as $ev)
                 <div class="event-card">
-                    @if($ev->publicacion?->imagen)
-                        <img src="{{ $ev->publicacion->imagenBase64() }}" alt="Evento" class="event-card-img">
+                    @if($ev->imagen)
+                        <img src="{{ $ev->imagenBase64() }}" alt="Evento" class="event-card-img">
                     @else
                         <div class="event-card-noimg"><i class="fa-solid fa-calendar-days"></i></div>
                     @endif
                     <div class="event-card-body">
                         <h3>{{ $ev->Nombre }}</h3>
-                        @if($ev->publicacion?->contenido)
-                        <p>{{ mb_substr($ev->publicacion->contenido, 0, 100) }}...</p>
+                        @if($ev->contenido)
+                        <p>{{ mb_substr($ev->contenido, 0, 100) }}...</p>
                         @endif
                         <div class="event-meta">
-                            @if($ev->programacion?->FechaEntrega)
-                            <span><i class="fa-solid fa-calendar"></i> {{ \Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d/m/Y') }}</span>
+                            @if($ev->fechaInicio)
+                            <span><i class="fa-solid fa-calendar"></i> {{ \Carbon\Carbon::parse($ev->fechaInicio)->format('d/m/Y') }}@if($ev->esMultidia()) – {{ \Carbon\Carbon::parse($ev->fechaFin)->format('d/m/Y') }}@endif</span>
                             @endif
-                            @if($ev->programacion?->Lugar)
-                            <span><i class="fa-solid fa-location-dot"></i> {{ mb_substr($ev->programacion->Lugar, 0, 40) }}</span>
+                            @if($ev->lugar)
+                            <span><i class="fa-solid fa-location-dot"></i> {{ mb_substr($ev->lugar, 0, 40) }}</span>
                             @endif
                         </div>
                     </div>
@@ -133,12 +134,19 @@
                     <option value="pendiente" {{ request('don_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
                     <option value="aprobada"  {{ request('don_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
                     <option value="rechazada" {{ request('don_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="completada" {{ request('don_estado')=='completada' ? 'selected' : '' }}>Completada</option>
+                    <option value="cancelada" {{ request('don_estado')=='cancelada' ? 'selected' : '' }}>Cancelada</option>
                 </select>
                 <select name="don_cat" class="form-input" onchange="this.form.submit()">
                     <option value="0">Todas las categorías</option>
                     @foreach($categorias as $cat)
                         <option value="{{ $cat->idCategoria }}" {{ request('don_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
                     @endforeach
+                </select>
+                <select name="don_sort" class="form-input" onchange="this.form.submit()">
+                    <option value="">Más recientes</option>
+                    <option value="az" {{ request('don_sort')=='az' ? 'selected' : '' }}>Descripción A-Z</option>
+                    <option value="za" {{ request('don_sort')=='za' ? 'selected' : '' }}>Descripción Z-A</option>
                 </select>
                 <a href="{{ route('usuario.dashboard', ['tab'=>'donaciones']) }}" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-xmark"></i> Limpiar filtros
@@ -222,12 +230,19 @@
                     <option value="pendiente" {{ request('sol_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
                     <option value="aprobada"  {{ request('sol_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
                     <option value="rechazada" {{ request('sol_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="completada" {{ request('sol_estado')=='completada' ? 'selected' : '' }}>Completada</option>
+                    <option value="cancelada" {{ request('sol_estado')=='cancelada' ? 'selected' : '' }}>Cancelada</option>
                 </select>
                 <select name="sol_cat" class="form-input" onchange="this.form.submit()">
                     <option value="0">Todas las categorías</option>
                     @foreach($categorias as $cat)
                         <option value="{{ $cat->idCategoria }}" {{ request('sol_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
                     @endforeach
+                </select>
+                <select name="sol_sort" class="form-input" onchange="this.form.submit()">
+                    <option value="">Más recientes</option>
+                    <option value="az" {{ request('sol_sort')=='az' ? 'selected' : '' }}>Descripción A-Z</option>
+                    <option value="za" {{ request('sol_sort')=='za' ? 'selected' : '' }}>Descripción Z-A</option>
                 </select>
                 <a href="{{ route('usuario.dashboard', ['tab'=>'solicitudes']) }}" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-xmark"></i> Limpiar filtros
@@ -254,7 +269,7 @@
                     </tr></thead>
                     <tbody>
                         @foreach($misSolicitudes as $s)
-                        @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>$s->fechaCreacion??'','observacion'=>$s->observacion??'','imagen'=>$s->imagenBase64()??'','idCategoria'=>$s->idCategoria], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); @endphp
+                        @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>$s->fechaCreacion??'','observacion'=>$s->observacion??'','idCategoria'=>$s->idCategoria], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); @endphp
                         <tr>
                             <td>{{ $s->idSolicitud }}</td>
                             <td class="td-desc">{{ $s->descripcion }}</td>
@@ -288,6 +303,66 @@
         </div>
     </div>
 
+    {{-- ══ VISITAS DOMICILIARIAS ══ --}}
+    <div id="visitas" class="tab-pane {{ $tabActivo==='visitas' ? 'active' : '' }}">
+        <div class="section-header">
+            <div>
+                <h2 class="page-title">Visitas Domiciliarias</h2>
+                <p class="page-subtitle">Solicita que un asistente o administrador visite tu domicilio para validar tu necesidad.</p>
+            </div>
+            <button class="btn btn-primary" onclick="abrirModal('modalNuevaVisita')">
+                <i class="fa-solid fa-plus"></i> Solicitar Visita
+            </button>
+        </div>
+        <div class="card">
+            @if($misVisitas->isEmpty())
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fa-solid fa-house-chimney-user"></i></div>
+                <h3>Sin visitas solicitadas</h3>
+                <p>Aún no has solicitado ninguna visita domiciliaria.</p>
+                <button class="btn btn-primary" onclick="abrirModal('modalNuevaVisita')">
+                    <i class="fa-solid fa-plus"></i> Solicitar mi primera visita
+                </button>
+            </div>
+            @else
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>#</th><th>Dirección</th><th>Motivo</th><th>Fecha preferida</th>
+                        <th>Estado</th><th>Gestor</th><th>Observación</th><th>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+                        @foreach($misVisitas as $v)
+                        <tr>
+                            <td>{{ $v->idVisita }}</td>
+                            <td class="td-desc">{{ $v->direccion }}</td>
+                            <td class="td-desc">{{ $v->motivo }}</td>
+                            <td>{{ $v->fechaPreferida ? \Carbon\Carbon::parse($v->fechaPreferida)->format('d/m/Y') : '—' }}</td>
+                            <td><span class="badge estado-{{ $v->estado }}">{{ $v->estado }}</span></td>
+                            <td>{{ $v->gestor?->nombre ?? '—' }}</td>
+                            <td class="td-obs">{{ $v->observacion ?? '—' }}</td>
+                            <td class="td-actions">
+                                @if($v->estado === 'pendiente')
+                                <form action="{{ route('usuario.visitas.cancelar', $v->idVisita) }}" method="POST" style="display:inline"
+                                      onsubmit="return confirm('¿Cancelar esta solicitud de visita?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Cancelar">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                                @else
+                                —
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+    </div>
+
     {{-- ══ EVENTOS ══ --}}
     <div id="eventos" class="tab-pane {{ $tabActivo==='eventos' ? 'active' : '' }}">
         <div>
@@ -305,37 +380,52 @@
         @else
         <div class="eventos-grid">
             @foreach($eventos as $ev)
-            <div class="event-card">
-                @if($ev->publicacion?->imagen)
-                    <img src="{{ $ev->publicacion->imagenBase64() }}" alt="Evento" class="event-card-img">
+                @php
+                    $evJson = json_encode([
+                        'nombre'        => $ev->Nombre,
+                        'contenido'     => $ev->contenido,
+                        'imagen'        => $ev->imagenBase64(),
+                        'fechaInicio'   => $ev->fechaInicio,
+                        'fechaFin'      => $ev->fechaFin,
+                        'lugar'         => $ev->lugar,
+                        'fechaPublicacion' => $ev->fechaPublicacion,
+                    ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
+                @endphp
+            <div class="event-card" onclick='abrirDetalleEvento({{ $evJson }})' style="cursor:pointer" title="Ver evento completo">
+                @if($ev->imagen)
+                    <img src="{{ $ev->imagenBase64() }}" alt="Evento" class="event-card-img">
                 @else
                     <div class="event-card-noimg"><i class="fa-solid fa-calendar-days"></i></div>
                 @endif
                 <div class="event-card-body">
                     <h3>{{ $ev->Nombre }}</h3>
-                    @if($ev->publicacion?->titulo)
-                    <p class="event-pub-title">{{ $ev->publicacion->titulo }}</p>
-                    @endif
-                    @if($ev->publicacion?->contenido)
-                    <p>{{ $ev->publicacion->contenido }}</p>
+                    @if($ev->contenido)
+                    <p>{{ \Illuminate\Support\Str::limit($ev->contenido, 110) }}</p>
                     @endif
                     <div class="event-meta">
-                        @if($ev->programacion?->FechaEntrega)
-                        <span><i class="fa-solid fa-calendar-check"></i> {{ \Carbon\Carbon::parse($ev->programacion->FechaEntrega)->format('d \d\e F \d\e Y') }}</span>
+                        @if($ev->fechaInicio)
+                        <span><i class="fa-solid fa-calendar-check"></i> {{ \Carbon\Carbon::parse($ev->fechaInicio)->format('d \d\e F \d\e Y') }}@if($ev->esMultidia()) – {{ \Carbon\Carbon::parse($ev->fechaFin)->format('d \d\e F \d\e Y') }}@endif</span>
                         @endif
-                        @if($ev->programacion?->Lugar)
-                        <span><i class="fa-solid fa-location-dot"></i> {{ $ev->programacion->Lugar }}</span>
-                        @endif
-                        @if($ev->publicacion?->fechaPublicacion)
-                        <span><i class="fa-solid fa-clock"></i> Publicado: {{ \Carbon\Carbon::parse($ev->publicacion->fechaPublicacion)->format('d/m/Y') }}</span>
+                        @if($ev->lugar)
+                        <span><i class="fa-solid fa-location-dot"></i> {{ $ev->lugar }}</span>
                         @endif
                     </div>
+                    <p class="event-ver-mas"><i class="fa-solid fa-eye"></i> Ver evento completo</p>
                 </div>
             </div>
             @endforeach
         </div>
         @endif
     </div>
+
+    {{-- MODAL: Detalle completo del evento --}}
+    <div id="modalDetalleEvento" class="modal"><div class="modal-content">
+        <div class="modal-header">
+            <h3 id="det_ev_titulo"><i class="fa-solid fa-calendar-days"></i></h3>
+            <button class="modal-close" onclick="cerrarModal('modalDetalleEvento')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="det_ev_body" class="detalle-box"></div>
+    </div></div>
 
     {{-- ══ PERFIL ══ --}}
     <div id="perfil" class="tab-pane {{ $tabActivo==='perfil' ? 'active' : '' }}">
@@ -352,7 +442,7 @@
             <div class="perfil-header">
                 <div class="perfil-avatar">{{ mb_strtoupper(mb_substr($usuario->nombre, 0, 1)) }}</div>
                 <div class="perfil-header-info">
-                    <h2>{{ $usuario->nombre }}</h2>
+                    <h2>{{ $usuario->nombre }} {{ $usuario->apellido }}</h2>
                     <p><i class="fa-solid fa-envelope"></i> {{ $usuario->email }}</p>
                     <p class="perfil-estado"><span class="badge estado-{{ $usuario->estado }}">{{ $usuario->estado }}</span></p>
                 </div>
@@ -377,6 +467,8 @@
                 <div class="form-grid-2">
                     <div class="form-group"><label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                         <input type="text" class="form-input" value="{{ $usuario->nombre }}" disabled readonly></div>
+                    <div class="form-group"><label>Apellido <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                        <input type="text" class="form-input" value="{{ $usuario->apellido }}" disabled readonly></div>
                     <div class="form-group"><label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                         <input type="text" class="form-input" value="{{ $usuario->tipoDocumento }}" disabled readonly></div>
                     <div class="form-group"><label>Número de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
@@ -508,10 +600,30 @@
     <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalDetalleDonacion')">Cerrar</button></div>
 </div></div>
 
+<div id="modalNuevaVisita" class="modal"><div class="modal-content">
+    <div class="modal-header"><h3><i class="fa-solid fa-house-chimney-user"></i> Solicitar Visita Domiciliaria</h3>
+        <button class="modal-close" onclick="cerrarModal('modalNuevaVisita')"><i class="fa-solid fa-xmark"></i></button></div>
+    <form action="{{ route('usuario.visitas.crear') }}" method="POST">
+        @csrf
+        <div class="form-group"><label>Dirección de la visita *</label>
+            <input type="text" name="direccion" class="form-input" required maxlength="255"
+                   value="{{ $usuario->direccion }}" placeholder="Dirección donde se realizará la visita"></div>
+        <div class="form-group"><label>Motivo de la visita *</label>
+            <textarea name="motivo" class="form-input" required maxlength="300" rows="3"
+                      placeholder="Cuéntanos por qué necesitas la visita..."></textarea></div>
+        <div class="form-group"><label>Fecha preferida <small class="text-muted">(opcional)</small></label>
+            <input type="date" name="fechaPreferida" class="form-input" min="{{ date('Y-m-d') }}"></div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar Solicitud</button>
+            <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalNuevaVisita')">Cancelar</button>
+        </div>
+    </form>
+</div></div>
+
 <div id="modalNuevaSolicitud" class="modal"><div class="modal-content">
     <div class="modal-header"><h3><i class="fa-solid fa-clipboard-list"></i> Registrar Solicitud</h3>
         <button class="modal-close" onclick="cerrarModal('modalNuevaSolicitud')"><i class="fa-solid fa-xmark"></i></button></div>
-    <form action="{{ route('usuario.solicitudes.crear') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('usuario.solicitudes.crear') }}" method="POST">
         @csrf
         <div class="form-group"><label>Descripción de la solicitud *</label>
             <textarea name="descripcion" class="form-input" required maxlength="300" rows="3" placeholder="Describe qué necesitas..."></textarea></div>
@@ -520,10 +632,6 @@
                 <option value="">Selecciona la categoría de tu necesidad</option>
                 @foreach($categorias as $cat)<option value="{{ $cat->idCategoria }}">{{ $cat->nombre }}</option>@endforeach
             </select></div>
-        <div class="form-group"><label>Imagen de soporte <small class="text-muted">(opcional)</small></label>
-            <input type="file" name="imagen" class="form-input" accept="image/*" onchange="previewImg(this,'prev_sol')">
-            <img id="prev_sol" src="" alt="" class="img-file-preview" style="display:none;">
-            <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Puedes adjuntar una foto que respalde tu solicitud.</p></div>
         <div class="modal-footer">
             <button type="submit" name="crear_solicitud" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar Solicitud</button>
             <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalNuevaSolicitud')">Cancelar</button>
@@ -534,7 +642,7 @@
 <div id="modalEditarSolicitud" class="modal"><div class="modal-content">
     <div class="modal-header"><h3><i class="fa-solid fa-pen"></i> Editar Solicitud</h3>
         <button class="modal-close" onclick="cerrarModal('modalEditarSolicitud')"><i class="fa-solid fa-xmark"></i></button></div>
-    <form id="formEditarSolicitud" method="POST" enctype="multipart/form-data">
+    <form id="formEditarSolicitud" method="POST">
         @csrf @method('PUT')
         <input type="hidden" name="idSolicitud" id="es_id">
         <div class="form-group"><label>Descripción *</label>
@@ -544,9 +652,6 @@
                 <option value="">Selecciona una categoría</option>
                 @foreach($categorias as $cat)<option value="{{ $cat->idCategoria }}">{{ $cat->nombre }}</option>@endforeach
             </select></div>
-        <div class="form-group"><label>Nueva imagen <small class="text-muted">(deja vacío para mantener la actual)</small></label>
-            <input type="file" name="imagen" class="form-input" accept="image/*" onchange="previewImg(this,'prev_ed_sol')">
-            <img id="prev_ed_sol" src="" alt="" class="img-file-preview" style="display:none;"></div>
         <div class="modal-footer">
             <button type="submit" name="editar_solicitud" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
             <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalEditarSolicitud')">Cancelar</button>
@@ -577,7 +682,8 @@
                 <label>Campo a corregir *</label>
                 <select name="campo" class="form-input" required>
                     <option value="">Selecciona el campo</option>
-                    <option value="nombre">Nombre completo</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="apellido">Apellido</option>
                     <option value="tipoDocumento">Tipo de documento</option>
                     <option value="numDocumento">Número de documento</option>
                     <option value="fechaNacimiento">Fecha de nacimiento</option>

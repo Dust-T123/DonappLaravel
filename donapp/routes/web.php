@@ -49,10 +49,13 @@ Route::middleware(['auth.role:administrador'])->prefix('admin')->name('admin.')-
     Route::post('/eventos',              [AdminController::class, 'crearEvento'])->name('eventos.crear');
     Route::put('/eventos/{id}',          [AdminController::class, 'editarEvento'])->name('eventos.editar');
     Route::delete('/eventos/{id}',       [AdminController::class, 'eliminarEvento'])->name('eventos.eliminar');
-    Route::patch('/eventos/{id}/estado', [AdminController::class, 'toggleEvento'])->name('eventos.estado');
+    Route::patch('/eventos/{id}/estado', [AdminController::class, 'cambiarEstadoEvento'])->name('eventos.estado');
 
     Route::patch('/donaciones/{id}/estado',  [AdminController::class, 'cambiarEstadoDonacion'])->name('donaciones.estado');
     Route::patch('/solicitudes/{id}/estado', [AdminController::class, 'cambiarEstadoSolicitud'])->name('solicitudes.estado');
+
+    // Visitas domiciliarias
+    Route::patch('/visitas/{id}/estado', [AdminController::class, 'cambiarEstadoVisita'])->name('visitas.estado');
 });
 
 // ── ASISTENTE ─────────────────────────────────────────────────────────────────
@@ -64,7 +67,7 @@ Route::middleware(['auth.role:asistente'])->prefix('asis')->name('asis.')->group
 
     Route::post('/eventos',              [AsisController::class, 'crearEvento'])->name('eventos.crear');
     Route::put('/eventos/{id}',          [AsisController::class, 'editarEvento'])->name('eventos.editar');
-    Route::patch('/eventos/{id}/estado', [AsisController::class, 'toggleEvento'])->name('eventos.estado');
+    Route::patch('/eventos/{id}/estado', [AsisController::class, 'cambiarEstadoEvento'])->name('eventos.estado');
 
     Route::patch('/donaciones/{id}/estado',  [AsisController::class, 'cambiarEstadoDonacion'])->name('donaciones.estado');
     Route::patch('/solicitudes/{id}/estado', [AsisController::class, 'cambiarEstadoSolicitud'])->name('solicitudes.estado');
@@ -83,6 +86,9 @@ Route::middleware(['auth.role:asistente'])->prefix('asis')->name('asis.')->group
     // Perfil propio del asistente (solo campos no sensibles) + solicitud de corrección
     Route::put('/perfil', [AsisController::class, 'actualizarPerfil'])->name('perfil.update');
     Route::post('/perfil/solicitar-correccion', [AsisController::class, 'solicitarCorreccionPerfil'])->name('perfil.solicitarCorreccion');
+
+    // Visitas domiciliarias
+    Route::patch('/visitas/{id}/estado', [AsisController::class, 'cambiarEstadoVisita'])->name('visitas.estado');
 });
 
 // ── DONANTE / SOLICITANTE ──────────────────────────────────────────────────────
@@ -100,4 +106,8 @@ Route::middleware(['auth.role:donante'])->prefix('usuario')->name('usuario.')->g
     // Perfil propio del donante/solicitante (solo campos no sensibles) + solicitud de corrección
     Route::put('/perfil', [UserController::class, 'actualizarPerfil'])->name('perfil.update');
     Route::post('/perfil/solicitar-correccion', [UserController::class, 'solicitarCorreccionPerfil'])->name('perfil.solicitarCorreccion');
+
+    // Visitas domiciliarias
+    Route::post('/visitas',           [UserController::class, 'crearVisita'])->name('visitas.crear');
+    Route::delete('/visitas/{id}',    [UserController::class, 'cancelarVisita'])->name('visitas.cancelar');
 });

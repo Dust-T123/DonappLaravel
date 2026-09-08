@@ -61,7 +61,9 @@ function verDetallePublicacion(data) {
     document.getElementById('detalle-evento').innerHTML = `<i class="fa-solid fa-tag"></i> ${data.evento}`;
     document.getElementById('detalle-entrega').textContent = data.entrega;
     document.getElementById('detalle-lugar').textContent = data.lugar;
-    document.getElementById('detalle-autor').innerHTML = `<i class="fa-regular fa-user"></i> Publicado por ${data.autor}`;
+    document.getElementById('detalle-autor').innerHTML = data.autor
+        ? `<i class="fa-regular fa-user"></i> Publicado por ${data.autor}`
+        : '';
 
     // 3. Construir el Header (Estado y Fecha) con margen superior
     const detalleHeader = document.getElementById('detalle-header');
@@ -257,12 +259,18 @@ function formatearFechaEvento(fechaStr) {
     return fechaStr;
 }
 
+function formatearRangoFechasEvento(inicio, fin) {
+    if (!inicio && !fin) return 'Pendiente';
+    if (!fin || inicio === fin) return formatearFechaEvento(inicio);
+    return `${formatearFechaEvento(inicio)} - ${formatearFechaEvento(fin)}`;
+}
+
 function renderizarTarjetaEvento(ev) {
     const pub = ev.publicacion || {};
     const prog = ev.programacion || {};
     const titulo = pub.titulo || ev.nombre;
     const contenido = pub.contenido || '';
-    const fecha = formatearFechaEvento(prog.fecha_entrega);
+    const fecha = formatearRangoFechasEvento(prog.fecha_inicio, prog.fecha_fin);
     const lugar = prog.lugar || 'No especificado';
     const imagen = pub.imagen || '';
     const autor = pub.autor || '';

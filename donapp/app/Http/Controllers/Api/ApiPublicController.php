@@ -43,7 +43,7 @@ class ApiPublicController extends Controller
 
             'solicitudes_aprobadas'   => Solicitud::where('estado', 'aprobada')->count(),
 
-            'eventos_activos'         => Evento::where('estado', 'activo')->count(),
+            'eventos_activos'         => Evento::whereIn('estado', ['publicado', 'en_curso'])->count(),
 
             'total_categorias'        => Categoria::count(),
         ];
@@ -65,8 +65,7 @@ class ApiPublicController extends Controller
     //
     public function eventos()
     {
-        $eventos = Evento::with(['publicacion.autor', 'programacion'])
-            ->where('estado', 'activo')
+        $eventos = Evento::whereIn('estado', ['publicado', 'en_curso'])
             ->orderByDesc('idEvento')
             ->get()
             ->map(fn($ev) => [
@@ -74,21 +73,23 @@ class ApiPublicController extends Controller
                 'nombre' => $ev->Nombre,
                 'estado' => $ev->estado,
 
-                // Datos de la programación (fecha y lugar de entrega)
-                'programacion' => $ev->programacion ? [
-                    'fecha_entrega' => $ev->programacion->FechaEntrega,
-                    'lugar'         => $ev->programacion->Lugar,
-                ] : null,
+                // Fecha y lugar de entrega (antes vivían en ProgramadorEventos,
+                // ahora son columnas propias de evento).
+                'programacion' => [
+                    'fecha_inicio'  => $ev->fechaInicio,
+                    'fecha_fin'     => $ev->fechaFin,
+                    'lugar'         => $ev->lugar,
+                ],
 
-                // Datos de la publicación (lo que ve el público)
-                'publicacion' => $ev->publicacion ? [
-                    'titulo'           => $ev->publicacion->titulo,
-                    'contenido'        => $ev->publicacion->contenido,
-                    'fecha_publicacion'=> $ev->publicacion->fechaPublicacion,
-                    'autor'            => $ev->publicacion->autor?->nombre,
+                // Contenido publicado sobre el evento (antes vivía en la tabla
+                // publicacion, ahora son columnas propias de evento).
+                'publicacion' => [
+                    'titulo'            => $ev->Nombre,
+                    'contenido'         => $ev->contenido,
+                    'fecha_publicacion' => $ev->fechaPublicacion,
                     // La imagen se devuelve en base64 para que la app pueda mostrarla
-                    'imagen'           => $ev->publicacion->imagenBase64(),
-                ] : null,
+                    'imagen'            => $ev->imagenBase64(),
+                ],
             ]);
 
         return response()->json([
@@ -107,9 +108,8 @@ class ApiPublicController extends Controller
     //
     public function evento(int $id)
     {
-        $ev = Evento::with(['publicacion.autor', 'programacion'])
-            ->where('idEvento', $id)
-            ->where('estado', 'activo')
+        $ev = Evento::where('idEvento', $id)
+            ->whereIn('estado', ['publicado', 'en_curso'])
             ->first();
 
         if (!$ev) {
@@ -126,18 +126,18 @@ class ApiPublicController extends Controller
                 'nombre' => $ev->Nombre,
                 'estado' => $ev->estado,
 
-                'programacion' => $ev->programacion ? [
-                    'fecha_entrega' => $ev->programacion->FechaEntrega,
-                    'lugar'         => $ev->programacion->Lugar,
-                ] : null,
+                'programacion' => [
+                    'fecha_inicio'  => $ev->fechaInicio,
+                    'fecha_fin'     => $ev->fechaFin,
+                    'lugar'         => $ev->lugar,
+                ],
 
-                'publicacion' => $ev->publicacion ? [
-                    'titulo'           => $ev->publicacion->titulo,
-                    'contenido'        => $ev->publicacion->contenido,
-                    'fecha_publicacion'=> $ev->publicacion->fechaPublicacion,
-                    'autor'            => $ev->publicacion->autor?->nombre,
-                    'imagen'           => $ev->publicacion->imagenBase64(),
-                ] : null,
+                'publicacion' => [
+                    'titulo'            => $ev->Nombre,
+                    'contenido'         => $ev->contenido,
+                    'fecha_publicacion' => $ev->fechaPublicacion,
+                    'imagen'            => $ev->imagenBase64(),
+                ],
             ],
         ]);
     }

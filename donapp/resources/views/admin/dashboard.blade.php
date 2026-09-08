@@ -34,7 +34,11 @@
             <li><a href="#usuarios"   class="nav-link"><i class="fa-solid fa-users"></i><span> Usuarios</span></a></li>
             <li><a href="#categorias" class="nav-link"><i class="fa-solid fa-tags"></i><span> Categorías</span></a></li>
             <li><a href="#donapp"     class="nav-link"><i class="fa-solid fa-hand-holding-heart"></i><span> Donaciones/Sol.</span></a></li>
+            <li><a href="#stock"      class="nav-link"><i class="fa-solid fa-warehouse"></i><span> Stock Disponible</span></a></li>
             <li><a href="#eventos"    class="nav-link"><i class="fa-solid fa-calendar-days"></i><span> Eventos</span></a></li>
+            <li><a href="#visitas"    class="nav-link"><i class="fa-solid fa-house-chimney-user"></i><span> Visitas Domiciliarias</span>
+                @if($totalVisitasPendientes > 0)<span class="nav-badge">{{ $totalVisitasPendientes }}</span>@endif
+            </a></li>
             <li><a href="#reportes"   class="nav-link"><i class="fa-solid fa-file-pdf"></i><span> Reportes</span></a></li>
             <li><a href="#perfil"     class="nav-link"><i class="fa-solid fa-user-gear"></i><span> Mi Perfil</span></a></li>
             <li><hr></li>
@@ -194,12 +198,19 @@
                     <select name="prioridad" class="form-input sel-small" onchange="this.form.submit()"
                             id="filtro_prioridad_select">
                         <option value="">Todas las prioridades</option>
+                        <option value="urgente" {{ request('prioridad')=='urgente' ? 'selected' : '' }}>🟣 Urgente</option>
                         <option value="alta"  {{ request('prioridad')=='alta'  ? 'selected' : '' }}>🔴 Alta</option>
                         <option value="media" {{ request('prioridad')=='media' ? 'selected' : '' }}>🟡 Media</option>
                         <option value="baja"  {{ request('prioridad')=='baja'  ? 'selected' : '' }}>🟢 Baja</option>
                     </select>
+                    <select name="sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('sort')=='az' ? 'selected' : '' }}>Nombre A-Z</option>
+                        <option value="za" {{ request('sort')=='za' ? 'selected' : '' }}>Nombre Z-A</option>
+                        <option value="prioridad" {{ request('sort')=='prioridad' ? 'selected' : '' }}>Prioridad (urgente → baja)</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    @if(request('search') || request('rol') || request('prioridad'))
+                    @if(request('search') || request('rol') || request('prioridad') || request('sort'))
                         <a href="{{ route('admin.dashboard') }}#usuarios" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -265,8 +276,12 @@
                     <input type="hidden" name="tab" value="categorias">
                     <input type="text" name="cat_search" placeholder="🔍 Buscar categoría por nombre..."
                            value="{{ request('cat_search') }}" class="form-input search-input" maxlength="200">
+                    <select name="cat_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Nombre A-Z</option>
+                        <option value="za" {{ request('cat_sort')=='za' ? 'selected' : '' }}>Nombre Z-A</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
-                    @if(request('cat_search'))
+                    @if(request('cat_search') || request('cat_sort'))
                         <a href="{{ route('admin.dashboard') }}#categorias" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -339,6 +354,8 @@
                         <option value="pendiente" {{ request('don_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
                         <option value="aprobada"  {{ request('don_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
                         <option value="rechazada" {{ request('don_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="completada" {{ request('don_estado')=='completada' ? 'selected' : '' }}>Completada</option>
+                    <option value="cancelada" {{ request('don_estado')=='cancelada' ? 'selected' : '' }}>Cancelada</option>
                     </select>
                     <select name="don_cat" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="0">Todas las categorías</option>
@@ -347,6 +364,11 @@
                                 {{ $cat->nombre }}
                             </option>
                         @endforeach
+                    </select>
+                    <select name="don_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('don_sort')=='az' ? 'selected' : '' }}>Descripción A-Z</option>
+                        <option value="za" {{ request('don_sort')=='za' ? 'selected' : '' }}>Descripción Z-A</option>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
                     @if(request('don_search') || request('don_estado') || request('don_cat'))
@@ -398,6 +420,8 @@
                         <option value="pendiente" {{ request('sol_estado')=='pendiente' ? 'selected' : '' }}>Pendiente</option>
                         <option value="aprobada"  {{ request('sol_estado')=='aprobada'  ? 'selected' : '' }}>Aprobada</option>
                         <option value="rechazada" {{ request('sol_estado')=='rechazada' ? 'selected' : '' }}>Rechazada</option>
+                    <option value="completada" {{ request('sol_estado')=='completada' ? 'selected' : '' }}>Completada</option>
+                    <option value="cancelada" {{ request('sol_estado')=='cancelada' ? 'selected' : '' }}>Cancelada</option>
                     </select>
                     <select name="sol_cat" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="0">Todas las categorías</option>
@@ -407,8 +431,13 @@
                             </option>
                         @endforeach
                     </select>
+                    <select name="sol_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('sol_sort')=='az' ? 'selected' : '' }}>Descripción A-Z</option>
+                        <option value="prioridad" {{ request('sol_sort')=='prioridad' ? 'selected' : '' }}>Prioridad del beneficiario</option>
+                    </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('sol_search') || request('sol_estado') || request('sol_cat'))
+                    @if(request('sol_search') || request('sol_estado') || request('sol_cat') || request('sol_sort'))
                         <a href="{{ route('admin.dashboard') }}#donapp" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
@@ -427,7 +456,12 @@
                                     <td>{{ $s->categoria?->nombre ?? '—' }}</td>
                                     <td><span class="badge estado-{{ $s->estado }}">{{ $s->estado }}</span></td>
                                     <td>{{ $s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—' }}</td>
-                                    <td>{{ $s->solicitante?->nombre ?? '—' }}</td>
+                                    <td>
+                                        {{ $s->solicitante?->nombre ?? '—' }}
+                                        @if($s->solicitante?->prioridad)
+                                            <span class="badge prioridad-{{ $s->solicitante->prioridad }}" title="Prioridad del beneficiario">{{ ucfirst($s->solicitante->prioridad) }}</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if($s->gestor)
                                             <span class="badge-staff"><i class="fa-solid fa-user-shield"></i> {{ $s->gestor->nombre }}</span>
@@ -437,7 +471,7 @@
                                     </td>
                                     <td>{{ $s->observacion ?? '—' }}</td>
                                     <td>
-                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
+                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"prioridad"=>$s->solicitante?->prioridad,"categoria"=>$s->categoria?->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                                 class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
@@ -450,6 +484,74 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        {{-- ── STOCK DISPONIBLE ── --}}
+        <div id="stock" class="tab-pane">
+            <div class="section-header">
+                <h2 class="page-title">Stock Disponible en la Fundación</h2>
+                <p class="page-subtitle">Suma de todas las donaciones <strong>aprobadas</strong>, agrupadas por artículo — lo que hay listo para asignar a un beneficiario.</p>
+            </div>
+
+            <div class="stats-grid" style="margin-bottom:20px">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div class="stat-info"><h3>{{ $totalUnidadesInventario }}</h3><p>Unidades totales disponibles</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-list"></i></div>
+                    <div class="stat-info"><h3>{{ $inventario->count() }}</h3><p>Artículos distintos en stock</p></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+                    <input type="hidden" name="tab" value="stock">
+                    <input type="text" name="inv_search" placeholder="🔍 Buscar artículo..."
+                           value="{{ request('inv_search') }}" class="form-input search-input" maxlength="200">
+                    <select name="inv_cat" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="0">Todas las categorías</option>
+                        @foreach($categorias as $cat)
+                            <option value="{{ $cat->idCategoria }}" {{ request('inv_cat')==$cat->idCategoria ? 'selected' : '' }}>{{ $cat->nombre }}</option>
+                        @endforeach
+                    </select>
+                    <select name="inv_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Mayor cantidad primero</option>
+                        <option value="az" {{ request('inv_sort')=='az' ? 'selected' : '' }}>Artículo A-Z</option>
+                        <option value="za" {{ request('inv_sort')=='za' ? 'selected' : '' }}>Artículo Z-A</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                    @if(request('inv_search') || request('inv_cat') || request('inv_sort'))
+                        <a href="{{ route('admin.dashboard') }}#stock" class="btn btn-secondary btn-sm">Limpiar</a>
+                    @endif
+                </form>
+
+                @if($inventario->isEmpty())
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <h3>Sin stock disponible</h3>
+                    <p>Aún no hay donaciones aprobadas para mostrar en el inventario.</p>
+                </div>
+                @else
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr>
+                            <th>Artículo</th><th>Categoría</th><th>Cantidad disponible</th><th># Donaciones que lo componen</th>
+                        </tr></thead>
+                        <tbody>
+                            @foreach($inventario as $item)
+                            <tr>
+                                <td class="td-desc">{{ $item->descripcion }}</td>
+                                <td>{{ $item->categoria?->nombre ?? '—' }}</td>
+                                <td><span class="badge estado-aprobada" style="font-size:0.95rem">{{ $item->total_stock }} disponibles</span></td>
+                                <td>{{ $item->num_donaciones }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -468,18 +570,26 @@
                            value="{{ request('ev_search') }}" class="form-input search-input" maxlength="200">
                     <select name="ev_estado" class="form-input sel-small" onchange="this.form.submit()">
                         <option value="">Todos los estados</option>
-                        <option value="activo"   {{ request('ev_estado')=='activo'   ? 'selected' : '' }}>Activo</option>
-                        <option value="inactivo" {{ request('ev_estado')=='inactivo' ? 'selected' : '' }}>Inactivo</option>
+                        <option value="borrador"   {{ request('ev_estado')=='borrador'   ? 'selected' : '' }}>Borrador</option>
+                        <option value="publicado"  {{ request('ev_estado')=='publicado'  ? 'selected' : '' }}>Publicado</option>
+                        <option value="en_curso"   {{ request('ev_estado')=='en_curso'   ? 'selected' : '' }}>En curso</option>
+                        <option value="finalizado" {{ request('ev_estado')=='finalizado' ? 'selected' : '' }}>Finalizado</option>
+                        <option value="cancelado"  {{ request('ev_estado')=='cancelado'  ? 'selected' : '' }}>Cancelado</option>
+                    </select>
+                    <select name="ev_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes</option>
+                        <option value="az" {{ request('ev_sort')=='az' ? 'selected' : '' }}>Nombre A-Z</option>
+                        <option value="za" {{ request('ev_sort')=='za' ? 'selected' : '' }}>Nombre Z-A</option>
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                    @if(request('ev_search') || request('ev_estado'))
+                    @if(request('ev_search') || request('ev_estado') || request('ev_sort'))
                         <a href="{{ route('admin.dashboard') }}#eventos" class="btn btn-secondary btn-sm">Limpiar</a>
                     @endif
                 </form>
                 <div class="table-wrap">
                     <table>
                         <thead><tr>
-                            <th>ID</th><th>Nombre</th><th>Estado</th><th>Acciones</th>
+                            <th>ID</th><th>Nombre</th><th>Fechas</th><th>Lugar</th><th>Estado</th><th>Acciones</th>
                         </tr></thead>
                         <tbody>
                             @forelse($eventos as $ev)
@@ -488,31 +598,125 @@
                                     'idEvento'        => $ev->idEvento,
                                     'Nombre'          => $ev->Nombre,
                                     'estado'          => $ev->estado,
-                                    'fecha_entrega'   => $ev->programacion?->FechaEntrega ?? '',
-                                    'lugar_entrega'   => $ev->programacion?->Lugar ?? '',
-                                    'titulo_pub'      => $ev->publicacion?->titulo ?? '',
-                                    'contenido_pub'   => $ev->publicacion?->contenido ?? '',
-                                    'idPublicacion'   => $ev->publicacion?->idPublicacion ?? '',
-                                    'imagen'          => $ev->publicacion?->imagenBase64() ?? '',
+                                    'fecha_inicio'    => $ev->fechaInicio ?? '',
+                                    'fecha_fin'       => $ev->fechaFin ?? '',
+                                    'lugar_entrega'   => $ev->lugar ?? '',
+                                    'titulo_pub'      => $ev->Nombre ?? '',
+                                    'contenido_pub'   => $ev->contenido ?? '',
+                                    'imagen'          => $ev->imagenBase64() ?? '',
                                 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
                             @endphp
                             <tr>
                                 <td>{{ $ev->idEvento }}</td>
                                 <td>{{ $ev->Nombre }}</td>
-                                <td><span class="badge estado-{{ $ev->estado }}">{{ $ev->estado }}</span></td>
+                                <td>
+                                    @if($ev->fechaInicio)
+                                        {{ \Carbon\Carbon::parse($ev->fechaInicio)->format('d/m/Y') }}
+                                        @if($ev->esMultidia())
+                                            – {{ \Carbon\Carbon::parse($ev->fechaFin)->format('d/m/Y') }}
+                                        @endif
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td>{{ $ev->lugar ?? '—' }}</td>
+                                <td>
+                                    <form action="{{ route('admin.eventos.estado', $ev->idEvento) }}" method="POST" style="display:inline">
+                                        @csrf @method('PATCH')
+                                        <select name="estado" class="form-input sel-small badge-select estado-{{ $ev->estado }}" onchange="this.form.submit()">
+                                            <option value="borrador"   {{ $ev->estado=='borrador'   ? 'selected' : '' }}>Borrador</option>
+                                            <option value="publicado"  {{ $ev->estado=='publicado'  ? 'selected' : '' }}>Publicado</option>
+                                            <option value="en_curso"   {{ $ev->estado=='en_curso'   ? 'selected' : '' }}>En curso</option>
+                                            <option value="finalizado" {{ $ev->estado=='finalizado' ? 'selected' : '' }}>Finalizado</option>
+                                            <option value="cancelado"  {{ $ev->estado=='cancelado'  ? 'selected' : '' }}>Cancelado</option>
+                                        </select>
+                                    </form>
+                                </td>
                                 <td class="td-actions">
                                     <button onclick='abrirModalEditarEvento({{ $evJson }})'
                                             class="btn btn-sm btn-primary"><i class="fa-solid fa-pen"></i></button>
-                                    <form action="{{ route('admin.eventos.estado', $ev->idEvento) }}" method="POST" style="display:inline">
-                                        @csrf @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-warning">
-                                            <i class="fa-solid fa-arrows-rotate"></i> Toggle
-                                        </button>
-                                    </form>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="4" class="empty-row">No se encontraron eventos.</td></tr>
+                            <tr><td colspan="6" class="empty-row">No se encontraron eventos.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── VISITAS DOMICILIARIAS ── --}}
+        <div id="visitas" class="tab-pane">
+            <div class="section-header">
+                <h2 class="page-title">Visitas Domiciliarias</h2>
+            </div>
+            <div class="card">
+                <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-bar" style="margin-bottom:16px">
+                    <input type="hidden" name="tab" value="visitas">
+                    <select name="vis_estado" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente"  {{ request('vis_estado')=='pendiente'  ? 'selected' : '' }}>Pendiente</option>
+                        <option value="aprobada"   {{ request('vis_estado')=='aprobada'   ? 'selected' : '' }}>Aprobada</option>
+                        <option value="rechazada"  {{ request('vis_estado')=='rechazada'  ? 'selected' : '' }}>Rechazada</option>
+                        <option value="realizada"  {{ request('vis_estado')=='realizada'  ? 'selected' : '' }}>Realizada</option>
+                        <option value="cancelada"  {{ request('vis_estado')=='cancelada'  ? 'selected' : '' }}>Cancelada</option>
+                    </select>
+                    <select name="vis_sort" class="form-input sel-small" onchange="this.form.submit()">
+                        <option value="">Más recientes / pendientes primero</option>
+                        <option value="az" {{ request('vis_sort')=='az' ? 'selected' : '' }}>Ordenar por beneficiario</option>
+                    </select>
+                    @if(request('vis_estado') || request('vis_sort'))
+                        <a href="{{ route('admin.dashboard') }}#visitas" class="btn btn-secondary btn-sm">Limpiar</a>
+                    @endif
+                </form>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr>
+                            <th>#</th><th>Beneficiario</th><th>Dirección</th><th>Motivo</th>
+                            <th>Fecha preferida</th><th>Estado</th><th>Gestor</th><th>Acciones</th>
+                        </tr></thead>
+                        <tbody>
+                            @forelse($visitas as $v)
+                            <tr>
+                                <td>{{ $v->idVisita }}</td>
+                                <td>
+                                    {{ $v->usuario?->nombre ?? '—' }}
+                                    @if($v->usuario?->prioridad)
+                                        <span class="badge prioridad-{{ $v->usuario->prioridad }}">{{ ucfirst($v->usuario->prioridad) }}</span>
+                                    @endif
+                                </td>
+                                <td class="td-desc">{{ $v->direccion }}</td>
+                                <td class="td-desc">{{ $v->motivo }}</td>
+                                <td>{{ $v->fechaPreferida ? \Carbon\Carbon::parse($v->fechaPreferida)->format('d/m/Y') : '—' }}</td>
+                                <td><span class="badge estado-{{ $v->estado }}">{{ $v->estado }}</span></td>
+                                <td>{{ $v->gestor?->nombre ?? '—' }}</td>
+                                <td class="td-actions">
+                                    @if($v->estado === 'pendiente')
+                                    <form action="{{ route('admin.visitas.estado', $v->idVisita) }}" method="POST" style="display:inline">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="aprobada">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Aprobar"><i class="fa-solid fa-check"></i></button>
+                                    </form>
+                                    <form action="{{ route('admin.visitas.estado', $v->idVisita) }}" method="POST" style="display:inline"
+                                          onsubmit="return confirm('¿Rechazar esta solicitud de visita?')">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="rechazada">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Rechazar"><i class="fa-solid fa-xmark"></i></button>
+                                    </form>
+                                    @elseif($v->estado === 'aprobada')
+                                    <form action="{{ route('admin.visitas.estado', $v->idVisita) }}" method="POST" style="display:inline">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="estado" value="realizada">
+                                        <button type="submit" class="btn btn-sm btn-primary" title="Marcar como realizada"><i class="fa-solid fa-house-circle-check"></i></button>
+                                    </form>
+                                    @else
+                                    —
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="8" class="empty-row">No hay visitas domiciliarias registradas.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -535,6 +739,8 @@
                             <option value="aprobada">Aprobadas</option>
                             <option value="rechazada">Rechazadas</option>
                             <option value="pendiente">Pendientes</option>
+                            <option value="completada">Completadas</option>
+                            <option value="cancelada">Canceladas</option>
                         </select>
                         <label>Fecha desde:</label>
                         <input type="date" id="rpt_don_desde" class="form-input" max="{{ date('Y-m-d') }}">
@@ -557,6 +763,8 @@
                             <option value="aprobada">Aprobadas</option>
                             <option value="rechazada">Rechazadas</option>
                             <option value="pendiente">Pendientes</option>
+                            <option value="completada">Completadas</option>
+                            <option value="cancelada">Canceladas</option>
                         </select>
                         <label>Fecha desde:</label>
                         <input type="date" id="rpt_sol_desde" class="form-input" max="{{ date('Y-m-d') }}">
@@ -609,6 +817,12 @@
                             <label>Nombre completo <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                             <input type="text" class="form-input"
                                    value="{{ $adminActual->nombre }}"
+                                   disabled readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                            <input type="text" class="form-input"
+                                   value="{{ $adminActual->apellido }}"
                                    disabled readonly>
                         </div>
                         <div class="form-group">
@@ -698,29 +912,38 @@
             @csrf
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>Nombre completo *</label>
+                    <label>Nombre *</label>
                     <input type="text" name="nombre" class="form-input" required minlength="3" maxlength="100"
                            oninput="this.value=this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g,'')"
-                           placeholder="Ingrese los nombres y apellidos del usuario">
+                           placeholder="Ingrese el nombre del usuario">
+                </div>
+                <div class="form-group">
+                    <label>Apellido *</label>
+                    <input type="text" name="apellido" class="form-input" required minlength="2" maxlength="100"
+                           oninput="this.value=this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g,'')"
+                           placeholder="Ingrese el apellido del usuario">
                 </div>
                 <div class="form-group">
                     <label>Tipo de documento *</label>
                     <select name="tipoDocumento" class="form-input" required>
                         <option value="">Seleccione el tipo de documento</option>
-                        @foreach(['CC','TI','CE','PEP'] as $t)
-                            <option value="{{ $t }}">{{ $t }}</option>
-                        @endforeach
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="TI">Tarjeta de Identidad</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="TE">Tarjeta de Extranjería</option>
+                        <option value="PPT">Permiso por Protección Temporal</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Número de documento *</label>
-                    <input type="text" name="numDocumento" class="form-input" required maxlength="15" pattern="[0-9]{4,15}"
+                    <input type="text" name="numDocumento" class="form-input" required maxlength="15" pattern="[A-Za-z0-9]{4,15}"
                            placeholder="Ingrese el número de identificación">
                 </div>
                 <div class="form-group">
                     <label>Fecha de nacimiento *</label>
                     <input type="date" name="fechaNacimiento" class="form-input" required
-                           max="{{ date('Y-m-d', strtotime('-5 years')) }}">
+                           max="{{ date('Y-m-d', strtotime('-14 years')) }}">
+                    <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Debe tener al menos 14 años.</p>
                 </div>
                 <div class="form-group">
                     <label>Dirección *</label>
@@ -746,7 +969,7 @@
                     <label>Prioridad</label>
                     <select name="prioridad" id="nuevo_prioridad" class="form-input">
                         <option value="">Sin prioridad</option>
-                        <option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option>
+                        <option value="urgente">Urgente</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option>
                     </select>
                 </div>
                 <div class="form-group" id="grp_nuevo_obs" style="display:none;">
@@ -829,6 +1052,10 @@
                     <input type="text" id="eu_nombre" class="form-input" disabled readonly>
                 </div>
                 <div class="form-group">
+                    <label>Apellido <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
+                    <input type="text" id="eu_apellido" class="form-input" disabled readonly>
+                </div>
+                <div class="form-group">
                     <label>Tipo de documento <i class="fa-solid fa-lock text-muted" title="Campo protegido"></i></label>
                     <input type="text" id="eu_tipo_display" class="form-input" disabled readonly>
                 </div>
@@ -860,7 +1087,7 @@
                     <label>Prioridad</label>
                     <select name="prioridad" id="eu_prioridad" class="form-input">
                         <option value="">Sin prioridad</option>
-                        <option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option>
+                        <option value="urgente">Urgente</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option>
                     </select>
                 </div>
                 <div class="form-group" id="grp_eu_obs" style="display:none;">
@@ -932,6 +1159,8 @@
                     <option value="pendiente">Pendiente</option>
                     <option value="aprobada">Aprobada</option>
                     <option value="rechazada">Rechazada</option>
+                    <option value="completada">Completada</option>
+                    <option value="cancelada">Cancelada</option>
                 </select>
             </div>
             <div class="form-group">
@@ -969,6 +1198,8 @@
                     <option value="pendiente">Pendiente</option>
                     <option value="aprobada">Aprobada</option>
                     <option value="rechazada">Rechazada</option>
+                    <option value="completada">Completada</option>
+                    <option value="cancelada">Cancelada</option>
                 </select>
             </div>
             <div class="form-group">
@@ -1005,16 +1236,26 @@
                 <div class="form-group">
                     <label>Estado</label>
                     <select name="estado_evento" class="form-input">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
+                        <option value="borrador">Borrador</option>
+                        <option value="publicado">Publicado</option>
+                        <option value="en_curso">En curso</option>
+                        <option value="finalizado">Finalizado</option>
+                        <option value="cancelado">Cancelado</option>
                     </select>
                 </div>
             </div>
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>Fecha de la Entrega *</label>
-                    <input type="date" name="fecha_entrega" class="form-input" required>
+                    <label>Fecha de inicio *</label>
+                    <input type="date" name="fecha_inicio" class="form-input" required>
                 </div>
+                <div class="form-group">
+                    <label>Fecha de fin *</label>
+                    <input type="date" name="fecha_fin" class="form-input" required>
+                    <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Usa la misma fecha si el evento dura un solo día.</p>
+                </div>
+            </div>
+            <div class="form-grid-2">
                 <div class="form-group">
                     <label>Lugar de Entrega *</label>
                     <input type="text" name="lugar_entrega" class="form-input" required maxlength="255"
@@ -1066,16 +1307,25 @@
                 <div class="form-group">
                     <label>Estado</label>
                     <select name="estado_evento" id="edit_estado" class="form-input">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
+                        <option value="borrador">Borrador</option>
+                        <option value="publicado">Publicado</option>
+                        <option value="en_curso">En curso</option>
+                        <option value="finalizado">Finalizado</option>
+                        <option value="cancelado">Cancelado</option>
                     </select>
                 </div>
             </div>
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>Fecha de Entrega</label>
-                    <input type="date" name="fecha_entrega" id="edit_fecha_entrega" class="form-input" required>
+                    <label>Fecha de inicio</label>
+                    <input type="date" name="fecha_inicio" id="edit_fecha_inicio" class="form-input" required>
                 </div>
+                <div class="form-group">
+                    <label>Fecha de fin</label>
+                    <input type="date" name="fecha_fin" id="edit_fecha_fin" class="form-input" required>
+                </div>
+            </div>
+            <div class="form-grid-2">
                 <div class="form-group">
                     <label>Lugar</label>
                     <input type="text" name="lugar_entrega" id="edit_lugar_entrega" class="form-input" required maxlength="255">
@@ -1180,7 +1430,8 @@
                 <label>Campo a corregir *</label>
                 <select name="campo" class="form-input" required>
                     <option value="">Selecciona el campo</option>
-                    <option value="nombre">Nombre completo</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="apellido">Apellido</option>
                     <option value="tipoDocumento">Tipo de documento</option>
                     <option value="numDocumento">Número de documento</option>
                     <option value="fechaNacimiento">Fecha de nacimiento</option>
@@ -1231,7 +1482,8 @@
                 <label>Campo a corregir *</label>
                 <select name="campo" class="form-input" required>
                     <option value="">Selecciona el campo</option>
-                    <option value="nombre">Nombre completo</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="apellido">Apellido</option>
                     <option value="tipoDocumento">Tipo de documento</option>
                     <option value="numDocumento">Número de documento</option>
                     <option value="fechaNacimiento">Fecha de nacimiento</option>
@@ -1304,6 +1556,7 @@ window.abrirModalEditarUsuario = function(u) {
     document.getElementById('formEditarUsuario').action = ROUTES.editarUsuario(u.idUsuario);
     document.getElementById('eu_id').value          = u.idUsuario;
     document.getElementById('eu_nombre').value       = u.nombre;
+    document.getElementById('eu_apellido').value      = u.apellido || '';
     document.getElementById('eu_tipo_display').value = u.tipoDocumento;
     document.getElementById('eu_doc').value          = u.numDocumento;
     document.getElementById('eu_fnac').value         = u.fechaNacimiento;
@@ -1410,11 +1663,17 @@ function fechaEsPasada(valorFecha) {
 }
 
 function validarFechaEventoForm(form) {
-    const input = form.querySelector('input[name="fecha_entrega"]');
-    if (!input) return true;
-    if (fechaEsPasada(input.value)) {
+    const inicio = form.querySelector('input[name="fecha_inicio"]');
+    const fin    = form.querySelector('input[name="fecha_fin"]');
+    if (!inicio || !fin) return true;
+    if (fechaEsPasada(inicio.value)) {
         alert('No se pueden programar eventos con fechas pasadas. Selecciona hoy o una fecha futura.');
-        input.focus();
+        inicio.focus();
+        return false;
+    }
+    if (fin.value && inicio.value && fin.value < inicio.value) {
+        alert('La fecha de fin no puede ser anterior a la fecha de inicio.');
+        fin.focus();
         return false;
     }
     return true;
@@ -1424,8 +1683,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const hoyStr = new Date().toISOString().split('T')[0];
 
     // Fecha mínima = hoy en ambos formularios de evento
-    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_entrega"]');
-    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_entrega"]');
+    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_inicio"]');
+    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_inicio"]');
     if (fCrear)  fCrear.min  = hoyStr;
     if (fEditar) fEditar.min = hoyStr;
 

@@ -161,10 +161,11 @@ function abrirModalEditarEvento(evento) {
     document.getElementById('edit_idEvento').value      = evento.idEvento;
     document.getElementById('edit_nombre').value        = evento.Nombre || evento.nombre || '';
     document.getElementById('edit_estado').value        = evento.estado;
-    document.getElementById('edit_fecha_entrega').value = evento.FechaEntrega || '';
-    document.getElementById('edit_lugar_entrega').value = evento.Lugar || '';
-    document.getElementById('edit_titulo_pub').value    = evento.titulo || '';
-    document.getElementById('edit_contenido_pub').value = evento.contenido || '';
+    document.getElementById('edit_fecha_inicio').value  = evento.fecha_inicio || '';
+    document.getElementById('edit_fecha_fin').value     = evento.fecha_fin || '';
+    document.getElementById('edit_lugar_entrega').value = evento.lugar_entrega || '';
+    document.getElementById('edit_titulo_pub').value    = evento.titulo_pub || '';
+    document.getElementById('edit_contenido_pub').value = evento.contenido_pub || '';
 
     document.getElementById('edit_imagen_pub').value = '';
     const nuevaPreview = document.getElementById('edit_nueva_img_preview');
@@ -271,7 +272,7 @@ function generarReporteDonaciones() {
     const hoy    = new Date().toLocaleDateString('es-CO');
 
     doc.setFontSize(16);
-    doc.setTextColor(211, 47, 47);
+    doc.setTextColor(11, 90, 166);
     doc.text('DONAPP — Reporte de Donaciones', 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -306,7 +307,7 @@ function generarReporteSolicitudes() {
     const hoy    = new Date().toLocaleDateString('es-CO');
 
     doc.setFontSize(16);
-    doc.setTextColor(211, 47, 47);
+    doc.setTextColor(11, 90, 166);
     doc.text('DONAPP — Reporte de Solicitudes', 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);

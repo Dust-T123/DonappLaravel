@@ -19,7 +19,7 @@
             icon: 'success',
             title: '¡Éxito!',
             text: '<?php echo e(addslashes(session('success'))); ?>',
-            confirmButtonColor: '#df0b0b',
+            confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ACEPTAR',
             customClass: { popup: 'donapp-popup', confirmButton: 'donapp-confirm-btn' }
         });
@@ -32,8 +32,8 @@
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: '<?php echo e(addslashes($errors->first('msg') ?? $errors->first())); ?>',
-            confirmButtonColor: '#df0b0b',
+            text: '<?php echo e(addslashes($errors->first('msg') ?: $errors->first())); ?>',
+            confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ENTENDIDO',
         });
     </script>

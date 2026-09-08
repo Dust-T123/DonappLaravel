@@ -7,9 +7,8 @@ use App\Models\Donacion;
 use App\Models\Solicitud;
 use App\Models\Categoria;
 use App\Models\Evento;
-use App\Models\Publicacion;
-use App\Models\ProgramadorEventos;
 use App\Models\CorreccionDatos;
+use App\Models\VisitaDomiciliaria;
 use App\Mail\NotificacionEstado;
 use App\Mail\NotificacionCorreccion;
 use Illuminate\Http\Request;
@@ -26,49 +25,91 @@ class AdminController extends Controller
 
         // ── Usuarios ──────────────────────────────────────────────────────────
         $usuarios = Usuario::when($request->search, fn($q, $s) =>
-                $q->where('nombre', 'like', "%$s%")->orWhere('email', 'like', "%$s%")
+                $q->where(fn($q2) => $q2->where('nombre', 'like', "%$s%")->orWhere('apellido', 'like', "%$s%")->orWhere('email', 'like', "%$s%"))
             )
             ->when($request->rol, fn($q, $r) => $q->where('rol', $r))
             ->when($request->prioridad, fn($q, $p) => $q->where('prioridad', $p))
-            ->orderByDesc('idUsuario')->get();
+            ->when($request->sort === 'az', fn($q) => $q->orderBy('nombre'))
+            ->when($request->sort === 'za', fn($q) => $q->orderByDesc('nombre'))
+            ->when($request->sort === 'prioridad', fn($q) => $q->ordenarPorPrioridad())
+            ->when(!$request->sort, fn($q) => $q->orderByDesc('idUsuario'))
+            ->get();
 
         // ── Categorías ────────────────────────────────────────────────────────
         $categorias = Categoria::with('creadaPor')
             ->withCount(['donaciones', 'solicitudes'])
             ->when($request->cat_search, fn($q, $s) => $q->where('nombre', 'like', "%$s%"))
-            ->orderBy('nombre')->get();
+            ->when($request->cat_sort === 'za', fn($q) => $q->orderByDesc('nombre'), fn($q) => $q->orderBy('nombre'))
+            ->get();
 
         // ── Donaciones ────────────────────────────────────────────────────────
         $donaciones = Donacion::with(['categoria', 'donantes'])
             ->when($request->don_search, fn($q, $s) =>
-                $q->where('descripcion', 'like', "%$s%")
-                  ->orWhereHas('donantes', fn($q2) => $q2->where('nombre', 'like', "%$s%"))
+                $q->where(fn($q2) => $q2->where('descripcion', 'like', "%$s%")
+                  ->orWhereHas('donantes', fn($q3) => $q3->where('nombre', 'like', "%$s%")))
             )
             ->when($request->don_estado, fn($q, $e) => $q->where('estado', $e))
             ->when($request->don_cat, fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
-            ->orderByDesc('idDonacion')->get();
+            ->when($request->don_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->don_sort === 'za', fn($q) => $q->orderByDesc('descripcion'))
+            ->when(!$request->don_sort, fn($q) => $q->orderByDesc('idDonacion'))
+            ->get();
+
+        // ── Inventario disponible (donaciones APROBADAS agrupadas por artículo) ──
+        // Suma el stock de todas las donaciones aprobadas que comparten la misma
+        // descripción y categoría, para responder "¿cuánto tenemos de X?"
+        // en vez de mostrar cada donación por separado.
+        $inventario = Donacion::where('estado', 'aprobada')
+            ->when($request->inv_search, fn($q, $s) => $q->where('descripcion', 'like', "%$s%"))
+            ->when($request->inv_cat, fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
+            ->select('descripcion', 'idCategoria', DB::raw('SUM(stock) as total_stock'), DB::raw('COUNT(*) as num_donaciones'))
+            ->groupBy('descripcion', 'idCategoria')
+            ->with('categoria')
+            ->when($request->inv_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->inv_sort === 'za', fn($q) => $q->orderByDesc('descripcion'))
+            ->when(!$request->inv_sort, fn($q) => $q->orderByDesc('total_stock'))
+            ->get();
+        $totalUnidadesInventario = $inventario->sum('total_stock');
 
         // ── Solicitudes ───────────────────────────────────────────────────────
         $solicitudes = Solicitud::with(['categoria', 'solicitante', 'gestor'])
             ->when($request->sol_search, fn($q, $s) =>
-                $q->where('descripcion', 'like', "%$s%")
-                  ->orWhereHas('solicitante', fn($q2) => $q2->where('nombre', 'like', "%$s%"))
+                $q->where(fn($q2) => $q2->where('descripcion', 'like', "%$s%")
+                  ->orWhereHas('solicitante', fn($q3) => $q3->where('nombre', 'like', "%$s%")))
             )
             ->when($request->sol_estado, fn($q, $e) => $q->where('estado', $e))
             ->when($request->sol_cat, fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
-            ->orderByDesc('idSolicitud')->get();
+            ->when($request->sol_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->sol_sort === 'prioridad', fn($q) =>
+                $q->join('usuario', 'usuario.idUsuario', '=', 'solicitud.idSolicitante')
+                  ->orderByRaw("FIELD(usuario.prioridad,'urgente','alta','media','baja') IS NULL")
+                  ->orderByRaw("FIELD(usuario.prioridad,'urgente','alta','media','baja')")
+                  ->select('solicitud.*'))
+            ->when(!$request->sol_sort, fn($q) => $q->orderByDesc('idSolicitud'))
+            ->get();
 
         // ── Eventos ───────────────────────────────────────────────────────────
-        $eventos = Evento::with(['publicacion.autor', 'programacion'])
+        $eventos = Evento::query()
             ->when($request->ev_search, fn($q, $s) => $q->where('Nombre', 'like', "%$s%"))
             ->when($request->ev_estado, fn($q, $e) => $q->where('estado', $e))
-            ->orderByDesc('idEvento')->get();
+            ->when($request->ev_sort === 'az', fn($q) => $q->orderBy('Nombre'))
+            ->when($request->ev_sort === 'za', fn($q) => $q->orderByDesc('Nombre'))
+            ->when(!$request->ev_sort, fn($q) => $q->orderByDesc('idEvento'))
+            ->get();
 
         // ── Correcciones de datos sensibles pendientes ───────────────────────
         $correcciones = CorreccionDatos::with(['usuario', 'solicitante'])
             ->where('estado', 'pendiente')
             ->orderByDesc('idCorreccion')
             ->get();
+
+        // ── Visitas domiciliarias ─────────────────────────────────────────────
+        $visitas = VisitaDomiciliaria::with(['usuario', 'gestor'])
+            ->when($request->vis_estado, fn($q, $e) => $q->where('estado', $e))
+            ->when($request->vis_sort === 'az', fn($q) => $q->orderBy('idUsuario'))
+            ->when(!$request->vis_sort, fn($q) => $q->orderByRaw("estado = 'pendiente' DESC")->orderByDesc('idVisita'))
+            ->get();
+        $totalVisitasPendientes = VisitaDomiciliaria::where('estado', 'pendiente')->count();
 
         // ── Estadísticas del dashboard ────────────────────────────────────────
         $totalUsuarios   = Usuario::count();
@@ -113,7 +154,8 @@ class AdminController extends Controller
             'usuarios', 'categorias', 'donaciones', 'solicitudes', 'eventos', 'correcciones',
             'totalUsuarios', 'totalDonaciones', 'totalSolicitudes', 'totalEventos',
             'totalAprobadas', 'totalCategorias', 'adminActual',
-            'donacionesRpt', 'solicitudesRpt'
+            'donacionesRpt', 'solicitudesRpt', 'visitas', 'totalVisitasPendientes',
+            'inventario', 'totalUnidadesInventario'
         ));
     }
 
@@ -123,20 +165,24 @@ class AdminController extends Controller
     {
         $request->validate([
             'nombre'         => 'required|min:3|max:100',
-            'tipoDocumento'  => 'required',
-            'numDocumento'   => 'required|numeric|unique:usuario',
-            'fechaNacimiento'=> 'required|date',
+            'apellido'       => 'required|min:2|max:100',
+            'tipoDocumento'  => 'required|in:CC,TI,CE,TE,PPT,Pasaporte',
+            'numDocumento'   => 'required|regex:/^[A-Za-z0-9]{4,15}$/|unique:usuario',
+            'fechaNacimiento'=> 'required|date|before_or_equal:-14 years',
             'direccion'      => 'required|min:5',
             'email'          => 'required|email|unique:usuario',
             'telefono'       => 'required|digits:10',
             'rol'            => 'required|in:administrador,asistente,donante',
             'estado'         => 'required|in:activo,inactivo',
             'password'       => 'required|min:6|confirmed',
+        ], [
+            'fechaNacimiento.before_or_equal' => 'El usuario debe tener al menos 14 años.',
         ]);
 
         $rol = $request->rol;
         Usuario::create([
             'nombre'             => $request->nombre,
+            'apellido'           => $request->apellido,
             'tipoDocumento'      => $request->tipoDocumento,
             'numDocumento'       => $request->numDocumento,
             'fechaNacimiento'    => $request->fechaNacimiento,
@@ -244,7 +290,7 @@ class AdminController extends Controller
     public function solicitarCorreccionPerfil(Request $request): RedirectResponse
     {
         $request->validate([
-            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'campo'          => 'required|in:nombre,apellido,tipoDocumento,numDocumento,fechaNacimiento',
             'valorNuevo'     => 'required|max:150',
             'justificacion'  => 'required|min:10|max:300',
             'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
@@ -287,7 +333,7 @@ class AdminController extends Controller
     public function solicitarCorreccionUsuario(Request $request, int $id): RedirectResponse
     {
         $request->validate([
-            'campo'          => 'required|in:nombre,tipoDocumento,numDocumento,fechaNacimiento',
+            'campo'          => 'required|in:nombre,apellido,tipoDocumento,numDocumento,fechaNacimiento',
             'valorNuevo'     => 'required|max:150',
             'justificacion'  => 'required|min:10|max:300',
             'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
@@ -342,15 +388,15 @@ class AdminController extends Controller
 
         switch ($correccion->campo) {
             case 'numDocumento':
-                if (!ctype_digit($valor)) {
-                    return back()->with('error', 'El número de documento propuesto no es válido (solo dígitos).');
+                if (!preg_match('/^[A-Za-z0-9]{4,15}$/', $valor)) {
+                    return back()->with('error', 'El número de documento propuesto no es válido.');
                 }
                 if (Usuario::where('numDocumento', $valor)->where('idUsuario', '!=', $correccion->idUsuario)->exists()) {
                     return back()->with('error', 'Ese número de documento ya está registrado por otro usuario.');
                 }
                 break;
             case 'tipoDocumento':
-                if (!in_array($valor, ['CC', 'TI', 'CE', 'PEP'])) {
+                if (!in_array($valor, ['CC', 'TI', 'CE', 'TE', 'PPT', 'PEP'])) {
                     return back()->with('error', 'Tipo de documento propuesto no es válido.');
                 }
                 break;
@@ -358,10 +404,18 @@ class AdminController extends Controller
                 if (!strtotime($valor)) {
                     return back()->with('error', 'La fecha de nacimiento propuesta no es válida.');
                 }
+                if (\Carbon\Carbon::parse($valor)->age < 14) {
+                    return back()->with('error', 'La fecha de nacimiento propuesta indica una edad menor a 14 años, no permitida en la plataforma.');
+                }
                 break;
             case 'nombre':
                 if (mb_strlen($valor) < 3) {
                     return back()->with('error', 'El nombre propuesto debe tener al menos 3 caracteres.');
+                }
+                break;
+            case 'apellido':
+                if (mb_strlen($valor) < 2) {
+                    return back()->with('error', 'El apellido propuesto debe tener al menos 2 caracteres.');
                 }
                 break;
         }
@@ -518,27 +572,32 @@ class AdminController extends Controller
     {
         $request->validate([
             'nombre_evento'  => 'required|min:3|max:150',
-            'estado_evento'  => 'required|in:activo,inactivo',
-            'fecha_entrega'  => 'required|date|after_or_equal:today',
+            'estado_evento'  => 'required|in:borrador,publicado,en_curso,finalizado,cancelado',
+            'fecha_inicio'   => 'required|date|after_or_equal:today',
+            'fecha_fin'      => 'required|date|after_or_equal:fecha_inicio',
             'lugar_entrega'  => 'required|min:3|max:255',
             'titulo_pub'     => 'required|min:3|max:200',
             'contenido_pub'  => 'required|min:10|max:500',
         ], [
-            'fecha_entrega.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.',
+            'fecha_inicio.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.',
+            'fecha_fin.after_or_equal'    => 'La fecha de fin no puede ser anterior a la fecha de inicio.',
         ]);
 
-        DB::transaction(function () use ($request) {
-            $evento = Evento::create(['Nombre' => $request->nombre_evento, 'estado' => $request->estado_evento]);
-            ProgramadorEventos::create(['idEvento' => $evento->idEvento, 'FechaEntrega' => $request->fecha_entrega, 'Lugar' => $request->lugar_entrega]);
-            $img = null;
-            if ($request->hasFile('imagen_pub') && $request->file('imagen_pub')->isValid())
-                $img = file_get_contents($request->file('imagen_pub')->getRealPath());
-            Publicacion::create([
-                'titulo' => $request->titulo_pub, 'contenido' => $request->contenido_pub,
-                'imagen' => $img, 'fechaPublicacion' => now()->format('Y-m-d'),
-                'idUsuario' => $request->session()->get('usuario.idUsuario'), 'idEvento' => $evento->idEvento,
-            ]);
-        });
+        $img = null;
+        if ($request->hasFile('imagen_pub') && $request->file('imagen_pub')->isValid())
+            $img = file_get_contents($request->file('imagen_pub')->getRealPath());
+
+        Evento::create([
+            'Nombre'           => $request->titulo_pub ?: $request->nombre_evento,
+            'contenido'        => $request->contenido_pub,
+            'imagen'           => $img,
+            'fechaPublicacion' => now()->format('Y-m-d'),
+            'fechaInicio'      => $request->fecha_inicio,
+            'fechaFin'         => $request->fecha_fin,
+            'lugar'            => $request->lugar_entrega,
+            'estado'           => $request->estado_evento,
+        ]);
+
         return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', 'Evento creado correctamente.');
     }
 
@@ -548,54 +607,51 @@ class AdminController extends Controller
             'nombre_evento'  => 'required|min:3|max:150',
             'titulo_pub'     => 'required|min:3|max:200',
             'contenido_pub'  => 'required|min:10|max:500',
-            'fecha_entrega'  => 'required|date|after_or_equal:today',
+            'fecha_inicio'   => 'required|date',
+            'fecha_fin'      => 'required|date|after_or_equal:fecha_inicio',
             'lugar_entrega'  => 'required|min:3|max:255',
+            'estado_evento'  => 'nullable|in:borrador,publicado,en_curso,finalizado,cancelado',
         ], [
-            'fecha_entrega.after_or_equal' => 'No se pueden reprogramar eventos con fechas pasadas.',
+            'fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la fecha de inicio.',
         ]);
 
-        DB::transaction(function () use ($request, $id) {
-            $evento = Evento::findOrFail($id);
-            $evento->update(['Nombre' => $request->nombre_evento, 'estado' => $request->estado_evento ?? $evento->estado]);
+        $evento = Evento::findOrFail($id);
+        $data = [
+            'Nombre'      => $request->titulo_pub ?: $request->nombre_evento,
+            'contenido'   => $request->contenido_pub,
+            'fechaInicio' => $request->fecha_inicio,
+            'fechaFin'    => $request->fecha_fin,
+            'lugar'       => $request->lugar_entrega,
+            'estado'      => $request->estado_evento ?? $evento->estado,
+        ];
+        if ($request->hasFile('imagen_pub') && $request->file('imagen_pub')->isValid())
+            $data['imagen'] = file_get_contents($request->file('imagen_pub')->getRealPath());
+        $evento->update($data);
 
-            if ($evento->programacion) {
-                $evento->programacion->update(['FechaEntrega' => $request->fecha_entrega, 'Lugar' => $request->lugar_entrega]);
-            }
-
-            if ($pub = $evento->publicacion) {
-                $data = ['titulo' => $request->titulo_pub, 'contenido' => $request->contenido_pub];
-                if ($request->hasFile('imagen_pub') && $request->file('imagen_pub')->isValid())
-                    $data['imagen'] = file_get_contents($request->file('imagen_pub')->getRealPath());
-                $pub->update($data);
-            }
-        });
         return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', 'Evento actualizado.');
     }
 
     public function eliminarEvento(int $id): RedirectResponse
     {
-        DB::transaction(function () use ($id) {
-            $evento = Evento::findOrFail($id);
-            $evento->publicaciones()->delete();
-            $evento->programacion()->delete();
-            $evento->delete();
-        });
+        Evento::findOrFail($id)->delete();
         return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', 'Evento eliminado.');
     }
 
-    public function toggleEvento(int $id): RedirectResponse
+    public function cambiarEstadoEvento(Request $request, int $id): RedirectResponse
     {
+        $request->validate([
+            'estado' => 'required|in:borrador,publicado,en_curso,finalizado,cancelado',
+        ]);
         $evento = Evento::findOrFail($id);
-        $nuevo  = $evento->estado === 'activo' ? 'inactivo' : 'activo';
-        $evento->update(['estado' => $nuevo]);
-        return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', "Evento ahora $nuevo.");
+        $evento->update(['estado' => $request->estado]);
+        return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', "Estado del evento actualizado a \"{$request->estado}\".");
     }
 
     // ── DONACIONES / SOLICITUDES ──────────────────────────────────────────────
 
     public function cambiarEstadoDonacion(Request $request, int $id): RedirectResponse
     {
-        $request->validate(['estado' => 'required|in:pendiente,aprobada,rechazada', 'observacion' => 'nullable|max:250']);
+        $request->validate(['estado' => 'required|in:pendiente,aprobada,rechazada,cancelada,completada', 'observacion' => 'nullable|max:250']);
         $donacion = Donacion::with('donantes')->findOrFail($id);
         $donacion->update(['estado' => $request->estado, 'observacion' => $request->observacion]);
         if ($donante = $donacion->donantes->first()) {
@@ -606,7 +662,7 @@ class AdminController extends Controller
 
     public function cambiarEstadoSolicitud(Request $request, int $id): RedirectResponse
     {
-        $request->validate(['estado' => 'required|in:pendiente,aprobada,rechazada', 'observacion' => 'nullable|max:250']);
+        $request->validate(['estado' => 'required|in:pendiente,aprobada,rechazada,cancelada,completada', 'observacion' => 'nullable|max:250']);
         $solicitud = Solicitud::with('solicitante')->findOrFail($id);
         $solicitud->update([
             'estado'      => $request->estado,
@@ -617,5 +673,27 @@ class AdminController extends Controller
             try { Mail::to($sol->email)->send(new NotificacionEstado($sol->nombre, 'solicitud', $request->estado, $request->observacion ?? '')); } catch (\Exception) {}
         }
         return redirect()->route('admin.dashboard', ['tab' => 'donapp'])->with('success', 'Estado actualizado.');
+    }
+
+    public function cambiarEstadoVisita(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'estado'      => 'required|in:aprobada,rechazada,realizada,cancelada',
+            'observacion' => 'nullable|max:300',
+        ]);
+
+        $visita = VisitaDomiciliaria::with('usuario')->findOrFail($id);
+        $visita->update([
+            'estado'          => $request->estado,
+            'observacion'     => $request->observacion,
+            'idGestor'        => $request->session()->get('usuario.idUsuario'),
+            'fechaResolucion' => now(),
+        ]);
+
+        if ($u = $visita->usuario) {
+            try { Mail::to($u->email)->send(new NotificacionEstado($u->nombre, 'visita domiciliaria', $request->estado, $request->observacion ?? '')); } catch (\Exception) {}
+        }
+
+        return redirect()->route('admin.dashboard', ['tab' => 'visitas'])->with('success', 'Estado de la visita actualizado.');
     }
 }

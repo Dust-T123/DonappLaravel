@@ -8,22 +8,29 @@
                value="{{ old('nombre', $usuario->nombre ?? '') }}">
     </div>
     <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" name="apellido" class="form-input" required minlength="2"
+               value="{{ old('apellido', $usuario->apellido ?? '') }}">
+    </div>
+    <div class="form-group">
         <label>Tipo Documento</label>
         <select name="tipoDocumento" class="form-input" required>
-            @foreach(['CC','TI','CE','Pasaporte'] as $t)
-                <option value="{{ $t }}" {{ old('tipoDocumento', $usuario->tipoDocumento ?? '') == $t ? 'selected' : '' }}>{{ $t }}</option>
+            @foreach(['CC'=>'Cédula de Ciudadanía','TI'=>'Tarjeta de Identidad','CE'=>'Cédula de Extranjería','TE'=>'Tarjeta de Extranjería','PPT'=>'Permiso por Protección Temporal','Pasaporte'=>'Pasaporte'] as $t => $label)
+                <option value="{{ $t }}" {{ old('tipoDocumento', $usuario->tipoDocumento ?? '') == $t ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
     </div>
     <div class="form-group">
         <label>N° Documento</label>
-        <input type="number" name="numDocumento" class="form-input" required
+        <input type="text" name="numDocumento" class="form-input" required maxlength="15"
                value="{{ old('numDocumento', $usuario->numDocumento ?? '') }}">
     </div>
     <div class="form-group">
         <label>Fecha Nacimiento</label>
         <input type="date" name="fechaNacimiento" class="form-input" required
+               max="{{ now()->subYears(14)->format('Y-m-d') }}"
                value="{{ old('fechaNacimiento', $usuario->fechaNacimiento ?? '') }}">
+        <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Debe tener al menos 14 años.</p>
     </div>
     <div class="form-group" style="grid-column:1/-1">
         <label>Dirección</label>
@@ -67,7 +74,7 @@
         <label>Prioridad</label>
         <select name="prioridad" class="form-input">
             <option value="">— Sin prioridad —</option>
-            @foreach(['alta','media','baja'] as $p)
+            @foreach(['urgente','alta','media','baja'] as $p)
                 <option value="{{ $p }}" {{ old('prioridad', $usuario->prioridad ?? '') == $p ? 'selected' : '' }}>{{ ucfirst($p) }}</option>
             @endforeach
         </select>

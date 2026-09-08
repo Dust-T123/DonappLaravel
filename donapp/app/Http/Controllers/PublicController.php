@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Usuario;
 use App\Models\Donacion;
 use App\Models\Evento;
-use App\Models\Publicacion;
 
 class PublicController extends Controller
 {
@@ -13,9 +12,11 @@ class PublicController extends Controller
     {
         $statsUsuarios   = Usuario::where('rol', 'donante')->count();
         $statsDonaciones = Donacion::count();
-        $statsEventos    = Evento::where('estado', 'activo')->count();
+        $statsEventos    = Evento::whereIn('estado', ['publicado', 'en_curso'])->count();
 
-        $publicaciones = Publicacion::with(['autor', 'evento.programacion'])
+        // Antes vivía en la tabla publicacion (ya eliminada): el contenido
+        // publicado sobre cada evento ahora es parte del propio evento.
+        $publicaciones = Evento::whereIn('estado', ['publicado', 'en_curso'])
             ->latest('fechaPublicacion')
             ->get();
 

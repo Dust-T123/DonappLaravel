@@ -1,6 +1,6 @@
 :root {
-    --color-primary: #df0b0b;
-    --color-primary-dark: #811212;
+    --color-primary: #0B5AA6;
+    --color-primary-dark: #073E73;
     --color-text-dark: #2d2d2d;
     --color-text-muted: #6b7280;
     --shadow-premium: 0 15px 35px rgba(0, 0, 0, 0.2);
@@ -135,7 +135,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
     border-color: var(--color-primary);
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(223, 11, 11, 0.1);
+    box-shadow: 0 0 0 4px rgba(11, 90, 166, 0.1);
 }
 
 .boton-moderno {
@@ -183,8 +183,8 @@ input:focus, select:focus, textarea:focus {
    CHECKBOX TÉRMINOS Y CONDICIONES
    ═══════════════════════════════════════════ */
 .terminos-check {
-    background: #fdf2f2;
-    border: 1px solid rgba(223, 11, 11, 0.15);
+    background: #E3EDFB;
+    border: 1px solid rgba(11, 90, 166, 0.15);
     border-radius: 12px;
     padding: 14px 16px;
 }
@@ -332,10 +332,10 @@ input:focus, select:focus, textarea:focus {
 .lista-asistencia {
     list-style: none;
     margin: 25px 0;
-    background: #fdf2f2; /* Fondo sutil rojizo */
+    background: #E3EDFB; /* Fondo sutil rojizo */
     padding: 20px;
     border-radius: 18px;
-    border: 1px solid rgba(223, 11, 11, 0.1);
+    border: 1px solid rgba(11, 90, 166, 0.1);
 }
 
 .lista-asistencia li {
@@ -386,7 +386,7 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
-    border: 1px solid rgba(223, 11, 11, 0.2);
+    border: 1px solid rgba(11, 90, 166, 0.2);
     border-radius: 14px;
     text-decoration: none;
     color: var(--color-text-dark);
@@ -400,7 +400,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .btn-descarga:hover {
-    background: #fdf2f2;
+    background: #E3EDFB;
     border-color: var(--color-primary);
     transform: translateY(-1px);
 }

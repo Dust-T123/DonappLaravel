@@ -7,9 +7,9 @@
 /* ── VARIABLES ── */
 
 :root {
-    --primary: #d32f2f;
-    --primary-dk: #b71c1c;
-    --secondary: #1a1a2e;
+    --primary: #0B5AA6;
+    --primary-dk: #073E73;
+    --secondary: #0D2C4E;
     --bg: #f0f2f5;
     --white: #ffffff;
     --text: #2d2d2d;
@@ -82,7 +82,7 @@ body {
 
 .sidebar-title {
     font-size: 0.72rem;
-    color: #811212;
+    color: #073E73;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-top: 10px;
@@ -116,6 +116,17 @@ body {
 .nav-link i {
     width: 18px;
     text-align: center;
+}
+
+.nav-badge {
+    display: inline-block;
+    background: #b91c1c;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    margin-left: 6px;
 }
 
 .nav-link:hover,
@@ -249,7 +260,7 @@ body {
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    background: #fde8e8;
+    background: #E3EDFB;
     color: var(--primary);
     display: flex;
     align-items: center;
@@ -469,16 +480,16 @@ tbody tr:hover td {
 
 .badge.cliente {
     background: #f5f5f5;
-    color: #811212;
+    color: #073E73;
 }
 
 .badge.asistente {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: #DCEAFB;
+    color: #1670C4;
 }
 
 .badge.administrador {
-    background: #811212;
+    background: #073E73;
     color: #fff;
 }
 
@@ -514,6 +525,31 @@ tbody tr:hover td {
     background: #fee2e2;
     color: #b91c1c;
 }
+
+.badge.estado-cancelada  { background: #f1f5f9; color: #475569; }
+.badge.estado-completada { background: #dbeafe; color: #1d4ed8; }
+
+/* Estados de Evento (BORRADOR, PUBLICADO, EN_CURSO, FINALIZADO, CANCELADO) */
+.badge.estado-borrador   { background: #f1f5f9; color: #475569; }
+.badge.estado-publicado  { background: #dcfce7; color: #15803d; }
+.badge.estado-en_curso   { background: #dbeafe; color: #1d4ed8; }
+.badge.estado-finalizado { background: #E3EDFB; color: #0B5AA6; }
+.badge.estado-cancelado  { background: #fee2e2; color: #b91c1c; }
+
+.badge-select {
+    border: none;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+/* Prioridad del beneficiario (mostrada junto a su nombre en donaciones/solicitudes) */
+.badge.prioridad-urgente { background: #fee2e2; color: #b91c1c; margin-left: 6px; }
+.badge.prioridad-alta    { background: #ffedd5; color: #c2410c; margin-left: 6px; }
+.badge.prioridad-media   { background: #fef9c3; color: #854d0e; margin-left: 6px; }
+.badge.prioridad-baja    { background: #E3EDFB; color: #0B5AA6; margin-left: 6px; }
 
 
 /* ─────────────────────────────────────────────
@@ -554,7 +590,7 @@ label {
 .form-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.12);
+    box-shadow: 0 0 0 3px rgba(11, 90, 166, 0.12);
 }
 
 select.form-input {
@@ -732,7 +768,7 @@ textarea.form-input {
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: #fee2e2;
+    background: #E3EDFB;
     color: var(--primary);
     display: flex;
     align-items: center;

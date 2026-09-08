@@ -7,9 +7,9 @@
 
 /* ── VARIABLES ── */
 :root {
-    --primary:    #d32f2f;
-    --primary-dk: #b71c1c;
-    --secondary:  #1a1a2e;
+    --primary:    #0B5AA6;
+    --primary-dk: #073E73;
+    --secondary:  #0D2C4E;
     --bg:         #f0f2f5;
     --white:      #ffffff;
     --text:       #2d2d2d;
@@ -67,7 +67,7 @@ body {
 .sidebar-logo img { width: 130px; }
 .sidebar-title {
     font-size: 0.72rem;
-    color: #811212;
+    color: #073E73;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-top: 10px;
@@ -220,7 +220,7 @@ body {
 .stat-icon {
     width: 48px; height: 48px;
     border-radius: 12px;
-    background: #fde8e8;
+    background: #E3EDFB;
     color: var(--primary);
     display: flex; align-items: center; justify-content: center;
     font-size: 1.2rem;
@@ -237,7 +237,7 @@ body {
    WELCOME HERO
 ───────────────────────────────────────────── */
 .welcome-hero {
-    background: linear-gradient(135deg, #cccccc 0%, #a51a1a 100%);
+    background: linear-gradient(135deg, #cccccc 0%, #073E73 100%);
     border-radius: var(--radius);
     padding: 32px 36px;
     margin-bottom: 28px;
@@ -252,7 +252,7 @@ body {
     right: -40px; top: -40px;
     width: 220px; height: 220px;
     border-radius: 50%;
-    background: rgba(211,47,47,0.18);
+    background: rgba(11,90,166,0.18);
 }
 .welcome-hero::after {
     content: '';
@@ -260,7 +260,7 @@ body {
     right: 60px; bottom: -60px;
     width: 150px; height: 150px;
     border-radius: 50%;
-    background: rgba(211,47,47,0.10);
+    background: rgba(11,90,166,0.10);
 }
 .welcome-hero h1 {
     font-size: 1.75rem;
@@ -419,9 +419,9 @@ tbody tr:hover td { background: #fafbfc; }
 }
 
 /* Roles */
-.badge.cliente       { background: #f5f5f5; color: #811212; }
-.badge.asistente     { background: #fee2e2; color: #b91c1c; }
-.badge.administrador { background: #811212; color: #fff; }
+.badge.cliente       { background: #f5f5f5; color: #073E73; }
+.badge.asistente     { background: #DCEAFB; color: #1670C4; }
+.badge.administrador { background: #073E73; color: #fff; }
 
 /* Estados */
 .badge.estado-activo     { background: #dcfce7; color: #15803d; }
@@ -430,6 +430,13 @@ tbody tr:hover td { background: #fafbfc; }
 .badge.estado-pendiente  { background: #fef9c3; color: #854d0e; }
 .badge.estado-aprobada   { background: #dcfce7; color: #15803d; }
 .badge.estado-rechazada  { background: #fee2e2; color: #b91c1c; }
+.badge.estado-cancelada  { background: #f1f5f9; color: #475569; }
+.badge.estado-completada { background: #dbeafe; color: #1d4ed8; }
+.badge.estado-borrador   { background: #f1f5f9; color: #475569; }
+.badge.estado-publicado  { background: #dcfce7; color: #15803d; }
+.badge.estado-en_curso   { background: #dbeafe; color: #1d4ed8; }
+.badge.estado-finalizado { background: #E3EDFB; color: #0B5AA6; }
+.badge.estado-cancelado  { background: #fee2e2; color: #b91c1c; }
 
 /* ─────────────────────────────────────────────
    FORMS
@@ -463,7 +470,7 @@ label {
 .form-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(211,47,47,0.12);
+    box-shadow: 0 0 0 3px rgba(11,90,166,0.12);
 }
 select.form-input { cursor: pointer; }
 textarea.form-input { resize: vertical; }
@@ -580,7 +587,7 @@ textarea.form-input { resize: vertical; }
 .detalle-box p:last-child { margin-bottom: 0; }
 
 .obs-box {
-    background: #fde8e8;
+    background: #E3EDFB;
     border-left: 3px solid var(--primary);
     border-radius: 0 8px 8px 0;
     padding: 10px 14px;
@@ -614,13 +621,20 @@ textarea.form-input { resize: vertical; }
 .event-card-img  { width: 100%; height: 170px; object-fit: cover; display: block; }
 .event-card-noimg {
     width: 100%; height: 170px;
-    background: linear-gradient(135deg, #fde8e8, #ffe0e0);
+    background: linear-gradient(135deg, #E3EDFB, #C9E0F7);
     display: flex; align-items: center; justify-content: center;
     color: var(--primary); font-size: 2.5rem;
 }
 .event-card-body { padding: 18px; }
 .event-card-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
 .event-card-body p  { font-size: 0.84rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5; }
+.event-ver-mas {
+    font-size: 0.78rem !important;
+    color: var(--primary) !important;
+    font-weight: 600;
+    margin-top: 8px;
+    margin-bottom: 0 !important;
+}
 .event-meta {
     display: flex; flex-wrap: wrap; gap: 8px;
     font-size: 0.78rem; color: var(--text-muted);
