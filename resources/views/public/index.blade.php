@@ -171,7 +171,11 @@
                 <p class="section-subtitle" style="margin-bottom:1rem">
                     Entérate de las próximas actividades de la fundación
                 </p>
+<<<<<<< HEAD:resources/views/public/index.blade.php
                 <div class="badge-tiempo-real" style="display:inline-flex;align-items:center;gap:8px;background:rgba(11,90,166,0.07);border:1px solid rgba(11,90,166,0.18);border-radius:20px;padding:5px 14px;font-size:0.82rem;font-weight:600;margin-bottom:1.5rem">
+=======
+                <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(211,47,47,0.07);border:1px solid rgba(211,47,47,0.18);border-radius:20px;padding:5px 14px;font-size:0.82rem;color:var(--color-primary);font-weight:600;margin-bottom:1.5rem">
+>>>>>>> 167c2457c2d76efa723cd44d76f2e025d0fdcc59:donapp/resources/views/public/index.blade.php
                     <i class="fa-solid fa-circle" style="font-size:0.5rem;color:#22c55e;animation:pulse 2s infinite"></i>
                     Datos en tiempo real
                     <span id="eventos-api-count" style="display:none;background:var(--color-primary);color:#fff;border-radius:20px;padding:1px 8px;font-size:0.75rem;margin-left:4px"></span>
