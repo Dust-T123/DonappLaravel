@@ -1,0 +1,444 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Usuario;
+use App\Models\Donacion;
+use App\Models\Solicitud;
+use App\Models\Categoria;
+use App\Models\Evento;
+use App\Models\CorreccionDatos;
+use App\Models\VisitaDomiciliaria;
+use App\Mail\NotificacionEstado;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+
+class AsisController extends Controller
+{
+    public function dashboard(Request $request)
+    {
+        $idAsis = $request->session()->get('usuario.idUsuario');
+
+        $clientes = Usuario::where('rol', 'donante')
+            ->when($request->cli_search, fn($q, $s) =>
+                $q->where(fn($q2) => $q2->where('nombre', 'like', "%$s%")->orWhere('apellido', 'like', "%$s%")->orWhere('email', 'like', "%$s%"))
+            )
+            ->when($request->cli_prioridad, fn($q, $p) => $q->where('prioridad', $p))
+            ->when($request->cli_sort === 'az', fn($q) => $q->orderBy('nombre'))
+            ->when($request->cli_sort === 'za', fn($q) => $q->orderByDesc('nombre'))
+            ->when($request->cli_sort === 'prioridad', fn($q) => $q->ordenarPorPrioridad())
+            ->when(!$request->cli_sort, fn($q) => $q->orderByDesc('idUsuario'))
+            ->get();
+
+        $categorias = Categoria::with('creadaPor')
+            ->when($request->cat_search, fn($q, $s) => $q->where('nombre', 'like', "%$s%"))
+            ->when($request->cat_sort === 'za', fn($q) => $q->orderByDesc('nombre'), fn($q) => $q->orderBy('nombre'))
+            ->get();
+
+        $donaciones = Donacion::with(['categoria', 'donantes'])
+            ->when($request->don_search, fn($q, $s) =>
+                $q->where(fn($q2) => $q2->where('descripcion', 'like', "%$s%")
+                  ->orWhereHas('donantes', fn($q3) => $q3->where('nombre', 'like', "%$s%")))
+            )
+            ->when($request->don_estado, fn($q, $e) => $q->where('estado', $e))
+            ->when($request->don_cat, fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
+            ->when($request->don_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->don_sort === 'za', fn($q) => $q->orderByDesc('descripcion'))
+            ->when(!$request->don_sort, fn($q) => $q->orderByDesc('idDonacion'))
+            ->get();
+
+        // ── Inventario disponible (donaciones APROBADAS agrupadas por artículo) ──
+        $inventario = Donacion::where('estado', 'aprobada')
+            ->when($request->inv_search, fn($q, $s) => $q->where('descripcion', 'like', "%$s%"))
+            ->when($request->inv_cat, fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
+            ->select('descripcion', 'idCategoria', DB::raw('SUM(stock) as total_stock'), DB::raw('COUNT(*) as num_donaciones'))
+            ->groupBy('descripcion', 'idCategoria')
+            ->with('categoria')
+            ->when($request->inv_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->inv_sort === 'za', fn($q) => $q->orderByDesc('descripcion'))
+            ->when(!$request->inv_sort, fn($q) => $q->orderByDesc('total_stock'))
+            ->get();
+        $totalUnidadesInventario = $inventario->sum('total_stock');
+
+        $solicitudes = Solicitud::with(['categoria', 'solicitante', 'gestor'])
+            ->when($request->sol_search, fn($q, $s) =>
+                $q->where(fn($q2) => $q2->where('descripcion', 'like', "%$s%")
+                  ->orWhereHas('solicitante', fn($q3) => $q3->where('nombre', 'like', "%$s%")))
+            )
+            ->when($request->sol_estado, fn($q, $e) => $q->where('estado', $e))
+            ->when($request->sol_cat, fn($q, $c) => $c ? $q->where('idCategoria', $c) : $q)
+            ->when($request->sol_sort === 'az', fn($q) => $q->orderBy('descripcion'))
+            ->when($request->sol_sort === 'prioridad', fn($q) =>
+                $q->join('usuario', 'usuario.idUsuario', '=', 'solicitud.idSolicitante')
+                  ->orderByRaw("FIELD(usuario.prioridad,'urgente','alta','media','baja') IS NULL")
+                  ->orderByRaw("FIELD(usuario.prioridad,'urgente','alta','media','baja')")
+                  ->select('solicitud.*'))
+            ->when(!$request->sol_sort, fn($q) => $q->orderByDesc('idSolicitud'))
+            ->get();
+
+        $eventos = Evento::query()
+            ->when($request->ev_search, fn($q, $s) => $q->where('Nombre', 'like', "%$s%"))
+            ->when($request->ev_estado, fn($q, $e) => $q->where('estado', $e))
+            ->when($request->ev_sort === 'az', fn($q) => $q->orderBy('Nombre'))
+            ->when($request->ev_sort === 'za', fn($q) => $q->orderByDesc('Nombre'))
+            ->when(!$request->ev_sort, fn($q) => $q->orderByDesc('idEvento'))
+            ->get();
+            
+
+        // Stats
+        $totalPendientes  = Donacion::where('estado', 'pendiente')->count()
+                          + Solicitud::where('estado', 'pendiente')->count();
+        $totalDonaciones  = Donacion::count();
+        $totalSolicitudes = Solicitud::count();
+        $totalAprobadas   = Donacion::where('estado', 'aprobada')->count();
+        $totalEventos     = Evento::count();
+        $totalClientes    = Usuario::where('rol', 'donante')->count();
+        $asisActual       = Usuario::findOrFail($idAsis);
+
+        // Solicitudes de corrección de datos sensibles hechas por este asistente
+        // (propias o de clientes). Solo lectura: la aprobación es exclusiva del admin.
+        $misCorrecciones = CorreccionDatos::with('usuario')
+            ->where('idSolicitante', $idAsis)
+            ->orderByDesc('idCorreccion')
+            ->get();
+
+        // ── Visitas domiciliarias ─────────────────────────────────────────────
+        $visitas = VisitaDomiciliaria::with(['usuario', 'gestor'])
+            ->when($request->vis_estado, fn($q, $e) => $q->where('estado', $e))
+            ->when($request->vis_sort === 'az', fn($q) => $q->orderBy('idUsuario'))
+            ->when(!$request->vis_sort, fn($q) => $q->orderByRaw("estado = 'pendiente' DESC")->orderByDesc('idVisita'))
+            ->get();
+        $totalVisitasPendientes = VisitaDomiciliaria::where('estado', 'pendiente')->count();
+
+        $donacionesRpt = Donacion::with(['categoria', 'donantes'])->orderByDesc('idDonacion')->get()
+    ->map(fn($d) => [
+        'idDonacion'    => $d->idDonacion,
+        'descripcion'   => $d->descripcion,
+        'categoria'     => $d->categoria?->nombre ?? '—',
+        'stock'         => $d->stock,
+        'estado'        => $d->estado,
+        'donante'       => $d->donantes->first()?->nombre ?? '—',
+        'fechaCreacion' => $d->donantes->first()?->pivot?->FechaCreacion ?? null,
+        'observacion'   => $d->observacion ?? '',
+    ])->toArray();
+        $solicitudesRpt = Solicitud::with(['categoria', 'solicitante'])->orderByDesc('idSolicitud')->get()
+    ->map(fn($s) => [
+        'idSolicitud'   => $s->idSolicitud,
+        'descripcion'   => $s->descripcion,
+        'categoria'     => $s->categoria?->nombre ?? '—',
+        'estado'        => $s->estado,
+        'solicitante'   => $s->solicitante?->nombre ?? '—',
+        'fechaCreacion' => $s->fechaCreacion ?? null,
+        'observacion'   => $s->observacion ?? '',
+    ])->toArray();
+    
+        return view('asis.dashboard', compact(
+            'clientes', 'categorias', 'donaciones', 'solicitudes', 'eventos', 'asisActual', 'misCorrecciones',
+            'totalPendientes', 'totalDonaciones', 'totalSolicitudes',
+            'totalAprobadas', 'totalEventos', 'totalClientes',
+            'donacionesRpt', 'solicitudesRpt', 'visitas', 'totalVisitasPendientes',
+            'inventario', 'totalUnidadesInventario'
+        ));
+    }
+
+    // ── CATEGORÍAS ────────────────────────────────────────────────────────────
+
+    public function crearCategoria(Request $request): RedirectResponse
+    {
+        $request->validate(['nombre_categoria' => 'required|min:3|unique:categoria,nombre'],
+            ['nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.']);
+        Categoria::create(['nombre' => $request->nombre_categoria, 'idUsuario' => $request->session()->get('usuario.idUsuario')]);
+        return redirect()->route('asis.dashboard', ['tab' => 'categorias'])->with('success', 'Categoría creada.');
+    }
+
+    public function editarCategoria(Request $request, int $id): RedirectResponse
+    {
+        $request->validate(["nombre_categoria" => "required|min:3|unique:categoria,nombre,$id,idCategoria"],
+            ['nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.']);
+        Categoria::findOrFail($id)->update(['nombre' => $request->nombre_categoria]);
+        return redirect()->route('asis.dashboard', ['tab' => 'categorias'])->with('success', 'Categoría actualizada.');
+    }
+
+    // ── EVENTOS ───────────────────────────────────────────────────────────────
+
+    public function crearEvento(Request $request): RedirectResponse
+    {
+        $request->validate(['nombre_evento'=>'required|min:3','fecha_inicio'=>'required|date|after_or_equal:today','fecha_fin'=>'required|date|after_or_equal:fecha_inicio','lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10'], ['fecha_inicio.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.', 'fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.']);
+        $img = $request->hasFile('imagen_pub') ? file_get_contents($request->file('imagen_pub')->getRealPath()) : null;
+        Evento::create([
+            'Nombre'           => $request->titulo_pub ?: $request->nombre_evento,
+            'contenido'        => $request->contenido_pub,
+            'imagen'           => $img,
+            'fechaPublicacion' => now()->format('Y-m-d'),
+            'fechaInicio'      => $request->fecha_inicio,
+            'fechaFin'         => $request->fecha_fin,
+            'lugar'            => $request->lugar_entrega,
+            'estado'           => $request->estado_evento ?? 'borrador',
+        ]);
+        return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', 'Evento creado.');
+    }
+
+    public function editarEvento(Request $request, int $id): RedirectResponse
+    {
+        $request->validate(['titulo_pub'=>'required','contenido_pub'=>'required','nombre_evento'=>'required','fecha_inicio'=>'required|date','fecha_fin'=>'required|date|after_or_equal:fecha_inicio','lugar_entrega'=>'required|min:3','estado_evento'=>'nullable|in:borrador,publicado,en_curso,finalizado,cancelado'], ['fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.']);
+        $evento = Evento::findOrFail($id);
+        $data = [
+            'Nombre'      => $request->titulo_pub ?: $request->nombre_evento,
+            'contenido'   => $request->contenido_pub,
+            'fechaInicio' => $request->fecha_inicio,
+            'fechaFin'    => $request->fecha_fin,
+            'lugar'       => $request->lugar_entrega,
+            'estado'      => $request->estado_evento ?? $evento->estado,
+        ];
+        if ($request->hasFile('imagen_pub')) $data['imagen'] = file_get_contents($request->file('imagen_pub')->getRealPath());
+        $evento->update($data);
+        return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', 'Evento actualizado.');
+    }
+
+    public function cambiarEstadoEvento(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'estado' => 'required|in:borrador,publicado,en_curso,finalizado,cancelado',
+        ]);
+        $evento = Evento::findOrFail($id);
+        $evento->update(['estado' => $request->estado]);
+        return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', "Estado del evento actualizado a \"{$request->estado}\".");
+    }
+
+    // ── DONACIONES / SOLICITUDES ──────────────────────────────────────────────
+
+    public function cambiarEstadoDonacion(Request $request, int $id): RedirectResponse
+    {
+        $request->validate(['estado'=>'required|in:pendiente,aprobada,rechazada,cancelada,completada','observacion'=>'nullable|max:250']);
+        $donacion = Donacion::with('donantes')->findOrFail($id);
+        $donacion->update(['estado'=>$request->estado,'observacion'=>$request->observacion]);
+        if ($donante = $donacion->donantes->first()) {
+            try { Mail::to($donante->email)->send(new NotificacionEstado($donante->nombre,'donación',$request->estado,$request->observacion??'')); } catch (\Exception) {}
+        }
+        return redirect()->route('asis.dashboard', ['tab' => 'donapp'])->with('success', 'Estado actualizado.');
+    }
+
+    public function cambiarEstadoSolicitud(Request $request, int $id): RedirectResponse
+    {
+        $request->validate(['estado'=>'required|in:pendiente,aprobada,rechazada,cancelada,completada','observacion'=>'nullable|max:250']);
+        $solicitud = Solicitud::with('solicitante')->findOrFail($id);
+        $solicitud->update(['estado'=>$request->estado,'observacion'=>$request->observacion,'idGestor'=>$request->session()->get('usuario.idUsuario')]);
+        if ($sol = $solicitud->solicitante) {
+            try { Mail::to($sol->email)->send(new NotificacionEstado($sol->nombre,'solicitud',$request->estado,$request->observacion??'')); } catch (\Exception) {}
+        }
+        return redirect()->route('asis.dashboard', ['tab' => 'donapp'])->with('success', 'Estado actualizado.');
+    }
+
+    // ── CLIENTES ──────────────────────────────────────────────────────────────
+
+    public function crearCliente(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'nombre'=>'required|min:3',
+            'apellido'=>'required|min:2',
+            'tipoDocumento'=>'required|in:CC,TI,CE,TE,PPT,Pasaporte',
+            'numDocumento'=>'required|regex:/^[A-Za-z0-9]{4,15}$/|unique:usuario',
+            'fechaNacimiento'=>'required|date|before_or_equal:-14 years',
+            'direccion'=>'required|min:5',
+            'email'=>'required|email|unique:usuario',
+            'telefono'=>'required|digits:10',
+            'password'=>'required|min:6|confirmed',
+        ], [
+            'fechaNacimiento.before_or_equal' => 'El cliente debe tener al menos 14 años.',
+        ]);
+        Usuario::create(['nombre'=>$request->nombre,'apellido'=>$request->apellido,'tipoDocumento'=>$request->tipoDocumento,'numDocumento'=>$request->numDocumento,'fechaNacimiento'=>$request->fechaNacimiento,'direccion'=>$request->direccion,'email'=>$request->email,'contrasena'=>Hash::make($request->password),'telefono'=>$request->telefono,'rol'=>'donante','estado'=>'activo','necesidad'=>$request->necesidad??null,'prioridad'=>$request->prioridad??null,'observacion_visita'=>$request->observacion_visita??null]);
+        return redirect()->route('asis.dashboard', ['tab' => 'clientes'])->with('success', 'Cliente creado correctamente.');
+    }
+
+    public function editarCliente(Request $request, int $id): RedirectResponse
+    {
+        // nombre / tipoDocumento / numDocumento / fechaNacimiento son datos de
+        // identidad protegidos: el modal de edición los muestra deshabilitados
+        // y SIN atributo "name", por lo que nunca llegan en el request. Solo
+        // se validan y actualizan aquí los campos no sensibles. Para cambiar
+        // un dato sensible existe el flujo aparte solicitarCorreccionCliente().
+        $request->validate([
+            'email'    => "required|email|unique:usuario,email,$id,idUsuario",
+            'telefono' => 'required|digits:10',
+            'direccion'=> 'required|min:5',
+        ]);
+        $usuario = Usuario::findOrFail($id);
+        $data = $request->only(['direccion','email','telefono','necesidad','prioridad','observacion_visita']);
+        if ($request->filled('password')) {
+            $request->validate(['password'=>'min:6|confirmed']);
+            $data['contrasena'] = Hash::make($request->password);
+        }
+        $usuario->update($data);
+        return redirect()->route('asis.dashboard', ['tab' => 'clientes'])->with('success', 'Cliente actualizado correctamente.');
+    }
+
+    // ── CORRECCIÓN DE DATOS SENSIBLES (habeas data) ─────────────────────────────
+
+    /**
+     * Guarda el soporte (foto/PDF del documento de identidad) en disco privado
+     * y calcula su hash SHA-256 para verificar integridad. El archivo NUNCA
+     * se guarda en la base de datos, solo se referencia la ruta.
+     */
+    private function guardarSoporte($file): array
+    {
+        $ruta = $file->store('correcciones', 'local'); // storage/app/correcciones (disco privado)
+        return [
+            'ruta' => $ruta,
+            'mime' => $file->getMimeType(),
+            'hash' => hash_file('sha256', $file->getRealPath()),
+        ];
+    }
+
+    public function solicitarCorreccionCliente(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'campo'          => 'required|in:nombre,apellido,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|min:1|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'accepted',
+        ]);
+
+        $usuario = Usuario::findOrFail($id);
+        $soporte = $this->guardarSoporte($request->file('soporte'));
+
+        CorreccionDatos::create([
+            'idUsuario'      => $usuario->idUsuario,
+            'idSolicitante'  => $request->session()->get('usuario.idUsuario'),
+            'campo'          => $request->campo,
+            'valorAnterior'  => (string) $usuario->{$request->campo},
+            'valorNuevo'     => $request->valorNuevo,
+            'justificacion'  => $request->justificacion,
+            'estado'         => 'pendiente',
+            'soporteRuta'    => $soporte['ruta'],
+            'soporteMime'    => $soporte['mime'],
+            'soporteHash'    => $soporte['hash'],
+            'consentimiento' => 1,
+        ]);
+
+        return redirect()->route('asis.dashboard', ['tab' => 'clientes'])
+            ->with('success', 'Solicitud de corrección enviada. Un administrador la revisará.');
+    }
+
+    public function solicitarCorreccionPerfil(Request $request): RedirectResponse
+    {
+        $idAsis = $request->session()->get('usuario.idUsuario');
+
+        $request->validate([
+            'campo'          => 'required|in:nombre,apellido,tipoDocumento,numDocumento,fechaNacimiento',
+            'valorNuevo'     => 'required|min:1|max:150',
+            'justificacion'  => 'required|min:10|max:300',
+            'soporte'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'consentimiento' => 'accepted',
+        ]);
+
+        $usuario = Usuario::findOrFail($idAsis);
+        $soporte = $this->guardarSoporte($request->file('soporte'));
+
+        CorreccionDatos::create([
+            'idUsuario'      => $usuario->idUsuario,
+            'idSolicitante'  => $idAsis,
+            'campo'          => $request->campo,
+            'valorAnterior'  => (string) $usuario->{$request->campo},
+            'valorNuevo'     => $request->valorNuevo,
+            'justificacion'  => $request->justificacion,
+            'estado'         => 'pendiente',
+            'soporteRuta'    => $soporte['ruta'],
+            'soporteMime'    => $soporte['mime'],
+            'soporteHash'    => $soporte['hash'],
+            'consentimiento' => 1,
+        ]);
+
+        return redirect()->route('asis.dashboard', ['tab' => 'perfil'])
+            ->with('success', 'Solicitud de corrección enviada. Un administrador la revisará.');
+    }
+
+    // ── PERFIL ────────────────────────────────────────────────────────────────
+
+    public function actualizarPerfil(Request $request): RedirectResponse
+    {
+        $id = $request->session()->get('usuario.idUsuario');
+        $request->validate(['nombre'=>'required|min:3',"email"=>"required|email|unique:usuario,email,$id,idUsuario",'telefono'=>'required|digits:10']);
+        $usuario = Usuario::findOrFail($id);
+        $data = $request->only(['nombre','tipoDocumento','numDocumento','fechaNacimiento','direccion','email','telefono']);
+        if ($request->filled('password')) {
+            $request->validate(['password'=>'min:6|confirmed']);
+            $data['contrasena'] = Hash::make($request->password);
+        }
+        $usuario->update($data);
+        $request->session()->put('usuario.nombre', $request->nombre);
+        return redirect()->route('asis.dashboard', ['tab' => 'perfil'])->with('success', 'Perfil actualizado.');
+    }
+    public function toggleEstadoCliente(Request $request, int $id): RedirectResponse
+{
+    $cliente = Usuario::findOrFail($id);
+    $nuevo   = $cliente->estado === 'activo' ? 'inactivo' : 'activo';
+    $cliente->update(['estado' => $nuevo]);
+    return redirect()->route('asis.dashboard', ['tab' => 'clientes'])
+        ->with('success', "Cliente $nuevo correctamente.");
+}
+// ── HISTORIAL DE CLIENTE ──────────────────────────────────────────────────
+
+public function historialCliente(int $id)
+{
+    $donaciones = Donacion::with('categoria')
+        ->whereHas('donantes', fn($q) => $q->where('usuario.idUsuario', $id))
+        ->orderByDesc('idDonacion')
+        ->get()
+        ->map(function ($d) use ($id) {
+            $pivot = $d->donantes()->where('usuario.idUsuario', $id)->first()?->pivot;
+            return [
+                'idDonacion'  => $d->idDonacion,
+                'descripcion' => $d->descripcion,
+                'categoria'   => $d->categoria?->nombre ?? '—',
+                'estado'      => $d->estado,
+                'fecha'       => $pivot?->FechaCreacion
+                                    ? \Carbon\Carbon::parse($pivot->FechaCreacion)->format('d/m/Y')
+                                    : '—',
+            ];
+        });
+
+    $solicitudes = Solicitud::with('categoria')
+        ->where('idSolicitante', $id)   // ← corregido
+        ->orderByDesc('idSolicitud')
+        ->get()
+        ->map(fn($s) => [
+            'idSolicitud' => $s->idSolicitud,
+            'descripcion' => $s->descripcion,
+            'categoria'   => $s->categoria?->nombre ?? '—',
+            'estado'      => $s->estado,
+            'fecha'       => $s->fechaCreacion
+                                ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y')
+                                : '—',
+        ]);
+
+    return response()->json(compact('donaciones', 'solicitudes'));
+}
+
+    // ── VISITAS DOMICILIARIAS ────────────────────────────────────────────────
+
+    public function cambiarEstadoVisita(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'estado'      => 'required|in:aprobada,rechazada,realizada,cancelada',
+            'observacion' => 'nullable|max:300',
+        ]);
+
+        $visita = VisitaDomiciliaria::with('usuario')->findOrFail($id);
+        $visita->update([
+            'estado'          => $request->estado,
+            'observacion'     => $request->observacion,
+            'idGestor'        => $request->session()->get('usuario.idUsuario'),
+            'fechaResolucion' => now(),
+        ]);
+
+        if ($u = $visita->usuario) {
+            try { Mail::to($u->email)->send(new NotificacionEstado($u->nombre, 'visita domiciliaria', $request->estado, $request->observacion ?? '')); } catch (\Exception) {}
+        }
+
+        return redirect()->route('asis.dashboard', ['tab' => 'visitas'])->with('success', 'Estado de la visita actualizado.');
+    }
+}
