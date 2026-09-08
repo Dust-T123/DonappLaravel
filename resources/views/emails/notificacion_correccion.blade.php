@@ -6,12 +6,21 @@
         body { font-family: 'DM Sans', Arial, sans-serif; background: #f8f9fa; }
         .card { max-width: 600px; margin: 40px auto; background: #fff;
                 border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+<<<<<<< HEAD:resources/views/emails/notificacion_correccion.blade.php
         h2   { color: #0B5AA6; }
         .badge { display:inline-block; padding:6px 18px; border-radius:999px;
                  color:#fff; font-weight:700; text-transform:uppercase; }
         .badge-aprobada  { background:#1b9e5a; }
         .badge-rechazada { background:#c0392b; }
         .valor { background:#f4f4f4; border-left:4px solid #0B5AA6;
+=======
+        h2   { color: #df0b0b; }
+        .badge { display:inline-block; padding:6px 18px; border-radius:999px;
+                 color:#fff; font-weight:700; text-transform:uppercase; }
+        .badge-aprobada  { background:#1b9e5a; }
+        .badge-rechazada { background:#df0b0b; }
+        .valor { background:#f4f4f4; border-left:4px solid #df0b0b;
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/resources/views/emails/notificacion_correccion.blade.php
                  padding:12px 16px; border-radius:8px; margin-top:16px; }
         .obs  { background:#fff7e6; border-left:4px solid #e0a800;
                 padding:12px 16px; border-radius:8px; margin-top:16px; }

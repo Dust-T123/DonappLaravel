@@ -166,6 +166,7 @@ class AsisController extends Controller
 
     public function crearEvento(Request $request): RedirectResponse
     {
+<<<<<<< HEAD:app/Http/Controllers/AsisController.php
         $request->validate(['nombre_evento'=>'required|min:3','fecha_inicio'=>'required|date|after_or_equal:today','fecha_fin'=>'required|date|after_or_equal:fecha_inicio','lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10'], ['fecha_inicio.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.', 'fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.']);
         $img = $request->hasFile('imagen_pub') ? file_get_contents($request->file('imagen_pub')->getRealPath()) : null;
         Evento::create([
@@ -178,11 +179,21 @@ class AsisController extends Controller
             'lugar'            => $request->lugar_entrega,
             'estado'           => $request->estado_evento ?? 'borrador',
         ]);
+=======
+        $request->validate(['nombre_evento'=>'required|min:3','fecha_entrega'=>'required|date|after_or_equal:today','lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10'], ['fecha_entrega.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.']);
+        DB::transaction(function () use ($request) {
+            $evento = Evento::create(['Nombre'=>$request->nombre_evento,'estado'=>$request->estado_evento??'activo']);
+            ProgramadorEventos::create(['idEvento'=>$evento->idEvento,'FechaEntrega'=>$request->fecha_entrega,'Lugar'=>$request->lugar_entrega]);
+            $img = $request->hasFile('imagen_pub') ? file_get_contents($request->file('imagen_pub')->getRealPath()) : null;
+            Publicacion::create(['titulo'=>$request->titulo_pub,'contenido'=>$request->contenido_pub,'imagen'=>$img,'fechaPublicacion'=>now()->format('Y-m-d'),'idUsuario'=>$request->session()->get('usuario.idUsuario'),'idEvento'=>$evento->idEvento]);
+        });
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/app/Http/Controllers/AsisController.php
         return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', 'Evento creado.');
     }
 
     public function editarEvento(Request $request, int $id): RedirectResponse
     {
+<<<<<<< HEAD:app/Http/Controllers/AsisController.php
         $request->validate(['titulo_pub'=>'required','contenido_pub'=>'required','nombre_evento'=>'required','fecha_inicio'=>'required|date','fecha_fin'=>'required|date|after_or_equal:fecha_inicio','lugar_entrega'=>'required|min:3','estado_evento'=>'nullable|in:borrador,publicado,en_curso,finalizado,cancelado'], ['fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.']);
         $evento = Evento::findOrFail($id);
         $data = [
@@ -195,6 +206,19 @@ class AsisController extends Controller
         ];
         if ($request->hasFile('imagen_pub')) $data['imagen'] = file_get_contents($request->file('imagen_pub')->getRealPath());
         $evento->update($data);
+=======
+        $request->validate(['titulo_pub'=>'required','contenido_pub'=>'required','nombre_evento'=>'required','fecha_entrega'=>'required|date|after_or_equal:today','lugar_entrega'=>'required|min:3'], ['fecha_entrega.after_or_equal' => 'No se pueden reprogramar eventos con fechas pasadas.']);
+        DB::transaction(function () use ($request, $id) {
+            $evento = Evento::findOrFail($id);
+            $evento->update(['Nombre'=>$request->nombre_evento,'estado'=>$request->estado_evento??$evento->estado]);
+            if ($evento->programacion) $evento->programacion->update(['FechaEntrega'=>$request->fecha_entrega,'Lugar'=>$request->lugar_entrega]);
+            if ($pub = $evento->publicacion) {
+                $data = ['titulo'=>$request->titulo_pub,'contenido'=>$request->contenido_pub];
+                if ($request->hasFile('imagen_pub')) $data['imagen'] = file_get_contents($request->file('imagen_pub')->getRealPath());
+                $pub->update($data);
+            }
+        });
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/app/Http/Controllers/AsisController.php
         return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', 'Evento actualizado.');
     }
 

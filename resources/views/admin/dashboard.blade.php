@@ -471,7 +471,11 @@
                                     </td>
                                     <td>{{ $s->observacion ?? '—' }}</td>
                                     <td>
+<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
                                         <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"prioridad"=>$s->solicitante?->prioridad,"categoria"=>$s->categoria?->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
+=======
+                                        <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"categoria"=>$s->categoria?->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/resources/views/admin/dashboard.blade.php
                                                 class="btn btn-sm btn-primary">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
@@ -598,12 +602,21 @@
                                     'idEvento'        => $ev->idEvento,
                                     'Nombre'          => $ev->Nombre,
                                     'estado'          => $ev->estado,
+<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
                                     'fecha_inicio'    => $ev->fechaInicio ?? '',
                                     'fecha_fin'       => $ev->fechaFin ?? '',
                                     'lugar_entrega'   => $ev->lugar ?? '',
                                     'titulo_pub'      => $ev->Nombre ?? '',
                                     'contenido_pub'   => $ev->contenido ?? '',
                                     'imagen'          => $ev->imagenBase64() ?? '',
+=======
+                                    'fecha_entrega'   => $ev->programacion?->FechaEntrega ?? '',
+                                    'lugar_entrega'   => $ev->programacion?->Lugar ?? '',
+                                    'titulo_pub'      => $ev->publicacion?->titulo ?? '',
+                                    'contenido_pub'   => $ev->publicacion?->contenido ?? '',
+                                    'idPublicacion'   => $ev->publicacion?->idPublicacion ?? '',
+                                    'imagen'          => $ev->publicacion?->imagenBase64() ?? '',
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/resources/views/admin/dashboard.blade.php
                                 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
                             @endphp
                             <tr>

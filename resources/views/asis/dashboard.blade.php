@@ -339,6 +339,10 @@
     "prioridad"     => $s->solicitante?->prioridad,
     "categoria"     => $s->categoria?->nombre,
     "fechaCreacion" => $s->fechaCreacion,
+<<<<<<< HEAD:resources/views/asis/dashboard.blade.php
+=======
+    "imagen"        => $s->imagenBase64(),
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/resources/views/asis/dashboard.blade.php
 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
         class="btn btn-sm btn-primary"><i class="fa-solid fa-pen-to-square"></i></button>
                         </tr>

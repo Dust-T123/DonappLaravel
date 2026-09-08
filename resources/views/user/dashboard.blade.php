@@ -269,7 +269,11 @@
                     </tr></thead>
                     <tbody>
                         @foreach($misSolicitudes as $s)
+<<<<<<< HEAD:resources/views/user/dashboard.blade.php
                         @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>$s->fechaCreacion??'','observacion'=>$s->observacion??'','idCategoria'=>$s->idCategoria], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); @endphp
+=======
+                        @php $sJson = json_encode(['idSolicitud'=>$s->idSolicitud,'descripcion'=>$s->descripcion,'categoria'=>$s->categoria?->nombre??'—','estado'=>$s->estado,'fechaCreacion'=>$s->fechaCreacion??'','observacion'=>$s->observacion??'','imagen'=>$s->imagenBase64()??'','idCategoria'=>$s->idCategoria], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); @endphp
+>>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/resources/views/user/dashboard.blade.php
                         <tr>
                             <td>{{ $s->idSolicitud }}</td>
                             <td class="td-desc">{{ $s->descripcion }}</td>

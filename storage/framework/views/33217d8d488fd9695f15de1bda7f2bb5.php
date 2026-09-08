@@ -3,46 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Donapp')</title>
-    <link rel="icon" type="image/png" href="{{ asset('assets/uploads/Icon.png') }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title><?php echo $__env->yieldContent('title', 'Donapp'); ?></title>
+    <link rel="icon" type="image/png" href="<?php echo e(asset('assets/uploads/Icon.png')); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    @yield('styles')
+    <?php echo $__env->yieldContent('styles'); ?>
 </head>
 <body>
-    @yield('content')
+    <?php echo $__env->yieldContent('content'); ?>
 
-    @if(session('success'))
+    <?php if(session('success')): ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         Swal.fire({
             icon: 'success',
             title: '¡Éxito!',
-            text: '{{ addslashes(session('success')) }}',
+            text: '<?php echo e(addslashes(session('success'))); ?>',
             confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ACEPTAR',
             customClass: { popup: 'donapp-popup', confirmButton: 'donapp-confirm-btn' }
         });
     </script>
-    @endif
+    <?php endif; ?>
 
-    @if($errors->any())
+    <?php if($errors->any()): ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: '{{ addslashes($errors->first('msg') ?: $errors->first()) }}',
-<<<<<<< HEAD:resources/views/layouts/app.blade.php
+            text: '<?php echo e(addslashes($errors->first('msg') ?: $errors->first())); ?>',
             confirmButtonColor: '#0B5AA6',
-=======
-            confirmButtonColor: '#df0b0b',
->>>>>>> 9842787a81702b94f49187c54bf92c9678891faa:donapp/resources/views/layouts/app.blade.php
             confirmButtonText: 'ENTENDIDO',
         });
     </script>
-    @endif
+    <?php endif; ?>
 
-    @yield('scripts')
+    <?php echo $__env->yieldContent('scripts'); ?>
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\DonappLaravel\resources\views/layouts/app.blade.php ENDPATH**/ ?>
