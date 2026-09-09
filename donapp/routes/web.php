@@ -35,6 +35,8 @@ Route::middleware(['auth.role:administrador'])->prefix('admin')->name('admin.')-
 
     // Flujo de corrección de datos sensibles (tipo SofiaPlus)
     Route::post('/perfil/solicitar-correccion', [AdminController::class, 'solicitarCorreccionPerfil'])->name('perfil.solicitarCorreccion');
+    Route::post('/perfil/password/enviar-codigo', [AdminController::class, 'solicitarCodigoPassword'])->name('perfil.password.enviarCodigo');
+    Route::post('/perfil/password/confirmar', [AdminController::class, 'confirmarCambioPassword'])->name('perfil.password.confirmar');
     Route::post('/usuarios/{id}/solicitar-correccion', [AdminController::class, 'solicitarCorreccionUsuario'])->name('usuarios.solicitarCorreccion');
     Route::patch('/correcciones/{id}/aprobar',  [AdminController::class, 'aprobarCorreccion'])->name('correcciones.aprobar');
     Route::patch('/correcciones/{id}/rechazar', [AdminController::class, 'rechazarCorreccion'])->name('correcciones.rechazar');
@@ -86,6 +88,8 @@ Route::middleware(['auth.role:asistente'])->prefix('asis')->name('asis.')->group
     // Perfil propio del asistente (solo campos no sensibles) + solicitud de corrección
     Route::put('/perfil', [AsisController::class, 'actualizarPerfil'])->name('perfil.update');
     Route::post('/perfil/solicitar-correccion', [AsisController::class, 'solicitarCorreccionPerfil'])->name('perfil.solicitarCorreccion');
+    Route::post('/perfil/password/enviar-codigo', [AsisController::class, 'solicitarCodigoPassword'])->name('perfil.password.enviarCodigo');
+    Route::post('/perfil/password/confirmar', [AsisController::class, 'confirmarCambioPassword'])->name('perfil.password.confirmar');
 
     // Visitas domiciliarias
     Route::patch('/visitas/{id}/estado', [AsisController::class, 'cambiarEstadoVisita'])->name('visitas.estado');

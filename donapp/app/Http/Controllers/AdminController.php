@@ -11,6 +11,7 @@ use App\Models\CorreccionDatos;
 use App\Models\VisitaDomiciliaria;
 use App\Mail\NotificacionEstado;
 use App\Mail\NotificacionCorreccion;
+use App\Mail\CodigoCambioPassword;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -271,15 +272,69 @@ class AdminController extends Controller
 
         $usuario = Usuario::findOrFail($id);
         $data    = $request->only(['direccion', 'email', 'telefono']);
-
-        if ($request->filled('password')) {
-            $request->validate(['password' => 'min:6|confirmed']);
-            $data['contrasena'] = Hash::make($request->password);
-        }
-
         $usuario->update($data);
 
         return redirect()->route('admin.dashboard', ['tab' => 'perfil'])->with('success', 'Perfil actualizado.');
+    }
+
+    /**
+     * PASO 1 — Envía un código de 6 dígitos al correo del propio admin/asistente
+     * para poder confirmar un cambio de contraseña. Evita que alguien con la
+     * sesión abierta (pero sin acceso a ese correo) pueda tomar la cuenta.
+     */
+    public function solicitarCodigoPassword(Request $request): RedirectResponse
+    {
+        $id = $request->session()->get('usuario.idUsuario');
+        $usuario = Usuario::findOrFail($id);
+
+        $codigo    = (string) random_int(100000, 999999);
+        $codigoHash = hash('sha256', $codigo);
+
+        $usuario->update([
+            'reset_token'        => $codigoHash,
+            'reset_token_expira' => now()->addMinutes(10),
+        ]);
+
+        try {
+            Mail::to($usuario->email)->send(new CodigoCambioPassword($usuario->nombre, $codigo));
+        } catch (\Exception $e) {
+            return back()->with('error', 'No se pudo enviar el código. Verifica la configuración de correo.');
+        }
+
+        return redirect()->route('admin.dashboard', ['tab' => 'perfil'])
+            ->with('success', 'Te enviamos un código a tu correo. Ingrésalo junto con tu nueva contraseña para confirmar el cambio.');
+    }
+
+    /**
+     * PASO 2 — Verifica el código y, si es válido y no ha expirado (10 min),
+     * aplica la nueva contraseña.
+     */
+    public function confirmarCambioPassword(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'codigo'   => 'required|digits:6',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $id = $request->session()->get('usuario.idUsuario');
+        $usuario = Usuario::findOrFail($id);
+
+        $codigoHash = hash('sha256', $request->codigo);
+        $valido = $usuario->reset_token === $codigoHash
+            && $usuario->reset_token_expira
+            && now()->lt($usuario->reset_token_expira);
+
+        if (!$valido) {
+            return back()->with('error', 'El código es incorrecto o ya expiró. Solicita uno nuevo.');
+        }
+
+        $usuario->update([
+            'contrasena'         => Hash::make($request->password),
+            'reset_token'        => null,
+            'reset_token_expira' => null,
+        ]);
+
+        return redirect()->route('admin.dashboard', ['tab' => 'perfil'])->with('success', 'Contraseña actualizada correctamente.');
     }
 
     /**
@@ -574,13 +629,13 @@ class AdminController extends Controller
             'nombre_evento'  => 'required|min:3|max:150',
             'estado_evento'  => 'required|in:borrador,publicado,en_curso,finalizado,cancelado',
             'fecha_inicio'   => 'required|date|after_or_equal:today',
-            'fecha_fin'      => 'required|date|after_or_equal:fecha_inicio',
+            'fecha_fin'      => ['required', 'date', 'after_or_equal:fecha_inicio', 'after_or_equal:today'],
             'lugar_entrega'  => 'required|min:3|max:255',
             'titulo_pub'     => 'required|min:3|max:200',
             'contenido_pub'  => 'required|min:10|max:500',
         ], [
             'fecha_inicio.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.',
-            'fecha_fin.after_or_equal'    => 'La fecha de fin no puede ser anterior a la fecha de inicio.',
+            'fecha_fin.after_or_equal'    => 'La fecha de fin debe ser hoy o una fecha futura, y no puede ser anterior a la fecha de inicio.',
         ]);
 
         $img = null;
@@ -644,7 +699,8 @@ class AdminController extends Controller
         ]);
         $evento = Evento::findOrFail($id);
         $evento->update(['estado' => $request->estado]);
-        return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', "Estado del evento actualizado a \"{$request->estado}\".");
+        $etiquetas = ['borrador' => 'Borrador', 'publicado' => 'Publicado', 'en_curso' => 'En curso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado'];
+        return redirect()->route('admin.dashboard', ['tab' => 'eventos'])->with('success', 'Estado del evento actualizado a: ' . ($etiquetas[$request->estado] ?? $request->estado));
     }
 
     // ── DONACIONES / SOLICITUDES ──────────────────────────────────────────────

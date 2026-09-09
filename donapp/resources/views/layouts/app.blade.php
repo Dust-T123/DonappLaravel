@@ -18,7 +18,7 @@
         Swal.fire({
             icon: 'success',
             title: '¡Éxito!',
-            text: '{{ addslashes(session('success')) }}',
+            text: {!! json_encode(session('success'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
             confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ACEPTAR',
             customClass: { popup: 'donapp-popup', confirmButton: 'donapp-confirm-btn' }
@@ -32,7 +32,7 @@
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: '{{ addslashes($errors->first('msg') ?: $errors->first()) }}',
+            text: {!! json_encode($errors->first('msg') ?: $errors->first(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
             confirmButtonColor: '#0B5AA6',
             confirmButtonText: 'ENTENDIDO',
         });

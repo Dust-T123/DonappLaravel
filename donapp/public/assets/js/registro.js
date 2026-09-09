@@ -10,6 +10,12 @@ function soloNumeros(e) {
     return (key >= 48 && key <= 57);
 }
 
+function soloAlfanumerico(e) {
+    let key   = e.keyCode || e.which;
+    let tecla = String.fromCharCode(key);
+    return /^[a-zA-Z0-9]$/.test(tecla);
+}
+
 function togglePass(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon  = document.getElementById(iconId);
@@ -41,7 +47,9 @@ const registrationForm = document.getElementById('registerForm');
 
 const fechaNacInput = document.getElementById('fecha_nac');
 if (fechaNacInput) {
-    fechaNacInput.max = new Date().toISOString().split('T')[0];
+    const hoy = new Date();
+    const hace14Anios = new Date(hoy.getFullYear() - 14, hoy.getMonth(), hoy.getDate());
+    fechaNacInput.max = hace14Anios.toISOString().split('T')[0];
 }
 
 registrationForm.onsubmit = function(e) {
@@ -55,7 +63,7 @@ registrationForm.onsubmit = function(e) {
             icon: 'warning',
             title: '¡Ups!',
             text: 'Las contraseñas no coinciden.',
-            confirmButtonColor: '#df0b0b'
+            confirmButtonColor: '#0B5AA6'
         });
         return false;
     }
@@ -66,7 +74,7 @@ registrationForm.onsubmit = function(e) {
             icon: 'warning',
             title: 'Términos y Condiciones',
             text: 'Debes leer y aceptar los Términos y Condiciones y la Política de Habeas Data para completar tu registro.',
-            confirmButtonColor: '#df0b0b'
+            confirmButtonColor: '#0B5AA6'
         });
         aceptaTerminos.focus();
         return false;

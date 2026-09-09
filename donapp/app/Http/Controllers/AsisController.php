@@ -10,6 +10,7 @@ use App\Models\Evento;
 use App\Models\CorreccionDatos;
 use App\Models\VisitaDomiciliaria;
 use App\Mail\NotificacionEstado;
+use App\Mail\CodigoCambioPassword;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -148,16 +149,24 @@ class AsisController extends Controller
 
     public function crearCategoria(Request $request): RedirectResponse
     {
-        $request->validate(['nombre_categoria' => 'required|min:3|unique:categoria,nombre'],
-            ['nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.']);
+        $request->validate([
+            'nombre_categoria' => 'required|min:3|max:100|regex:/^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+$/u|unique:categoria,nombre',
+        ], [
+            'nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.',
+            'nombre_categoria.regex'  => 'El nombre de una categoría solo puede contener letras, espacios, guiones y paréntesis (nunca números).',
+        ]);
         Categoria::create(['nombre' => $request->nombre_categoria, 'idUsuario' => $request->session()->get('usuario.idUsuario')]);
         return redirect()->route('asis.dashboard', ['tab' => 'categorias'])->with('success', 'Categoría creada.');
     }
 
     public function editarCategoria(Request $request, int $id): RedirectResponse
     {
-        $request->validate(["nombre_categoria" => "required|min:3|unique:categoria,nombre,$id,idCategoria"],
-            ['nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.']);
+        $request->validate([
+            'nombre_categoria' => "required|min:3|max:100|regex:/^[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+$/u|unique:categoria,nombre,$id,idCategoria",
+        ], [
+            'nombre_categoria.unique' => 'Ya existe una categoría con ese nombre.',
+            'nombre_categoria.regex'  => 'El nombre de una categoría solo puede contener letras, espacios, guiones y paréntesis (nunca números).',
+        ]);
         Categoria::findOrFail($id)->update(['nombre' => $request->nombre_categoria]);
         return redirect()->route('asis.dashboard', ['tab' => 'categorias'])->with('success', 'Categoría actualizada.');
     }
@@ -166,7 +175,7 @@ class AsisController extends Controller
 
     public function crearEvento(Request $request): RedirectResponse
     {
-        $request->validate(['nombre_evento'=>'required|min:3','fecha_inicio'=>'required|date|after_or_equal:today','fecha_fin'=>'required|date|after_or_equal:fecha_inicio','lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10'], ['fecha_inicio.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.', 'fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.']);
+        $request->validate(['nombre_evento'=>'required|min:3','fecha_inicio'=>'required|date|after_or_equal:today','fecha_fin'=>['required','date','after_or_equal:fecha_inicio','after_or_equal:today'],'lugar_entrega'=>'required|min:3','titulo_pub'=>'required|min:3','contenido_pub'=>'required|min:10'], ['fecha_inicio.after_or_equal' => 'No se pueden crear eventos con fechas pasadas. Selecciona hoy o una fecha futura.', 'fecha_fin.after_or_equal' => 'La fecha de fin debe ser hoy o una fecha futura, y no puede ser anterior a la de inicio.']);
         $img = $request->hasFile('imagen_pub') ? file_get_contents($request->file('imagen_pub')->getRealPath()) : null;
         Evento::create([
             'Nombre'           => $request->titulo_pub ?: $request->nombre_evento,
@@ -205,7 +214,8 @@ class AsisController extends Controller
         ]);
         $evento = Evento::findOrFail($id);
         $evento->update(['estado' => $request->estado]);
-        return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', "Estado del evento actualizado a \"{$request->estado}\".");
+        $etiquetas = ['borrador' => 'Borrador', 'publicado' => 'Publicado', 'en_curso' => 'En curso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado'];
+        return redirect()->route('asis.dashboard', ['tab' => 'eventos'])->with('success', 'Estado del evento actualizado a: ' . ($etiquetas[$request->estado] ?? $request->estado));
     }
 
     // ── DONACIONES / SOLICITUDES ──────────────────────────────────────────────
@@ -361,16 +371,62 @@ class AsisController extends Controller
     public function actualizarPerfil(Request $request): RedirectResponse
     {
         $id = $request->session()->get('usuario.idUsuario');
-        $request->validate(['nombre'=>'required|min:3',"email"=>"required|email|unique:usuario,email,$id,idUsuario",'telefono'=>'required|digits:10']);
+        $request->validate(['direccion'=>'required|min:5|max:255',"email"=>"required|email|unique:usuario,email,$id,idUsuario",'telefono'=>'required|digits:10']);
         $usuario = Usuario::findOrFail($id);
-        $data = $request->only(['nombre','tipoDocumento','numDocumento','fechaNacimiento','direccion','email','telefono']);
-        if ($request->filled('password')) {
-            $request->validate(['password'=>'min:6|confirmed']);
-            $data['contrasena'] = Hash::make($request->password);
-        }
+        $data = $request->only(['direccion','email','telefono']);
         $usuario->update($data);
-        $request->session()->put('usuario.nombre', $request->nombre);
         return redirect()->route('asis.dashboard', ['tab' => 'perfil'])->with('success', 'Perfil actualizado.');
+    }
+
+    /**
+     * PASO 1 — Envía un código de 6 dígitos al correo del propio asistente
+     * para poder confirmar un cambio de contraseña.
+     */
+    public function solicitarCodigoPassword(Request $request): RedirectResponse
+    {
+        $id = $request->session()->get('usuario.idUsuario');
+        $usuario = Usuario::findOrFail($id);
+
+        $codigo     = (string) random_int(100000, 999999);
+        $codigoHash = hash('sha256', $codigo);
+
+        $usuario->update([
+            'reset_token'        => $codigoHash,
+            'reset_token_expira' => now()->addMinutes(10),
+        ]);
+
+        try {
+            Mail::to($usuario->email)->send(new CodigoCambioPassword($usuario->nombre, $codigo));
+        } catch (\Exception $e) {
+            return back()->with('error', 'No se pudo enviar el código. Verifica la configuración de correo.');
+        }
+
+        return redirect()->route('asis.dashboard', ['tab' => 'perfil'])
+            ->with('success', 'Te enviamos un código a tu correo. Ingrésalo junto con tu nueva contraseña para confirmar el cambio.');
+    }
+
+    /**
+     * PASO 2 — Verifica el código y aplica la nueva contraseña.
+     */
+    public function confirmarCambioPassword(Request $request): RedirectResponse
+    {
+        $request->validate(['codigo' => 'required|digits:6', 'password' => 'required|min:6|confirmed']);
+
+        $id = $request->session()->get('usuario.idUsuario');
+        $usuario = Usuario::findOrFail($id);
+
+        $codigoHash = hash('sha256', $request->codigo);
+        $valido = $usuario->reset_token === $codigoHash
+            && $usuario->reset_token_expira
+            && now()->lt($usuario->reset_token_expira);
+
+        if (!$valido) {
+            return back()->with('error', 'El código es incorrecto o ya expiró. Solicita uno nuevo.');
+        }
+
+        $usuario->update(['contrasena' => Hash::make($request->password), 'reset_token' => null, 'reset_token_expira' => null]);
+
+        return redirect()->route('asis.dashboard', ['tab' => 'perfil'])->with('success', 'Contraseña actualizada correctamente.');
     }
     public function toggleEstadoCliente(Request $request, int $id): RedirectResponse
 {

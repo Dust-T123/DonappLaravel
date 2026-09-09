@@ -328,12 +328,18 @@ function actualizarHintObservacion(estadoId, hintId, obsId, errId) {
  * @param {HTMLInputElement} input
  */
 function validarEntrada(input) {
-    const patron = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9\s\-_.,()]+$/;
+    const patron = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-()]*$/;
     const errId = input.id === 'cat_nombre' ? 'cat_err' : 'ecat_err';
     const errEl = document.getElementById(errId);
 
+    // Las categorías nunca llevan números: se limpia en vivo, igual que en el panel de asistente.
+    const valorLimpio = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-()]/g, '');
+    if (input.value !== valorLimpio) {
+        input.value = valorLimpio;
+    }
+
     if (!patron.test(input.value) && input.value !== '') {
-        errEl.textContent = 'Solo se permiten letras, números y los caracteres: - _ . , ( )';
+        errEl.textContent = 'Solo se permiten letras, espacios, guiones y paréntesis (nunca números).';
         errEl.style.display = 'inline';
         input.style.borderColor = '#c62828';
     } else {

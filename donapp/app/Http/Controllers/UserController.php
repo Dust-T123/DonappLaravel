@@ -294,6 +294,16 @@ class UserController extends Controller
     {
         $id = $this->idCliente($request);
 
+        // Solo una visita "activa" (pendiente o aprobada) a la vez por usuario.
+        $tieneActiva = VisitaDomiciliaria::where('idUsuario', $id)
+            ->whereIn('estado', ['pendiente', 'aprobada'])
+            ->exists();
+
+        if ($tieneActiva) {
+            return redirect()->route('usuario.dashboard', ['tab' => 'visitas'])
+                ->with('error', 'Ya tienes una visita domiciliaria pendiente o aprobada. Espera a que se resuelva o cancélala antes de solicitar otra.');
+        }
+
         $request->validate([
             'direccion'      => 'required|min:5|max:255',
             'motivo'         => 'required|min:10|max:300',

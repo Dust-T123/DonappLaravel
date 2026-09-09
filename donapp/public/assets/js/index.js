@@ -10,15 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
     statsInterval = setInterval(actualizarEstadisticas, 30000);
     cargarEventosAPI();
     setInterval(() => {
-        cargarEventosAPI();
-        // Si el modal está abierto, refresca los datos del evento activo
-        const modal = document.getElementById('modal-detalle-publicacion');
-        if (modal && modal.classList.contains('active')) {
-            const cardActiva = document.querySelector('.api-evento-card.seleccionada');
-            if (cardActiva) {
-                verDetallePublicacion(JSON.parse(cardActiva.dataset.ev));
+        cargarEventosAPI().then(() => {
+            // Si el modal de detalle está abierto, refresca su contenido con los
+            // datos frescos del mismo evento (por id, no por una clase CSS que
+            // se pierde al reconstruir la cuadrícula cada vez).
+            const modal = document.getElementById('modal-detalle-publicacion');
+            if (modal && modal.classList.contains('active') && window.eventoAbiertoId) {
+                const cardActualizada = document.querySelector(`.api-evento-card[data-evento-id="${window.eventoAbiertoId}"]`);
+                if (cardActualizada) {
+                    verDetallePublicacion(JSON.parse(cardActualizada.dataset.ev));
+                }
             }
-        }
+        });
     }, 30000);
 });
 // ========== MODALES ==========
@@ -36,6 +39,9 @@ function closeModal(modalId) {
     if (modal) {
         modal.classList.remove('active');
         document.body.style.overflow = 'auto';
+        if (modalId === 'modal-detalle-publicacion') {
+            window.eventoAbiertoId = null;
+        }
     }
 }
 
@@ -44,6 +50,9 @@ window.addEventListener('click', (event) => {
     if (event.target.classList.contains('modal')) {
         event.target.classList.remove('active');
         document.body.style.overflow = 'auto';
+        if (event.target.id === 'modal-detalle-publicacion') {
+            window.eventoAbiertoId = null;
+        }
     }
 });
 
@@ -265,35 +274,39 @@ function formatearRangoFechasEvento(inicio, fin) {
     return `${formatearFechaEvento(inicio)} - ${formatearFechaEvento(fin)}`;
 }
 
-function renderizarTarjetaEvento(ev) {
-    const pub = ev.publicacion || {};
+function mapEventoParaDetalle(ev) {
+    const pub  = ev.publicacion || {};
     const prog = ev.programacion || {};
-    const titulo = pub.titulo || ev.nombre;
-    const contenido = pub.contenido || '';
-    const fecha = formatearRangoFechasEvento(prog.fecha_inicio, prog.fecha_fin);
-    const lugar = prog.lugar || 'No especificado';
-    const imagen = pub.imagen || '';
-    const autor = pub.autor || '';
-    const fechaPub = pub.fecha_publicacion ?
-        formatearFechaEvento(pub.fecha_publicacion) : '';
+    return {
+        id: ev.id,
+        titulo: pub.titulo || ev.nombre,
+        contenido: pub.contenido || '',
+        evento: ev.nombre,
+        fecha: pub.fecha_publicacion ? formatearFechaEvento(pub.fecha_publicacion) : '',
+        entrega: formatearRangoFechasEvento(prog.fecha_inicio, prog.fecha_fin),
+        lugar: prog.lugar || 'No especificado',
+        autor: pub.autor || '',
+        estado: ev.estado,
+        imagen: pub.imagen || '',
+    };
+}
+
+function renderizarTarjetaEvento(ev) {
+    const datos = mapEventoParaDetalle(ev);
+    const { titulo, contenido, fecha: fechaPub, entrega: fecha, lugar, imagen } = datos;
 
     // Guardamos los datos en un atributo data- para evitar problemas con comillas
     const card = document.createElement('div');
     card.className = 'publicacion-card publicacion-activa api-evento-card';
-    card.dataset.ev = JSON.stringify({
-        titulo,
-        contenido,
-        evento: ev.nombre,
-        fecha: fechaPub,
-        entrega: fecha,
-        lugar,
-        autor,
-        estado: ev.estado,
-        imagen,
-    });
+    card.dataset.eventoId = ev.id;
+    card.dataset.ev = JSON.stringify(datos);
+    if (window.eventoAbiertoId && String(window.eventoAbiertoId) === String(ev.id)) {
+        card.classList.add('seleccionada');
+    }
     card.addEventListener('click', function() {
         document.querySelectorAll('.api-evento-card').forEach(c => c.classList.remove('seleccionada'));
         this.classList.add('seleccionada');
+        window.eventoAbiertoId = ev.id;
         verDetallePublicacion(JSON.parse(this.dataset.ev));
     });
 

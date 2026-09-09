@@ -47,6 +47,20 @@ function activarTab(hash) {
 window.addEventListener('load', initTabs);
 window.addEventListener('popstate', initTabs);
 
+// Los <a href="#tabid" class="nav-link"> nunca tenían un listener real de click
+// (solo cambiaban el hash de la URL sin togglear la clase .active). Por eso
+// después de recargar con filtros (que sí activan la pestaña correcta vía
+// initTabs), un clic normal en otra pestaña no hacía nada — parecía "trabado".
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-link[href^="#"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tabId = link.getAttribute('href').replace('#', '');
+            activarTab(tabId);
+        });
+    });
+});
+
 // ── INNER TABS ────────────────────────────────────────────────────────────
 function switchInner(btn, panelId) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
