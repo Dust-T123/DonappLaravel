@@ -401,9 +401,12 @@ tbody tr:hover td {
 
 .td-actions {
     white-space: nowrap;
-    display: flex;
-    gap: 6px;
-    align-items: center;
+}
+.td-actions > * {
+    vertical-align: middle;
+}
+.td-actions > * + * {
+    margin-left: 6px;
 }
 
 .empty-row {

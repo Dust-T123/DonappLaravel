@@ -695,11 +695,14 @@
                                 <td>
                                     <div class="td-actions">
                                         @php
-                                            $esEditable = ($v->estado === 'pendiente');
+                                            // No finalizada = aún se puede gestionar (pendiente/aprobada).
+                                            // Finalizada (rechazada/realizada/cancelada) = solo constancia.
+                                            $esEditable = in_array($v->estado, ['pendiente', 'aprobada']);
                                             $datosModal = json_encode([
                                                 'idVisita'  => $v->idVisita,
                                                 'estado'    => $v->estado,
                                                 'usuario'   => $v->usuario?->nombre,
+                                                'editable'  => $esEditable,
                                                 'historial' => $v->historial->map(fn($h) => [
                                                     'autor' => $h->usuario?->nombre ?? 'Sistema',
                                                     'texto' => $h->texto,
@@ -1249,7 +1252,7 @@
 <div id="modalVisita" class="modal">
     <div class="modal-content modal-lg">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-house-chimney-user"></i> Gestionar Visita Domiciliaria</h3>
+            <h3 id="vis_titulo"><i class="fa-solid fa-house-chimney-user"></i> Gestionar Visita Domiciliaria</h3>
             <button class="modal-close" onclick="cerrarModal('modalVisita')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="vis_detalle" class="detalle-box"></div>
@@ -1257,9 +1260,14 @@
         <h4 style="margin:14px 0 6px"><i class="fa-solid fa-clock-rotate-left"></i> Bitácora</h4>
         <div id="vis_historial" class="bitacora-box"></div>
 
+        <p id="vis_locked_msg" class="text-muted" style="display:none; font-size:0.85rem; margin:6px 0 0">
+            <i class="fa-solid fa-lock"></i> Esta visita ya fue finalizada; queda como constancia y su estado no se puede modificar. Aún puedes agregar una nota a la bitácora.
+        </p>
+
         <form id="formVisita" method="POST">
-            @csrf @method('PATCH')
-            <div class="form-group">
+            @csrf
+            <input type="hidden" name="_method" id="vis_method" value="PATCH">
+            <div class="form-group" id="vis_estado_group">
                 <label>Estado</label>
                 <select name="estado" id="vis_estado" class="form-input">
                     <option value="aprobada">Aprobada</option>
@@ -1274,7 +1282,7 @@
                           placeholder="Escribe una nueva nota..." maxlength="500"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                <button type="submit" id="vis_submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
                 <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalVisita')">Cancelar</button>
             </div>
         </form>
@@ -1593,6 +1601,7 @@ const ROUTES = {
     donacion:  (id) => `{{ url('/admin/donaciones') }}/${id}/estado`,
     solicitud: (id) => `{{ url('/admin/solicitudes') }}/${id}/estado`,
     visita:    (id) => `{{ url('/admin/visitas') }}/${id}/estado`,
+    visitaNota:(id) => `{{ url('/admin/visitas') }}/${id}/nota`,
     editarUsuario: (id) => `{{ url('/admin/usuarios') }}/${id}`,
     editarCategoria: (id) => `{{ url('/admin/categorias') }}/${id}`,
     editarEvento: (id) => `{{ url('/admin/eventos') }}/${id}`,
@@ -1600,9 +1609,32 @@ const ROUTES = {
 };
 
 function abrirModalVisita(v) {
-    document.getElementById('formVisita').action = ROUTES.visita(v.idVisita);
-    document.getElementById('vis_estado').value = (v.estado === 'pendiente') ? 'aprobada' : v.estado;
-    document.getElementById('vis_obs').value = '';
+    const editable = !!v.editable;
+    const form = document.getElementById('formVisita');
+    const estadoSel = document.getElementById('vis_estado');
+    const obsField = document.getElementById('vis_obs');
+
+    form.action = editable ? ROUTES.visita(v.idVisita) : ROUTES.visitaNota(v.idVisita);
+    document.getElementById('vis_method').value = editable ? 'PATCH' : 'POST';
+
+    document.getElementById('vis_estado_group').style.display = editable ? '' : 'none';
+    estadoSel.disabled = !editable;          // los select deshabilitados no se envían con el form
+    estadoSel.value = (v.estado === 'pendiente') ? 'aprobada' : v.estado;
+
+    document.getElementById('vis_locked_msg').style.display = editable ? 'none' : '';
+    document.getElementById('vis_titulo').innerHTML = editable
+        ? '<i class="fa-solid fa-house-chimney-user"></i> Gestionar Visita Domiciliaria'
+        : '<i class="fa-solid fa-house-chimney-user"></i> Visita Domiciliaria (finalizada)';
+
+    // El nombre del campo cambia según el endpoint: 'observacion' (opcional,
+    // acompaña el cambio de estado) vs 'texto' (nota suelta a la bitácora).
+    obsField.name = editable ? 'observacion' : 'texto';
+    obsField.required = !editable;
+    obsField.value = '';
+    document.getElementById('vis_submit').innerHTML = editable
+        ? '<i class="fa-solid fa-floppy-disk"></i> Guardar'
+        : '<i class="fa-solid fa-note-sticky"></i> Agregar nota';
+
     document.getElementById('vis_detalle').innerHTML =
         `<p><strong>Beneficiario:</strong> ${v.usuario || '—'}</p>`;
 
