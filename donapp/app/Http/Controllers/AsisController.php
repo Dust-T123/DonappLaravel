@@ -485,6 +485,14 @@ public function historialCliente(int $id)
         ]);
 
         $visita = VisitaDomiciliaria::with('usuario')->findOrFail($id);
+
+        // Una visita finalizada (rechazada/realizada/cancelada) queda como
+        // constancia: ya no se puede volver a cambiar su estado, solo se
+        // puede seguir anotando en la bitácora (ver agregarNotaVisita()).
+        if (in_array($visita->estado, ['rechazada', 'realizada', 'cancelada'])) {
+            return back()->with('error', 'Esta visita ya fue finalizada y no se puede modificar su estado.');
+        }
+
         $visita->update([
             'estado'          => $request->estado,
             'idGestor'        => $request->session()->get('usuario.idUsuario'),

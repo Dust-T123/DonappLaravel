@@ -18,7 +18,7 @@ const navLink = document.querySelector(`.nav-link[href="#${tabId}"]`);
 
 function irTab(tabId, e) {
     e.preventDefault();
-    history.pushState({}, '', 'asis_dashboard.php#' + tabId);
+    history.pushState({}, '', '#' + tabId);
     mostrarTab(tabId);
 }
 
@@ -47,7 +47,7 @@ function initTabs() {
 
 function activarTab(hash) {
     const tabId = hash.replace('#', '');
-    history.pushState({}, '', 'asis_dashboard.php#' + tabId);
+    history.pushState({}, '', '#' + tabId);
     mostrarTab(tabId);
 }
 

@@ -356,7 +356,15 @@ td.td-obs  { max-width: 200px; font-size: .82rem; color: var(--text-muted); }
 tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: #fafbfc; }
 
-.td-actions { white-space: nowrap; display: flex; gap: 6px; align-items: center; }
+.td-actions {
+    white-space: nowrap;
+}
+.td-actions > * {
+    vertical-align: middle;
+}
+.td-actions > * + * {
+    margin-left: 6px;
+}
 .empty-row  { text-align: center; color: var(--text-muted); padding: 40px; }
 
 /* ─────────────────────────────────────────────

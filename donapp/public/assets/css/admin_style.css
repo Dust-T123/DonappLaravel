@@ -287,13 +287,19 @@ table th {
     vertical-align: middle !important;
 }
 
-/* 2. Asegurar que el contenedor de botones esté centrado dentro de su celda */
-.td-actions { 
-    display: flex; 
-    align-items: center; 
-    justify-content: flex-start;
-    gap: 6px; 
+/* 2. Asegurar que los botones queden centrados verticalmente dentro de su
+   celda: display:flex directamente en el <td> le quita a la celda su
+   comportamiento de table-cell, así que vertical-align deja de aplicarle
+   (por eso los !important de arriba no alcanzaban a arreglarlo). En vez de
+   eso, apoyarse en que .btn ya es inline-flex con vertical-align: middle. */
+.td-actions {
     white-space: nowrap;
+}
+.td-actions > * {
+    vertical-align: middle;
+}
+.td-actions > * + * {
+    margin-left: 6px;
 }
 
 /* 3. Forzar que todos los botones dentro de acciones mantengan el tamaño compacto */
