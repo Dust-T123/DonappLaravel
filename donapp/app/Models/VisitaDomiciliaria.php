@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Modelo: VisitaDomiciliaria
@@ -37,6 +38,11 @@ class VisitaDomiciliaria extends Model
     public function gestor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'idGestor');
+    }
+
+    public function historial(): HasMany
+    {
+        return $this->hasMany(VisitaObservacion::class, 'idVisita')->orderBy('fecha');
     }
 
     public function isPendiente(): bool

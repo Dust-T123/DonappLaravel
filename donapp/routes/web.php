@@ -58,6 +58,7 @@ Route::middleware(['auth.role:administrador'])->prefix('admin')->name('admin.')-
 
     // Visitas domiciliarias
     Route::patch('/visitas/{id}/estado', [AdminController::class, 'cambiarEstadoVisita'])->name('visitas.estado');
+    Route::post('/visitas/{id}/nota', [AdminController::class, 'agregarNotaVisita'])->name('visitas.nota');
 });
 
 // ── ASISTENTE ─────────────────────────────────────────────────────────────────
@@ -93,6 +94,7 @@ Route::middleware(['auth.role:asistente'])->prefix('asis')->name('asis.')->group
 
     // Visitas domiciliarias
     Route::patch('/visitas/{id}/estado', [AsisController::class, 'cambiarEstadoVisita'])->name('visitas.estado');
+    Route::post('/visitas/{id}/nota', [AsisController::class, 'agregarNotaVisita'])->name('visitas.nota');
 });
 
 // ── DONANTE / SOLICITANTE ──────────────────────────────────────────────────────
@@ -114,4 +116,5 @@ Route::middleware(['auth.role:donante'])->prefix('usuario')->name('usuario.')->g
     // Visitas domiciliarias
     Route::post('/visitas',           [UserController::class, 'crearVisita'])->name('visitas.crear');
     Route::delete('/visitas/{id}',    [UserController::class, 'cancelarVisita'])->name('visitas.cancelar');
+    Route::post('/visitas/{id}/nota', [UserController::class, 'agregarNotaVisita'])->name('visitas.nota');
 });

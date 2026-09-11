@@ -226,7 +226,7 @@ h1, h2, h3 {
 }
 
 .title-gradient {
-    background: linear-gradient(135deg, #1670C4, #073E73);
+    background: linear-gradient(135deg, #3391e9, #0f4b83);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -866,11 +866,15 @@ h1, h2, h3 {
     inset: 0;
     background: linear-gradient(
         to bottom,
-        rgba(10, 0, 0, 0.164) 0%,
-        rgba(100, 10, 10, 0.35) 60%,
-        rgba(117, 18, 18, 0.514) 100%
+        rgba(0, 5, 10, 0.164) 0%,
+        rgba(10, 59, 100, 0.35) 60%,
+        rgba(237, 249, 255, 0.514) 100%
     );
     z-index: 1;
+}
+
+.badge-tiempo-real {
+    color: #FFFFFF; /* Cambia este valor hexadecimal o nombre de color */
 }
 
 /* Partículas flotantes */
@@ -1077,7 +1081,7 @@ h1, h2, h3 {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-error);
+    color: var(--color-primary);
     font-size: 1rem;
 }
 
@@ -1148,7 +1152,7 @@ h1, h2, h3 {
 
 .sobre-badge-main {
     grid-column: 1 / -1;
-    background: #E3EDFB;
+    background: rgba(11, 90, 166, 0.15);
     border-color: rgba(11, 90, 166, 0.35);
 }
 

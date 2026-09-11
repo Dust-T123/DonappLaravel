@@ -4,6 +4,13 @@
  * navegación de tabs, modales, validaciones, reportes PDF y helpers.
  */
 
+// ── VALIDACIÓN: solo letras y espacios (bloquea la tecla, no solo limpia después) ──
+function soloLetras(e) {
+    const key   = e.key || String.fromCharCode(e.keyCode || e.which);
+    const letras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]$/;
+    return letras.test(key);
+}
+
 // ─────────────────────────────────────────────
 // TABS DE NAVEGACIÓN (sidebar)
 // ─────────────────────────────────────────────
@@ -130,6 +137,103 @@ function abrirModalEditarUsuario(u) {
 }
 
 // ─────────────────────────────────────────────
+// MODAL — VISITA DOMICILIARIA
+// ─────────────────────────────────────────────
+
+/**
+ * Abre la modal de visita domiciliaria.
+ * Bloquea controles y oculta el botón si la visita no está en estado editable.
+ * @param {Object} data - Datos de la visita e historial.
+ */
+function abrirModalVisita(data) {
+    const modal = document.getElementById('modalVisita');
+    if (!modal) return;
+
+    // Helper interno por si escHtml no está definido en el ámbito global
+    const safeHtml = (str) => {
+        if (typeof escHtml === 'function') return escHtml(str);
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+    // 1. Validar si la visita es editable
+    const estadosEditables = ['pendiente'];
+    const estadoActual = String(data?.estado || '').toLowerCase();
+    const esEditable = estadosEditables.includes(estadoActual);
+
+    // 2. Configurar el formulario y la ruta
+    const formVisita = document.getElementById('formVisita');
+    if (formVisita && data?.idVisita) {
+        formVisita.action = `/admin/visitas/${data.idVisita}`;
+    }
+
+    // 3. Asignar estado actual al select
+    const elEstado = document.getElementById('vis_estado');
+    if (elEstado) {
+        elEstado.value = data?.estado || '';
+    }
+
+    // 4. Bloquear / Desbloquear inputs, selectores y textareas
+    const controles = modal.querySelectorAll('input, textarea, select');
+    controles.forEach(control => {
+        if (control.type === 'hidden') return;
+
+        // Deshabilitar cualquier control si no es editable
+        control.disabled = !esEditable;
+
+        // Limpiar o restablecer campos de texto adicionales (ej. nueva observación)
+        if (control.tagName === 'TEXTAREA' || (control.tagName === 'INPUT' && control.type === 'text')) {
+            if (control.id !== 'vis_estado') {
+                control.readOnly = !esEditable;
+            }
+        }
+    });
+
+    // Resetear el campo de nuevas observaciones al abrir
+    const campoObs = document.getElementById('vis_obs');
+    if (campoObs) {
+        campoObs.value = '';
+    }
+
+    // 5. Visibilidad del botón de guardar
+    const btnGuardar = modal.querySelector('button[type="submit"]');
+    if (btnGuardar) {
+        btnGuardar.style.display = esEditable ? 'inline-block' : 'none';
+    }
+
+    // 6. Renderizar historial / bitácora
+    const contenedorHistorial = document.getElementById('vis_historial');
+    if (contenedorHistorial) {
+        if (Array.isArray(data?.historial) && data.historial.length > 0) {
+            contenedorHistorial.innerHTML = data.historial.map(item => `
+                <div class="historial-item" style="margin-bottom: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #0d6efd;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>${safeHtml(item.autor || 'Sistema')}</strong>
+                        <small class="text-muted">${safeHtml(item.fecha || '')}</small>
+                    </div>
+                    <p style="margin: 4px 0 0 0; color: #333;">${safeHtml(item.texto || '')}</p>
+                </div>
+            `).join('');
+        } else {
+            contenedorHistorial.innerHTML = '<p class="text-muted" style="margin: 0; font-size: 0.9rem;">Sin notas registradas en la bitácora.</p>';
+        }
+    }
+
+    // 7. Mostrar la modal
+    if (typeof abrirModal === 'function') {
+        abrirModal('modalVisita');
+    } else {
+        modal.classList.add('show');
+        modal.style.display = 'block';
+    }
+}
+
+// ─────────────────────────────────────────────
 // MODAL — GESTIONAR DONACIÓN
 // ─────────────────────────────────────────────
 
@@ -209,6 +313,13 @@ function abrirModalEditarEvento(ev) {
     document.getElementById('edit_lugar_entrega').value = ev.lugar_entrega || '';
     document.getElementById('edit_titulo_pub').value = ev.titulo_pub || '';
     document.getElementById('edit_contenido_pub').value = ev.contenido_pub || '';
+
+    // Solo bloqueamos fechas pasadas si el evento aún no terminó; si ya es
+    // un evento histórico, no forzamos el mínimo o sería imposible guardar
+    // cualquier otro cambio en él sin cambiarle también las fechas.
+    const hoyStr = new Date().toISOString().split('T')[0];
+    const finInput = document.getElementById('edit_fecha_fin');
+    finInput.min = (ev.fecha_fin && ev.fecha_fin < hoyStr) ? '' : hoyStr;
 
     const preview = document.getElementById('edit_img_preview');
     const wrap = document.getElementById('edit_img_preview_wrap');
@@ -451,8 +562,8 @@ function generarReporteDonaciones() {
             d.observacion || '—'
         ]),
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [211, 47, 47] },
-        alternateRowStyles: { fillColor: [253, 235, 235] }
+        headStyles: { fillColor: [11, 90, 166] },
+        alternateRowStyles: { fillColor: [227, 237, 251] }
     });
 
     doc.save(`donaciones_${new Date().toISOString().slice(0,10)}.pdf`);

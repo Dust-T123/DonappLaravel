@@ -1,3 +1,10 @@
+// ── VALIDACIÓN: solo letras y espacios (bloquea la tecla, no solo limpia después) ──
+function soloLetras(e) {
+    const key   = e.key || String.fromCharCode(e.keyCode || e.which);
+    const letras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]$/;
+    return letras.test(key);
+}
+
 // ── TABS ──────────────────────────────────────────────────────────────────
 function mostrarTab(tabId) {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -220,6 +227,11 @@ function abrirModalEditarEvento(evento) {
     document.getElementById('edit_titulo_pub').value    = evento.titulo_pub || '';
     document.getElementById('edit_contenido_pub').value = evento.contenido_pub || '';
 
+    // Solo bloqueamos fechas pasadas si el evento aún no terminó.
+    const hoyStr = new Date().toISOString().split('T')[0];
+    const finInput = document.getElementById('edit_fecha_fin');
+    finInput.min = (evento.fecha_fin && evento.fecha_fin < hoyStr) ? '' : hoyStr;
+
     document.getElementById('edit_imagen_pub').value = '';
     const nuevaPreview = document.getElementById('edit_nueva_img_preview');
     nuevaPreview.style.display = 'none';
@@ -371,8 +383,8 @@ function generarReporteDonaciones() {
                 d.observacion || '—'
             ]),
             styles:             { fontSize: 8 },
-            headStyles:         { fillColor: [211, 47, 47] },
-            alternateRowStyles: { fillColor: [255, 240, 240] }
+            headStyles:         { fillColor: [11, 90, 166] },
+            alternateRowStyles: { fillColor: [227, 237, 251] }
         });
     }
     doc.save(`reporte_donaciones_${Date.now()}.pdf`);
@@ -404,8 +416,8 @@ function generarReporteSolicitudes() {
                 s.observacion || '—'
             ]),
             styles:             { fontSize: 8 },
-            headStyles:         { fillColor: [211, 47, 47] },
-            alternateRowStyles: { fillColor: [240, 244, 255] }
+            headStyles:         { fillColor: [11, 90, 166] },
+            alternateRowStyles: { fillColor: [227, 237, 251] }
         });
     }
     doc.save(`reporte_solicitudes_${Date.now()}.pdf`);

@@ -9,6 +9,7 @@ use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\CorreccionDatos;
 use App\Models\VisitaDomiciliaria;
+use App\Models\VisitaObservacion;
 use App\Mail\NotificacionEstado;
 use App\Mail\NotificacionCorreccion;
 use App\Mail\CodigoCambioPassword;
@@ -105,7 +106,7 @@ class AdminController extends Controller
             ->get();
 
         // ── Visitas domiciliarias ─────────────────────────────────────────────
-        $visitas = VisitaDomiciliaria::with(['usuario', 'gestor'])
+        $visitas = VisitaDomiciliaria::with(['usuario', 'gestor', 'historial.usuario'])
             ->when($request->vis_estado, fn($q, $e) => $q->where('estado', $e))
             ->when($request->vis_sort === 'az', fn($q) => $q->orderBy('idUsuario'))
             ->when(!$request->vis_sort, fn($q) => $q->orderByRaw("estado = 'pendiente' DESC")->orderByDesc('idVisita'))
@@ -735,21 +736,54 @@ class AdminController extends Controller
     {
         $request->validate([
             'estado'      => 'required|in:aprobada,rechazada,realizada,cancelada',
-            'observacion' => 'nullable|max:300',
+            'observacion' => 'nullable|max:500',
         ]);
 
         $visita = VisitaDomiciliaria::with('usuario')->findOrFail($id);
         $visita->update([
             'estado'          => $request->estado,
-            'observacion'     => $request->observacion,
             'idGestor'        => $request->session()->get('usuario.idUsuario'),
             'fechaResolucion' => now(),
         ]);
+
+        // La observación ahora es una bitácora: cada nota queda registrada por
+        // separado (con quién la escribió), en vez de reemplazar la anterior.
+        if ($request->filled('observacion')) {
+            VisitaObservacion::create([
+                'idVisita'  => $visita->idVisita,
+                'idUsuario' => $request->session()->get('usuario.idUsuario'),
+                'texto'     => $request->observacion,
+            ]);
+            // La última nota de un admin/asistente también queda reflejada al
+            // ver/editar el usuario, sin perder el historial completo de la bitácora.
+            if ($visita->usuario && $visita->usuario->rol === 'donante') {
+                $visita->usuario->update(['observacion_visita' => $request->observacion]);
+            }
+        }
 
         if ($u = $visita->usuario) {
             try { Mail::to($u->email)->send(new NotificacionEstado($u->nombre, 'visita domiciliaria', $request->estado, $request->observacion ?? '')); } catch (\Exception) {}
         }
 
         return redirect()->route('admin.dashboard', ['tab' => 'visitas'])->with('success', 'Estado de la visita actualizado.');
+    }
+
+    public function agregarNotaVisita(Request $request, int $id): RedirectResponse
+    {
+        $request->validate(['texto' => 'required|min:3|max:500']);
+
+        $visita = VisitaDomiciliaria::with('usuario')->findOrFail($id);
+
+        VisitaObservacion::create([
+            'idVisita'  => $id,
+            'idUsuario' => $request->session()->get('usuario.idUsuario'),
+            'texto'     => $request->texto,
+        ]);
+
+        if ($visita->usuario && $visita->usuario->rol === 'donante') {
+            $visita->usuario->update(['observacion_visita' => $request->texto]);
+        }
+
+        return redirect()->route('admin.dashboard', ['tab' => 'visitas'])->with('success', 'Nota agregada a la bitácora.');
     }
 }

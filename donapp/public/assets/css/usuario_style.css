@@ -121,7 +121,7 @@ body {
     background: var(--primary);
     color: #fff;
 }
-.nav-link.logout:hover { background: var(--danger); }
+.nav-link.logout:hover { background: var(--primary-dk); color: #fff; }
 .nav-menu hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
 
 /* ─────────────────────────────────────────────
@@ -339,18 +339,20 @@ td {
     border-bottom: 1px solid var(--border);
     font-size: 0.9rem;
     vertical-align: middle;
-    max-width: 0; /* permite que width relativo del th funcione */
+    white-space: nowrap; /* Evita que el badge y la fecha se colapsen o peguen */
 }
 
-/* Celdas con texto largo: truncar con ellipsis */
+/* Celdas con texto largo: que se acople hacia abajo (wrap) en vez de
+   truncarse o ensanchar la tabla */
 td.td-desc, td.td-cat, td.td-obs {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
-td.td-desc { max-width: 200px; }
+td.td-desc { max-width: 220px; }
 td.td-cat  { max-width: 160px; }
-td.td-obs  { max-width: 160px; font-size: .82rem; color: var(--text-muted); }
+td.td-obs  { max-width: 200px; font-size: .82rem; color: var(--text-muted); }
 tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: #fafbfc; }
 
@@ -408,6 +410,7 @@ tbody tr:hover td { background: #fafbfc; }
    BADGES
 ───────────────────────────────────────────── */
 .badge {
+    margin-right: 6px;
     display: inline-block;
     padding: 4px 10px;
     border-radius: 20px;
@@ -795,5 +798,30 @@ button.nav-link.logout {
     font: inherit;
     font-size: 0.93rem;
     font-weight: 500;
-    color: inherit;
+    color: #808da0;
+}
+/* Bitácora de observaciones (visitas domiciliarias) */
+.bitacora-box {
+    max-height: 220px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+}
+.bitacora-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.bitacora-item:last-child { border-bottom: none; }
+.bitacora-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted, #777);
+    margin-bottom: 2px;
+}
+.bitacora-texto {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    word-wrap: break-word;
 }

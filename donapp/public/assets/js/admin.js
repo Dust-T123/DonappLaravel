@@ -292,8 +292,8 @@ function generarReporteDonaciones() {
                 d.observacion || '—'
             ]),
             styles:             { fontSize: 8 },
-            headStyles:         { fillColor: [211, 47, 47] },
-            alternateRowStyles: { fillColor: [255, 240, 240] }
+            headStyles:         { fillColor: [11, 90, 166] },
+            alternateRowStyles: { fillColor: [227, 237, 251] }
         });
     }
     doc.save(`reporte_donaciones_${Date.now()}.pdf`);
@@ -327,8 +327,8 @@ function generarReporteSolicitudes() {
                 s.observacion || '—'
             ]),
             styles:             { fontSize: 8 },
-            headStyles:         { fillColor: [211, 47, 47] },
-            alternateRowStyles: { fillColor: [240, 244, 255] }
+            headStyles:         { fillColor: [11, 90, 166] },
+            alternateRowStyles: { fillColor: [227, 237, 251] }
         });
     }
     doc.save(`reporte_solicitudes_${Date.now()}.pdf`);
