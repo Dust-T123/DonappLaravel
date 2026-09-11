@@ -137,6 +137,7 @@ body {
 
 .nav-link.logout:hover {
     background: var(--danger);
+    color: #fff;
 }
 
 .nav-menu hr {
@@ -378,6 +379,18 @@ td {
     vertical-align: middle;
 }
 
+/* Celdas con texto largo: que se acople hacia abajo (wrap) en vez de
+   truncarse o ensanchar la tabla */
+td.td-desc, td.td-cat, td.td-obs {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+td.td-desc { max-width: 220px; }
+td.td-cat  { max-width: 160px; }
+td.td-obs  { max-width: 180px; font-size: .82rem; color: var(--text-muted); }
+
 tr:last-child td {
     border-bottom: none;
 }
@@ -465,6 +478,7 @@ tbody tr:hover td {
 ───────────────────────────────────────────── */
 
 .badge {
+    margin-right: 6px;
     display: inline-block;
     padding: 4px 10px;
     border-radius: 20px;
@@ -921,7 +935,8 @@ hr {
 }
 
 .sidebar .nav-link.logout:hover {
-    background: #1565c0;
+    background: var(--primary-dk);
+    color: #fff;
 }
 
 
@@ -1126,5 +1141,30 @@ button.nav-link.logout {
     font: inherit;
     font-size: 0.93rem;
     font-weight: 500;
-    color: inherit;
+    color: #808da0;
+}
+/* Bitácora de observaciones (visitas domiciliarias) */
+.bitacora-box {
+    max-height: 220px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+}
+.bitacora-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.bitacora-item:last-child { border-bottom: none; }
+.bitacora-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted, #777);
+    margin-bottom: 2px;
+}
+.bitacora-texto {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    word-wrap: break-word;
 }

@@ -252,13 +252,13 @@
                         <?php $__empty_1 = true; $__currentLoopData = $donaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
                             <td><?php echo e($d->idDonacion); ?></td>
-                            <td><?php echo e($d->descripcion); ?></td>
+                            <td class="td-desc"><?php echo e($d->descripcion); ?></td>
                             <td><?php echo e($d->categoria?->nombre ?? '—'); ?></td>
                             <td><?php echo e($d->stock); ?></td>
                             <td><span class="badge estado-<?php echo e($d->estado); ?>"><?php echo e($d->estado); ?></span></td>
                             <td><?php echo e($d->donantes->first()?->pivot->FechaCreacion ? \Carbon\Carbon::parse($d->donantes->first()->pivot->FechaCreacion)->format('d/m/Y') : '—'); ?></td>
                             <td><?php echo e($d->donantes->first()?->nombre ?? '—'); ?></td>
-                            <td><?php echo e($d->observacion ?? '—'); ?></td>
+                            <td class="td-obs"><?php echo e($d->observacion ?? '—'); ?></td>
                             <td>
                                 <button onclick='abrirModalDonacion(<?php echo e(json_encode([
     "idDonacion"    => $d->idDonacion,
@@ -316,7 +316,7 @@
                         <?php $__empty_1 = true; $__currentLoopData = $solicitudes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
                             <td><?php echo e($s->idSolicitud); ?></td>
-                            <td><?php echo e($s->descripcion); ?></td>
+                            <td class="td-desc"><?php echo e($s->descripcion); ?></td>
                             <td><?php echo e($s->categoria?->nombre ?? '—'); ?></td>
                             <td><span class="badge estado-<?php echo e($s->estado); ?>"><?php echo e($s->estado); ?></span></td>
                             <td><?php echo e($s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—'); ?></td>
@@ -328,7 +328,7 @@
                                 <?php endif; ?>
                             </td>
                             <td><?php echo e($s->gestor?->nombre ?? '—'); ?></td>
-                            <td><?php echo e($s->observacion ?? '—'); ?></td>
+                            <td class="td-obs"><?php echo e($s->observacion ?? '—'); ?></td>
                             <td>
                                 <button onclick='abrirModalSolicitud(<?php echo e(json_encode([
     "idSolicitud"   => $s->idSolicitud,
@@ -595,7 +595,7 @@ $evJson = json_encode([
                                 <td class="td-desc"><?php echo e($v->motivo); ?></td>
                                 <td><?php echo e($v->fechaPreferida ? \Carbon\Carbon::parse($v->fechaPreferida)->format('d/m/Y') : '—'); ?></td>
                                 <td><span class="badge estado-<?php echo e($v->estado); ?>"><?php echo e($v->estado); ?></span></td>
-                                <td class="td-obs"><?php echo e($v->observacion ?? '—'); ?></td>
+                                <td class="td-obs"><?php echo e($v->historial->last()?->texto ?? '—'); ?></td>
                                 <td><?php echo e($v->gestor?->nombre ?? '—'); ?></td>
                                 <td class="td-actions">
                                     <?php if(in_array($v->estado, ['pendiente', 'aprobada'])): ?>
@@ -603,8 +603,12 @@ $evJson = json_encode([
                                             onclick='abrirModalVisita(<?php echo e(json_encode([
     "idVisita"    => $v->idVisita,
     "estado"      => $v->estado,
-    "observacion" => $v->observacion,
     "usuario"     => $v->usuario?->nombre,
+    "historial"   => $v->historial->map(fn($h) => [
+        "autor" => $h->usuario?->nombre ?? "Sistema",
+        "texto" => $h->texto,
+        "fecha" => $h->fecha->format('d/m/Y H:i'),
+    ]),
 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE)); ?>)'
                                             title="Gestionar visita">
                                         <i class="fa-solid fa-pen-to-square"></i> Gestionar
@@ -813,10 +817,14 @@ $evJson = json_encode([
 </div></div>
 
 
-<div id="modalVisita" class="modal"><div class="modal-content">
+<div id="modalVisita" class="modal"><div class="modal-content modal-lg">
     <div class="modal-header"><h3><i class="fa-solid fa-house-chimney-user"></i> Gestionar Visita Domiciliaria</h3>
         <button class="modal-close" onclick="cerrarModal('modalVisita')"><i class="fa-solid fa-xmark"></i></button></div>
     <div id="vis_detalle" class="detalle-box"></div>
+
+    <h4 style="margin:14px 0 6px"><i class="fa-solid fa-clock-rotate-left"></i> Bitácora</h4>
+    <div id="vis_historial" class="bitacora-box"></div>
+
     <form id="formVisita" method="POST">
         <?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
         <div class="form-group"><label>Estado</label>
@@ -826,8 +834,8 @@ $evJson = json_encode([
                 <option value="realizada">Realizada</option>
                 <option value="cancelada">Cancelada</option>
             </select></div>
-        <div class="form-group"><label>Observación <small class="text-muted">(detalles de la visita, motivo de rechazo, etc.)</small></label>
-            <textarea name="observacion" id="vis_obs" class="form-input" rows="3" placeholder="Añade los detalles de la visita..." maxlength="300"></textarea></div>
+        <div class="form-group"><label>Agregar nota a la bitácora <small class="text-muted">(opcional, no borra las anteriores)</small></label>
+            <textarea name="observacion" id="vis_obs" class="form-input" rows="2" placeholder="Escribe una nueva nota..." maxlength="500"></textarea></div>
         <div class="modal-footer">
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
             <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalVisita')">Cancelar</button>
@@ -849,8 +857,8 @@ $evJson = json_encode([
                 <option value="cancelado">Cancelado</option></select></div>
         </div>
         <div class="form-grid-2">
-            <div class="form-group"><label>Fecha de inicio *</label><input type="date" name="fecha_inicio" class="form-input" required></div>
-            <div class="form-group"><label>Fecha de fin *</label><input type="date" name="fecha_fin" class="form-input" required>
+            <div class="form-group"><label>Fecha de inicio *</label><input type="date" name="fecha_inicio" class="form-input" required min="<?php echo e(date('Y-m-d')); ?>"></div>
+            <div class="form-group"><label>Fecha de fin *</label><input type="date" name="fecha_fin" class="form-input" required min="<?php echo e(date('Y-m-d')); ?>">
                 <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Usa la misma fecha si dura un solo día.</p></div>
         </div>
         <div class="form-grid-2">
@@ -1079,7 +1087,7 @@ $evJson = json_encode([
     <form action="<?php echo e(route('asis.categorias.crear')); ?>" method="POST">
         <?php echo csrf_field(); ?>
         <div class="form-group"><label>Nombre de la categoría *</label>
-            <input type="text" name="nombre_categoria" id="asis_cat_nombre" class="form-input" required minlength="3" maxlength="100" placeholder="Nombre de la categoría" oninput="validarCategoriaAsistente(this)">
+            <input type="text" name="nombre_categoria" id="asis_cat_nombre" class="form-input" autocomplete="off" pattern="[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+" required minlength="3" maxlength="100" placeholder="Nombre de la categoría" onkeypress="return soloLetras(event)" oninput="validarCategoriaAsistente(this)">
             <small id="asis_cat_err" class="field-error" style="display:none;"></small></div>
         <div class="modal-footer">
             <button type="submit" name="crear_categoria" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Crear</button>
@@ -1096,7 +1104,7 @@ $evJson = json_encode([
         <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
         <input type="hidden" name="idCategoria" id="edit_cat_id">
         <div class="form-group"><label>Nombre de la categoría *</label>
-            <input type="text" name="nombre_categoria" id="edit_cat_nombre" class="form-input" required minlength="3" maxlength="100" oninput="validarCategoriaAsistente(this)">
+            <input type="text" name="nombre_categoria" id="edit_cat_nombre" class="form-input" autocomplete="off" pattern="[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+" required minlength="3" maxlength="100" onkeypress="return soloLetras(event)" oninput="validarCategoriaAsistente(this)">
             <small id="edit_cat_err" class="field-error" style="display:none;"></small></div>
         <div class="modal-footer">
             <button type="submit" name="editar_categoria" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
@@ -1124,8 +1132,18 @@ const ROUTES_ASIS = {
 function abrirModalVisita(v) {
     document.getElementById('formVisita').action = ROUTES_ASIS.visita(v.idVisita);
     document.getElementById('vis_estado').value = (v.estado === 'pendiente') ? 'aprobada' : v.estado;
-    document.getElementById('vis_obs').value = v.observacion || '';
+    document.getElementById('vis_obs').value = '';
     document.getElementById('vis_detalle').innerHTML = `<p><strong>Beneficiario:</strong> ${v.usuario || '—'}</p>`;
+
+    const hist = v.historial || [];
+    document.getElementById('vis_historial').innerHTML = hist.length
+        ? hist.map(h => `
+            <div class="bitacora-item">
+                <div class="bitacora-meta"><strong>${h.autor}</strong> · ${h.fecha}</div>
+                <div class="bitacora-texto">${h.texto}</div>
+            </div>`).join('')
+        : '<p class="text-muted" style="font-size:0.85rem">Aún no hay notas en la bitácora.</p>';
+
     abrirModal('modalVisita');
 }
 
@@ -1256,10 +1274,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const hoyStr = new Date().toISOString().split('T')[0];
 
     // Fecha mínima = hoy en ambos formularios
-    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_inicio"]');
-    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_inicio"]');
-    if (fCrear)  fCrear.min  = hoyStr;
-    if (fEditar) fEditar.min = hoyStr;
+    const fCrear       = document.querySelector('#modalCrearEvento input[name="fecha_inicio"]');
+    const fCrearFin    = document.querySelector('#modalCrearEvento input[name="fecha_fin"]');
+    const fEditarInicio= document.querySelector('#modalEditarEvento input[name="fecha_inicio"]');
+    if (fCrear)    fCrear.min    = hoyStr;
+    if (fCrearFin) fCrearFin.min = hoyStr;
+
+    // Cuando cambie la fecha de inicio, la de fin no puede quedar antes que ella
+    [fCrear, fEditarInicio].forEach(inicioInput => {
+        if (!inicioInput) return;
+        inicioInput.addEventListener('change', () => {
+            const finInput = inicioInput.closest('form').querySelector('input[name="fecha_fin"]');
+            if (finInput && inicioInput.value) {
+                finInput.min = inicioInput.value > hoyStr ? inicioInput.value : hoyStr;
+            }
+        });
+    });
 
     // Validar antes de enviar
     const formCrear  = document.querySelector('#modalCrearEvento form');

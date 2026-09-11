@@ -9,6 +9,7 @@ use App\Models\Categoria;
 use App\Models\Evento;
 use App\Models\CorreccionDatos;
 use App\Models\VisitaDomiciliaria;
+use App\Models\VisitaObservacion;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -61,7 +62,7 @@ class UserController extends Controller
             ->get();
 
         // Visitas domiciliarias solicitadas por este usuario
-        $misVisitas = VisitaDomiciliaria::with('gestor')
+        $misVisitas = VisitaDomiciliaria::with(['gestor', 'historial.usuario'])
             ->where('idUsuario', $id)
             ->orderByDesc('idVisita')
             ->get();
@@ -334,5 +335,21 @@ class UserController extends Controller
         $visita->update(['estado' => 'cancelada', 'fechaResolucion' => now()]);
 
         return redirect()->route('usuario.dashboard', ['tab' => 'visitas'])->with('success', 'Visita cancelada.');
+    }
+
+    public function agregarNotaVisita(Request $request, int $id): RedirectResponse
+    {
+        $idUsuario = $this->idCliente($request);
+        $visita = VisitaDomiciliaria::where('idVisita', $id)->where('idUsuario', $idUsuario)->firstOrFail();
+
+        $request->validate(['texto' => 'required|min:3|max:500']);
+
+        VisitaObservacion::create([
+            'idVisita'  => $visita->idVisita,
+            'idUsuario' => $idUsuario,
+            'texto'     => $request->texto,
+        ]);
+
+        return redirect()->route('usuario.dashboard', ['tab' => 'visitas'])->with('success', 'Nota agregada.');
     }
 }

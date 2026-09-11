@@ -168,3 +168,20 @@ function abrirDetalleEvento(ev) {
 
     abrirModal('modalDetalleEvento');
 }
+
+// ── BITÁCORA DE VISITA DOMICILIARIA ──────────────────────────────────────
+function abrirBitacoraVisita(v) {
+    document.getElementById('bit_direccion').textContent = v.direccion || '';
+    document.getElementById('formNotaVisita').action = `${window.VISITAS_BASE_URL}/${v.idVisita}/nota`;
+
+    const hist = v.historial || [];
+    document.getElementById('bit_historial').innerHTML = hist.length
+        ? hist.map(h => `
+            <div class="bitacora-item">
+                <div class="bitacora-meta"><strong>${h.autor}</strong> · ${h.fecha}</div>
+                <div class="bitacora-texto">${h.texto}</div>
+            </div>`).join('')
+        : '<p class="text-muted" style="font-size:0.85rem">Aún no hay notas en la bitácora.</p>';
+
+    abrirModal('modalBitacoraVisita');
+}

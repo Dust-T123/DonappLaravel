@@ -336,10 +336,21 @@
                 <table>
                     <thead><tr>
                         <th>#</th><th>Dirección</th><th>Motivo</th><th>Fecha preferida</th>
-                        <th>Estado</th><th>Gestor</th><th>Observación</th><th>Acciones</th>
+                        <th>Estado</th><th>Gestor</th><th>Acciones</th>
                     </tr></thead>
                     <tbody>
                         @foreach($misVisitas as $v)
+                        @php
+                            $histJson = json_encode([
+                                'idVisita'  => $v->idVisita,
+                                'direccion' => $v->direccion,
+                                'historial' => $v->historial->map(fn($h) => [
+                                    'autor' => $h->usuario?->nombre ?? 'Sistema',
+                                    'texto' => $h->texto,
+                                    'fecha' => $h->fecha->format('d/m/Y H:i'),
+                                ]),
+                            ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
+                        @endphp
                         <tr>
                             <td>{{ $v->idVisita }}</td>
                             <td class="td-desc">{{ $v->direccion }}</td>
@@ -347,8 +358,10 @@
                             <td>{{ $v->fechaPreferida ? \Carbon\Carbon::parse($v->fechaPreferida)->format('d/m/Y') : '—' }}</td>
                             <td><span class="badge estado-{{ $v->estado }}">{{ $v->estado }}</span></td>
                             <td>{{ $v->gestor?->nombre ?? '—' }}</td>
-                            <td class="td-obs">{{ $v->observacion ?? '—' }}</td>
                             <td class="td-actions">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick='abrirBitacoraVisita({{ $histJson }})' title="Ver bitácora">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </button>
                                 @if($v->estado === 'pendiente')
                                 <form action="{{ route('usuario.visitas.cancelar', $v->idVisita) }}" method="POST" style="display:inline"
                                       onsubmit="return confirm('¿Cancelar esta solicitud de visita?')">
@@ -357,8 +370,6 @@
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 </form>
-                                @else
-                                —
                                 @endif
                             </td>
                         </tr>
@@ -627,6 +638,23 @@
     </form>
 </div></div>
 
+<div id="modalBitacoraVisita" class="modal"><div class="modal-content">
+    <div class="modal-header"><h3><i class="fa-solid fa-clock-rotate-left"></i> Bitácora de la Visita</h3>
+        <button class="modal-close" onclick="cerrarModal('modalBitacoraVisita')"><i class="fa-solid fa-xmark"></i></button></div>
+    <p id="bit_direccion" class="page-subtitle" style="margin-top:-8px"></p>
+    <div id="bit_historial" class="bitacora-box"></div>
+    <form id="formNotaVisita" method="POST">
+        @csrf
+        <div class="form-group"><label>Agregar una nota</label>
+            <textarea name="texto" class="form-input" rows="2" maxlength="500"
+                      placeholder="Escribe un comentario para el asistente/administrador..."></textarea></div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Agregar nota</button>
+            <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalBitacoraVisita')">Cerrar</button>
+        </div>
+    </form>
+</div></div>
+
 <div id="modalNuevaSolicitud" class="modal"><div class="modal-content">
     <div class="modal-header"><h3><i class="fa-solid fa-clipboard-list"></i> Registrar Solicitud</h3>
         <button class="modal-close" onclick="cerrarModal('modalNuevaSolicitud')"><i class="fa-solid fa-xmark"></i></button></div>
@@ -726,6 +754,7 @@
 
 @endsection
 @section('scripts')
+<script>window.VISITAS_BASE_URL = "{{ url('/usuario/visitas') }}";</script>
 <script src="{{ asset('assets/js/usuario.js') }}"></script>
 <script>
 // Conectar formularios de edición con rutas Laravel

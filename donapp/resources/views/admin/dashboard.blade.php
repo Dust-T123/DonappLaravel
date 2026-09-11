@@ -386,13 +386,13 @@
                                 @forelse($donaciones as $d)
                                 <tr>
                                     <td>{{ $d->idDonacion }}</td>
-                                    <td>{{ $d->descripcion }}</td>
+                                    <td class="td-desc">{{ $d->descripcion }}</td>
                                     <td>{{ $d->categoria?->nombre ?? '—' }}</td>
                                     <td>{{ $d->stock }}</td>
                                     <td><span class="badge estado-{{ $d->estado }}">{{ $d->estado }}</span></td>
                                     <td>{{ $d->donantes->first()?->pivot->FechaCreacion ? \Carbon\Carbon::parse($d->donantes->first()->pivot->FechaCreacion)->format('d/m/Y') : '—' }}</td>
                                     <td>{{ $d->donantes->first()?->nombre ?? '—' }}</td>
-                                    <td>{{ $d->observacion ?? '—' }}</td>
+                                    <td class="td-obs">{{ $d->observacion ?? '—' }}</td>
                                     <td>
                                         <button onclick='abrirModalDonacion({{ json_encode(["idDonacion"=>$d->idDonacion,"descripcion"=>$d->descripcion,"estado"=>$d->estado,"observacion"=>$d->observacion,"donante"=>$d->donantes->first()?->nombre,"categoria"=>$d->categoria?->nombre,"stock"=>$d->stock], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                                 class="btn btn-sm btn-primary">
@@ -452,7 +452,7 @@
                                 @forelse($solicitudes as $s)
                                 <tr>
                                     <td>{{ $s->idSolicitud }}</td>
-                                    <td>{{ $s->descripcion }}</td>
+                                    <td class="td-desc">{{ $s->descripcion }}</td>
                                     <td>{{ $s->categoria?->nombre ?? '—' }}</td>
                                     <td><span class="badge estado-{{ $s->estado }}">{{ $s->estado }}</span></td>
                                     <td>{{ $s->fechaCreacion ? \Carbon\Carbon::parse($s->fechaCreacion)->format('d/m/Y') : '—' }}</td>
@@ -469,7 +469,7 @@
                                             <span class="text-muted"><i>Esperando revisión...</i></span>
                                         @endif
                                     </td>
-                                    <td>{{ $s->observacion ?? '—' }}</td>
+                                    <td class="td-obs">{{ $s->observacion ?? '—' }}</td>
                                     <td>
                                         <button onclick='abrirModalSolicitud({{ json_encode(["idSolicitud"=>$s->idSolicitud,"descripcion"=>$s->descripcion,"estado"=>$s->estado,"observacion"=>$s->observacion,"solicitante"=>$s->solicitante?->nombre,"prioridad"=>$s->solicitante?->prioridad,"categoria"=>$s->categoria?->nombre], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
                                                 class="btn btn-sm btn-primary">
@@ -690,23 +690,32 @@
                                 <td class="td-desc">{{ $v->motivo }}</td>
                                 <td>{{ $v->fechaPreferida ? \Carbon\Carbon::parse($v->fechaPreferida)->format('d/m/Y') : '—' }}</td>
                                 <td><span class="badge estado-{{ $v->estado }}">{{ $v->estado }}</span></td>
-                                <td class="td-obs">{{ $v->observacion ?? '—' }}</td>
+                                <td class="td-obs">{{ $v->historial->last()?->texto ?? '—' }}</td>
                                 <td>{{ $v->gestor?->nombre ?? '—' }}</td>
-                                <td class="td-actions">
-                                    @if(in_array($v->estado, ['pendiente', 'aprobada']))
-                                    <button type="button" class="btn btn-sm btn-primary"
-                                            onclick='abrirModalVisita({{ json_encode([
-    "idVisita"    => $v->idVisita,
-    "estado"      => $v->estado,
-    "observacion" => $v->observacion,
-    "usuario"     => $v->usuario?->nombre,
-], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})'
-                                            title="Gestionar visita">
-                                        <i class="fa-solid fa-pen-to-square"></i> Gestionar
-                                    </button>
-                                    @else
-                                    —
-                                    @endif
+                                <td>
+                                    <div class="td-actions">
+                                        @php
+                                            $esEditable = ($v->estado === 'pendiente');
+                                            $datosModal = json_encode([
+                                                'idVisita'  => $v->idVisita,
+                                                'estado'    => $v->estado,
+                                                'usuario'   => $v->usuario?->nombre,
+                                                'historial' => $v->historial->map(fn($h) => [
+                                                    'autor' => $h->usuario?->nombre ?? 'Sistema',
+                                                    'texto' => $h->texto,
+                                                    'fecha' => $h->fecha->format('d/m/Y H:i'),
+                                                ]),
+                                            ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
+                                        @endphp
+
+                                        <button type="button" 
+                                                class="btn btn-sm {{ $esEditable ? 'btn-primary' : 'btn-secondary' }}"
+                                                onclick='abrirModalVisita({{ $datosModal }})'
+                                                title="{{ $esEditable ? 'Gestionar visita' : 'Ver detalles y bitácora' }}">
+                                            <i class="fa-solid {{ $esEditable ? 'fa-pen-to-square' : 'fa-eye' }}"></i>
+                                            {{ $esEditable ? 'Gestionar' : 'Ver bitácora' }}
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -1238,12 +1247,16 @@
 
 {{-- GESTIONAR VISITA DOMICILIARIA --}}
 <div id="modalVisita" class="modal">
-    <div class="modal-content">
+    <div class="modal-content modal-lg">
         <div class="modal-header">
             <h3><i class="fa-solid fa-house-chimney-user"></i> Gestionar Visita Domiciliaria</h3>
             <button class="modal-close" onclick="cerrarModal('modalVisita')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="vis_detalle" class="detalle-box"></div>
+
+        <h4 style="margin:14px 0 6px"><i class="fa-solid fa-clock-rotate-left"></i> Bitácora</h4>
+        <div id="vis_historial" class="bitacora-box"></div>
+
         <form id="formVisita" method="POST">
             @csrf @method('PATCH')
             <div class="form-group">
@@ -1256,9 +1269,9 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Observación <small class="text-muted">(detalles de la visita, motivo de rechazo, etc.)</small></label>
-                <textarea name="observacion" id="vis_obs" class="form-input" rows="3"
-                          placeholder="Añade los detalles de la visita..." maxlength="300"></textarea>
+                <label>Agregar nota a la bitácora <small class="text-muted">(opcional, no borra las anteriores)</small></label>
+                <textarea name="observacion" id="vis_obs" class="form-input" rows="2"
+                          placeholder="Escribe una nueva nota..." maxlength="500"></textarea>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
@@ -1297,11 +1310,11 @@
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>Fecha de inicio *</label>
-                    <input type="date" name="fecha_inicio" class="form-input" required>
+                    <input type="date" name="fecha_inicio" class="form-input" required min="{{ date('Y-m-d') }}">
                 </div>
                 <div class="form-group">
                     <label>Fecha de fin *</label>
-                    <input type="date" name="fecha_fin" class="form-input" required>
+                    <input type="date" name="fecha_fin" class="form-input" required min="{{ date('Y-m-d') }}">
                     <p class="form-hint"><i class="fa-solid fa-circle-info"></i> Usa la misma fecha si el evento dura un solo día.</p>
                 </div>
             </div>
@@ -1421,9 +1434,10 @@
             @csrf
             <div class="form-group">
                 <label>Nombre de la categoría *</label>
-                <input type="text" name="nombre_categoria" id="cat_nombre" class="form-input"
+                <input type="text" name="nombre_categoria" id="cat_nombre" class="form-input" autocomplete="off" pattern="[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+"
                        required minlength="3" maxlength="100"
                        placeholder="Ingrese la nueva categoría"
+                       onkeypress="return soloLetras(event)"
                        oninput="validarEntrada(this)">
                 <small id="cat_err" class="field-error" style="display:none;"></small>
             </div>
@@ -1450,8 +1464,8 @@
             <input type="hidden" name="idCategoria" id="ecat_id">
             <div class="form-group">
                 <label>Nombre de la categoría *</label>
-                <input type="text" name="nombre_categoria" id="ecat_nombre" class="form-input"
-                       required minlength="3" maxlength="100" oninput="validarEntrada(this)">
+                <input type="text" name="nombre_categoria" id="ecat_nombre" class="form-input" autocomplete="off" pattern="[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s\(\)\-]+"
+                       required minlength="3" maxlength="100" onkeypress="return soloLetras(event)" oninput="validarEntrada(this)">
                 <small id="ecat_err" class="field-error" style="display:none;"></small>
             </div>
             <div class="modal-footer">
@@ -1588,9 +1602,19 @@ const ROUTES = {
 function abrirModalVisita(v) {
     document.getElementById('formVisita').action = ROUTES.visita(v.idVisita);
     document.getElementById('vis_estado').value = (v.estado === 'pendiente') ? 'aprobada' : v.estado;
-    document.getElementById('vis_obs').value = v.observacion || '';
+    document.getElementById('vis_obs').value = '';
     document.getElementById('vis_detalle').innerHTML =
         `<p><strong>Beneficiario:</strong> ${v.usuario || '—'}</p>`;
+
+    const hist = v.historial || [];
+    document.getElementById('vis_historial').innerHTML = hist.length
+        ? hist.map(h => `
+            <div class="bitacora-item">
+                <div class="bitacora-meta"><strong>${h.autor}</strong> · ${h.fecha}</div>
+                <div class="bitacora-texto">${h.texto}</div>
+            </div>`).join('')
+        : '<p class="text-muted" style="font-size:0.85rem">Aún no hay notas en la bitácora.</p>';
+
     abrirModal('modalVisita');
 }
 
@@ -1617,7 +1641,7 @@ window.abrirModalEditarUsuario = function(u) {
     // mandamos a "Mi perfil" (con su propio flujo de corrección de datos)
     // en vez de abrir el modal genérico de edición de usuarios.
     if (String(u.idUsuario) === String({{ $adminActual->idUsuario }})) {
-        activarTab('perfil');
+        activarTab('#perfil');
         return;
     }
     document.getElementById('formEditarUsuario').action = ROUTES.editarUsuario(u.idUsuario);
@@ -1749,11 +1773,24 @@ function validarFechaEventoForm(form) {
 document.addEventListener('DOMContentLoaded', function () {
     const hoyStr = new Date().toISOString().split('T')[0];
 
-    // Fecha mínima = hoy en ambos formularios de evento
-    const fCrear  = document.querySelector('#modalCrearEvento input[name="fecha_inicio"]');
-    const fEditar = document.querySelector('#modalEditarEvento input[name="fecha_inicio"]');
-    if (fCrear)  fCrear.min  = hoyStr;
-    if (fEditar) fEditar.min = hoyStr;
+    // Fecha mínima = hoy en ambos formularios de evento (inicio y fin)
+    const fCrearInicio  = document.querySelector('#modalCrearEvento input[name="fecha_inicio"]');
+    const fCrearFin     = document.querySelector('#modalCrearEvento input[name="fecha_fin"]');
+    const fEditarInicio = document.querySelector('#modalEditarEvento input[name="fecha_inicio"]');
+    const fEditarFin    = document.querySelector('#modalEditarEvento input[name="fecha_fin"]');
+    if (fCrearInicio)  fCrearInicio.min  = hoyStr;
+    if (fCrearFin)     fCrearFin.min     = hoyStr;
+
+    // Cuando cambie la fecha de inicio, la fecha de fin no puede ser anterior a ella
+    [fCrearInicio, fEditarInicio].forEach(inicioInput => {
+        if (!inicioInput) return;
+        inicioInput.addEventListener('change', () => {
+            const finInput = inicioInput.closest('form').querySelector('input[name="fecha_fin"]');
+            if (finInput && inicioInput.value) {
+                finInput.min = inicioInput.value > hoyStr ? inicioInput.value : hoyStr;
+            }
+        });
+    });
 
     const formCrearEvento  = document.querySelector('#modalCrearEvento form');
     const formEditarEvento = document.getElementById('formEditarEvento');
